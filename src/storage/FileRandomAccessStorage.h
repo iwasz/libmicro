@@ -48,40 +48,11 @@ public:
 
         virtual void init ();
 
-        //        virtual size_t getCapacity () const { return capacity; }
-
-        //        /**
-        //         * Remarks : for flash, the most efficient scenario is when length == capacity. If length <
-        //         * capacity, then this implementation would read prevoius record, modify it, and store as a
-        //         * whole.
-        //         */
-
-        //        /**
-        //         * @param offset Where to save the data (in bytes counted from the start of the record). Remember that the record
-        //         * has a length of 'capacity' bytes. Do not confuse offset with flash memory address. It is less than that.
-        //         */
-        //        virtual void store (uint8_t *data, size_t length, size_t offset);
-        //        virtual uint8_t const *read (uint8_t *out, size_t length, size_t offset, size_t history);
-        //        virtual uint8_t const *read (uint8_t *out, size_t length, size_t offset) { return read (out, length, offset, 0); }
-        //        virtual void clear ();
-
 protected:
         /// Clear one page.
         virtual void clearPage (size_t address);
         /// Store 1 word (WRITE_SIZE bytes long).
         virtual void storeWordImpl (uint8_t const *word, size_t address);
-
-private:
-        /// Do the book keeping after a single word was stored.
-        //        void increaseAndClear ();
-        //        void storeImpl (uint8_t *data, size_t length, size_t offset);
-
-        //        /**
-        //         * @brief Store one word of size WRITE_SIZE, and increase currentPage and currentOffset accordingly.
-        //         * If page boundary is exceeded, new page will be used, and if last page is full, first page will be
-        //         * cleared and used and so on.
-        //         */
-        //        void storeWord (uint8_t const *word);
 
 private:
         int fd;
@@ -108,10 +79,10 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FileRandomAccessStorage<PAGE
                 Error_Handler ();
         }
 
-        // Init END_MARKER
-        for (size_t i = 0; i < WRITE_SIZE; ++i) {
-                FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::END_MARKER[i] = 0xff;
-        }
+//        // Init END_MARKER
+//        for (size_t i = 0; i < WRITE_SIZE; ++i) {
+//                FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::END_MARKER[i] = 0xff;
+//        }
 
         /*---------------------------------------------------------------------------*/
 
@@ -153,9 +124,8 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FileRandomAccessStorage<PAGE
                 Error_Handler ();
         }
 
-        static uint8_t ZERO[PAGE_SIZE] = {
-                0,
-        };
+        uint8_t ZERO[PAGE_SIZE];
+        memset (ZERO, 0xff, PAGE_SIZE);
 
         if (write (fd, ZERO, PAGE_SIZE) < (ssize_t)PAGE_SIZE) {
                 Error_Handler ();

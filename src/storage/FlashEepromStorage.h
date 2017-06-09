@@ -9,6 +9,7 @@
 #ifndef FLASH_EEPROM_STORAGE_H
 #define FLASH_EEPROM_STORAGE_H
 
+#include "Hal.h"
 #include "ICircullarQueueStorage.h"
 #include "IRandomAccessStorage.h"
 
@@ -85,7 +86,6 @@ private:
         void storeWord (uint8_t const *word);
 
 protected:
-
         size_t capacity;
         size_t numOfPages;
         size_t address;
@@ -101,7 +101,10 @@ protected:
 
 /*****************************************************************************/
 
-template <size_t PAGE_SIZE, size_t WRITE_SIZE> uint8_t FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::END_MARKER[WRITE_SIZE];
+template <size_t PAGE_SIZE, size_t WRITE_SIZE>
+uint8_t FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::END_MARKER[WRITE_SIZE] = {
+        0,
+};
 
 /*****************************************************************************/
 
@@ -117,6 +120,11 @@ FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::FlashEepromStorage (size_t capacity, 
         if (capacity + WRITE_SIZE >= PAGE_SIZE / 2) {
                 Error_Handler ();
         }
+
+        //        // Init END_MARKER
+        //        for (size_t i = 0; i < WRITE_SIZE; ++i) {
+        //                END_MARKER[i] = 0xff;
+        //        }
 }
 
 /*****************************************************************************/
@@ -138,11 +146,6 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FlashEepromStorage<PAGE_SIZE
                 Error_Handler ();
         }
 
-        // Init END_MARKER
-        for (size_t i = 0; i < WRITE_SIZE; ++i) {
-                END_MARKER[i] = 0xff;
-        }
-
         /*
          * Read all the data, ad find currentPage and currentOffset. If those two variables cannot be determined,
          * clear all pages, and start from scratch (last sentence not implemented).
@@ -162,21 +165,17 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FlashEepromStorage<PAGE_SIZE
                         currentOffset %= PAGE_SIZE;
                 }
         }
+
+        if (currentPage >= numOfPages) {
+                clear ();
+                currentOffset = 0;
+                currentPage = 0;
+        }
 }
 
 /*****************************************************************************/
 
-template <size_t PAGE_SIZE, size_t WRITE_SIZE> FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::~FlashEepromStorage ()
-{
-//        if (munmap (contents, PAGE_SIZE * numOfPages) < 0) {
-//                Error_Handler ();
-//        }
-
-//        errno = 0;
-//        if (close (fd) < 0) {
-//                Error_Handler ();
-//        }
-}
+template <size_t PAGE_SIZE, size_t WRITE_SIZE> FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::~FlashEepromStorage () {}
 
 /*****************************************************************************/
 
@@ -236,13 +235,15 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FlashEepromStorage<PAGE_SIZE
 
 template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::storeWordImpl (uint8_t const *word, size_t address)
 {
-//        if (lseek (fd, address, SEEK_SET) < 0) {
-//                Error_Handler ();
-//        }
+#ifndef UNIT_TEST
+        HAL_FLASH_Unlock ();
 
-//        if (write (fd, word, WRITE_SIZE) < (ssize_t)WRITE_SIZE) {
-//                Error_Handler ();
-//        }
+        if (HAL_FLASH_Program (FLASH_TYPEPROGRAM_HALFWORD, address, *reinterpret_cast<uint16_t const *> (word)) != HAL_OK) {
+                Error_Handler ();
+        }
+
+        HAL_FLASH_Lock ();
+#endif
 }
 
 /*****************************************************************************/
@@ -319,17 +320,22 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FlashEepromStorage<PAGE_SIZE
 
 template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::clearPage (size_t address)
 {
-//        if (lseek (fd, address, SEEK_SET) < 0) {
-//                Error_Handler ();
-//        }
+#ifndef UNIT_TEST
+        HAL_FLASH_Unlock ();
 
-//        static uint8_t ZERO[PAGE_SIZE] = {
-//                0,
-//        };
+        FLASH_EraseInitTypeDef er;
+        er.PageAddress = address;
+        er.TypeErase = FLASH_TYPEERASE_PAGES;
+        er.NbPages = 1;
 
-//        if (write (fd, ZERO, PAGE_SIZE) < (ssize_t)PAGE_SIZE) {
-//                Error_Handler ();
-//        }
+        uint32_t per;
+
+        if (HAL_FLASHEx_Erase (&er, &per) != HAL_OK) {
+                Error_Handler ();
+        }
+
+        HAL_FLASH_Lock ();
+#endif
 }
 
 #endif // FILERANDOMACCESSSTORAGE_H
