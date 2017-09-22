@@ -9,6 +9,14 @@
 #ifndef GP8_STOPWATCH_UTILS_H
 #define GP8_STOPWATCH_UTILS_H
 
-extern void Error_Handler ();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void Error_Handler ();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // UTILS_H

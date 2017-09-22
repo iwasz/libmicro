@@ -9,6 +9,7 @@
 #ifndef FLASH_EEPROM_STORAGE_H
 #define FLASH_EEPROM_STORAGE_H
 
+#include "ErrorHandler.h"
 #include "Hal.h"
 #include "ICircullarQueueStorage.h"
 #include "IRandomAccessStorage.h"
@@ -242,6 +243,7 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FlashEepromStorage<PAGE_SIZE
                 Error_Handler ();
         }
 
+        CLEAR_BIT (FLASH->CR, (FLASH_CR_PG));
         HAL_FLASH_Lock ();
 #endif
 }
@@ -334,6 +336,7 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FlashEepromStorage<PAGE_SIZE
                 Error_Handler ();
         }
 
+        CLEAR_BIT (FLASH->CR, (FLASH_CR_PER));
         HAL_FLASH_Lock ();
 #endif
 }
