@@ -6,10 +6,21 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef MICROLIB_HAL_H
-#define MICROLIB_HAL_H
-
-// TODO ifdefs
 #include "HalStm32F0.h"
+#include "Gpio.h"
 
-#endif // HAL_H
+extern "C" void EXTI0_1_IRQHandler ()
+{
+        if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_0) != RESET) {
+                __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_0);
+                Gpio::connectedExtis[0]->onToggle ();
+        }
+        else if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_1) != RESET) {
+                __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_1);
+                Gpio::connectedExtis[0]->onToggle ();
+        }
+}
+
+extern "C" void EXTI2_3_IRQHandler () {}
+
+extern "C" void EXTI4_15_IRQHandler () {}

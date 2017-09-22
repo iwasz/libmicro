@@ -51,13 +51,32 @@ public:
          */
         void set (bool on);
 
-        void setOnToggle (std::function<void(void)> const &t) { onToggle = t; }
+        /**
+         * @brief Sets the callback. You must configure this Gpio in EXTI mode for this to work
+         * i.e. use GPIO_MODE_IT_RISING or simmilar.
+         * @param t Callback. A function, a method or lambda function.
+         */
+        void setOnToggle (std::function<void(void)> const &t);
+
+        /**
+         * Helper function, which tells which pin number is it based on the GPIO_PIN_x macro parameter.
+         */
+        static int pinNumber (uint32_t pinDef);
 
 private:
+        FRIEND_ALL_GPIO_IRQS
+
         GPIO_InitTypeDef gpioInitStructure;
         GPIO_TypeDef *port;
-        // Serviced in EXTI ISR
         std::function<void(void)> onToggle;
+
+        /**
+         * Stores which Gpio object is servicing which EXTI line.
+         * Also prevents from setting the onToggle callback multiple times for
+         * single pin. If you set onToggle for PA0, it will prevent you from setiing
+         * this callback for any other 0 pin (PB0, PC0 etc).
+         */
+        static Gpio *connectedExtis[16];
 };
 
 #endif // GPIO_H
