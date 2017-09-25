@@ -19,15 +19,16 @@ Gpio *Gpio::connectedExtis[16] = {
 
 /*****************************************************************************/
 
-Gpio::Gpio (GPIO_TypeDef *port, uint32_t pin, uint32_t mode, uint32_t pull, uint32_t speed)
+Gpio::Gpio (GPIO_TypeDef *port, uint32_t pin, uint32_t mode, uint32_t pull, uint32_t speed, uint32_t alternate)
 {
         this->port = port;
         gpioInitStructure.Pin = pin;
         gpioInitStructure.Mode = mode;
         gpioInitStructure.Pull = pull;
         gpioInitStructure.Speed = speed;
-        HAL_GPIO_Init (port, &gpioInitStructure);
+        gpioInitStructure.Alternate = alternate;
         clkEnable ();
+        HAL_GPIO_Init (port, &gpioInitStructure);
 }
 
 /*****************************************************************************/
@@ -62,9 +63,6 @@ void Gpio::clkEnable (GPIO_TypeDef *port)
         else if (port == GPIOF) {
                 __HAL_RCC_GPIOF_CLK_ENABLE ();
         }
-        else {
-                Error_Handler ();
-        }
 }
 
 /*****************************************************************************/
@@ -88,9 +86,6 @@ void Gpio::clkDisable (GPIO_TypeDef *port)
         }
         else if (port == GPIOF) {
                 __HAL_RCC_GPIOF_CLK_DISABLE ();
-        }
-        else {
-                Error_Handler ();
         }
 }
 

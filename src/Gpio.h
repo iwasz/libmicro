@@ -20,7 +20,9 @@ public:
         /**
          * @brief Initializes, and turns the clock on.
          */
-        Gpio (GPIO_TypeDef *port, uint32_t pin, uint32_t mode = GPIO_MODE_OUTPUT_PP, uint32_t pull = GPIO_NOPULL, uint32_t speed = GPIO_SPEED_FREQ_HIGH);
+        Gpio (GPIO_TypeDef *port, uint32_t pin, uint32_t mode = GPIO_MODE_OUTPUT_PP, uint32_t pull = GPIO_NOPULL, uint32_t speed = GPIO_SPEED_FREQ_HIGH,
+              uint32_t alternate = 0);
+
         ~Gpio ();
 
         /**
@@ -53,7 +55,7 @@ public:
 
         /**
          * @brief Sets the callback. You must configure this Gpio in EXTI mode for this to work
-         * i.e. use GPIO_MODE_IT_RISING or simmilar.
+         * i.e. use GPIO_MODE_IT_RISING or simmilar. Warning this callback is run from ISR!
          * @param t Callback. A function, a method or lambda function.
          */
         void setOnToggle (std::function<void(void)> const &t);
