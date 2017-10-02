@@ -13,14 +13,14 @@
 
 struct IMagnetometer {
 
-        struct Data {
+        struct MData {
                 int16_t x;
                 int16_t y;
                 int16_t z;
         };
 
         virtual ~IMagnetometer () {}
-        virtual Data getData () const = 0;
+        virtual MData getMData () const = 0;
 };
 
 #endif // IACCELEROMETER_H

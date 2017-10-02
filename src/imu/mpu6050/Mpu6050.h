@@ -428,10 +428,12 @@ THE SOFTWARE.
  */
 class Mpu6050 : public IAccelerometer, public IGyroscope {
 public:
-        Mpu6050 (I2c *i2c, uint8_t address = MPU6050_DEFAULT_ADDRESS);
+        Mpu6050 (I2c *i2c, uint8_t address = (MPU6050_DEFAULT_ADDRESS << 1));
         virtual ~Mpu6050 () {}
 
-        void initialize ();
+        virtual AData getAData () const { return AData (); }
+        virtual GData getGData () const { return GData (); }
+
         bool testConnection ();
 
         // AUX_VDDIO register
@@ -1019,16 +1021,16 @@ public:
         uint16_t dmpGetFIFOPacketSize ();
 #endif
 private:
-        size_t readBit (uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
-        size_t readBits (uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
-        size_t readByte (uint8_t devAddr, uint8_t regAddr, uint8_t *data);
-        size_t readBytes (uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+        void readBit (uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data);
+        void readBits (uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data);
+        void readByte (uint8_t devAddr, uint8_t regAddr, uint8_t *data);
+        //        size_t readBytes (uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
 
-        bool writeBit (uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
-        bool writeBits (uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
-        bool writeByte (uint8_t devAddr, uint8_t regAddr, uint8_t data);
-        bool writeBytes (uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
-        bool writeWord (uint8_t devAddr, uint8_t regAddr, uint16_t data);
+        void writeBit (uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data);
+        void writeBits (uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data);
+        void writeByte (uint8_t devAddr, uint8_t regAddr, uint8_t data);
+        //        void  writeBytes (uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data);
+        //        bool writeWord (uint8_t devAddr, uint8_t regAddr, uint16_t data);
 
 private:
         I2c *i2c;

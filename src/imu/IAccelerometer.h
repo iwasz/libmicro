@@ -13,14 +13,14 @@
 
 struct IAccelerometer {
 
-        struct Data {
+        struct AData {
                 int16_t x;
                 int16_t y;
                 int16_t z;
         };
 
         virtual ~IAccelerometer () {}
-        virtual Data getData () const = 0;
+        virtual AData getAData () const = 0;
 };
 
 #endif // IACCELEROMETER_H

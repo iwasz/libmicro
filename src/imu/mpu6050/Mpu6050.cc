@@ -36,7 +36,9 @@ THE SOFTWARE.
 */
 
 #include "Mpu6050.h"
+#include "ErrorHandler.h"
 #include "I2c.h"
+#include <cstring>
 
 /**
  * Specific address constructor.  Power on and prepare for general usage.
@@ -274,7 +276,7 @@ uint8_t Mpu6050::getAccelYSelfTestFactoryTrim ()
  */
 uint8_t Mpu6050::getAccelZSelfTestFactoryTrim ()
 {
-        readBytes (devAddr, MPU6050_RA_SELF_TEST_Z, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_SELF_TEST_Z, buffer, 2);
         return (buffer[0] >> 3) | (buffer[1] & 0x03);
 }
 
@@ -1781,7 +1783,7 @@ void Mpu6050::getMotion9 (int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, in
  */
 void Mpu6050::getMotion6 (int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz)
 {
-        readBytes (devAddr, MPU6050_RA_ACCEL_XOUT_H, 14, buffer);
+        i2c->read (devAddr, MPU6050_RA_ACCEL_XOUT_H, buffer, 14);
         *ax = (((int16_t)buffer[0]) << 8) | buffer[1];
         *ay = (((int16_t)buffer[2]) << 8) | buffer[3];
         *az = (((int16_t)buffer[4]) << 8) | buffer[5];
@@ -1827,7 +1829,7 @@ void Mpu6050::getMotion6 (int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, in
  */
 void Mpu6050::getAcceleration (int16_t *x, int16_t *y, int16_t *z)
 {
-        readBytes (devAddr, MPU6050_RA_ACCEL_XOUT_H, 6, buffer);
+        i2c->read (devAddr, MPU6050_RA_ACCEL_XOUT_H, buffer, 6);
         *x = (((int16_t)buffer[0]) << 8) | buffer[1];
         *y = (((int16_t)buffer[2]) << 8) | buffer[3];
         *z = (((int16_t)buffer[4]) << 8) | buffer[5];
@@ -1839,7 +1841,7 @@ void Mpu6050::getAcceleration (int16_t *x, int16_t *y, int16_t *z)
  */
 int16_t Mpu6050::getAccelerationX ()
 {
-        readBytes (devAddr, MPU6050_RA_ACCEL_XOUT_H, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_ACCEL_XOUT_H, buffer, 2);
         return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 /** Get Y-axis accelerometer reading.
@@ -1849,7 +1851,7 @@ int16_t Mpu6050::getAccelerationX ()
  */
 int16_t Mpu6050::getAccelerationY ()
 {
-        readBytes (devAddr, MPU6050_RA_ACCEL_YOUT_H, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_ACCEL_YOUT_H, buffer, 2);
         return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 /** Get Z-axis accelerometer reading.
@@ -1859,7 +1861,7 @@ int16_t Mpu6050::getAccelerationY ()
  */
 int16_t Mpu6050::getAccelerationZ ()
 {
-        readBytes (devAddr, MPU6050_RA_ACCEL_ZOUT_H, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_ACCEL_ZOUT_H, buffer, 2);
         return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 
@@ -1871,7 +1873,7 @@ int16_t Mpu6050::getAccelerationZ ()
  */
 int16_t Mpu6050::getTemperature ()
 {
-        readBytes (devAddr, MPU6050_RA_TEMP_OUT_H, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_TEMP_OUT_H, buffer, 2);
         return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 
@@ -1911,7 +1913,7 @@ int16_t Mpu6050::getTemperature ()
  */
 void Mpu6050::getRotation (int16_t *x, int16_t *y, int16_t *z)
 {
-        readBytes (devAddr, MPU6050_RA_GYRO_XOUT_H, 6, buffer);
+        i2c->read (devAddr, MPU6050_RA_GYRO_XOUT_H, buffer, 6);
         *x = (((int16_t)buffer[0]) << 8) | buffer[1];
         *y = (((int16_t)buffer[2]) << 8) | buffer[3];
         *z = (((int16_t)buffer[4]) << 8) | buffer[5];
@@ -1923,7 +1925,7 @@ void Mpu6050::getRotation (int16_t *x, int16_t *y, int16_t *z)
  */
 int16_t Mpu6050::getRotationX ()
 {
-        readBytes (devAddr, MPU6050_RA_GYRO_XOUT_H, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_GYRO_XOUT_H, buffer, 2);
         return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 /** Get Y-axis gyroscope reading.
@@ -1933,7 +1935,7 @@ int16_t Mpu6050::getRotationX ()
  */
 int16_t Mpu6050::getRotationY ()
 {
-        readBytes (devAddr, MPU6050_RA_GYRO_YOUT_H, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_GYRO_YOUT_H, buffer, 2);
         return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 /** Get Z-axis gyroscope reading.
@@ -1943,7 +1945,7 @@ int16_t Mpu6050::getRotationY ()
  */
 int16_t Mpu6050::getRotationZ ()
 {
-        readBytes (devAddr, MPU6050_RA_GYRO_ZOUT_H, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_GYRO_ZOUT_H, buffer, 2);
         return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 
@@ -2035,7 +2037,7 @@ uint8_t Mpu6050::getExternalSensorByte (int position)
  */
 uint16_t Mpu6050::getExternalSensorWord (int position)
 {
-        readBytes (devAddr, MPU6050_RA_EXT_SENS_DATA_00 + position, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_EXT_SENS_DATA_00 + position, buffer, 2);
         return (((uint16_t)buffer[0]) << 8) | buffer[1];
 }
 /** Read double word (4 bytes) from external sensor data registers.
@@ -2045,7 +2047,7 @@ uint16_t Mpu6050::getExternalSensorWord (int position)
  */
 uint32_t Mpu6050::getExternalSensorDWord (int position)
 {
-        readBytes (devAddr, MPU6050_RA_EXT_SENS_DATA_00 + position, 4, buffer);
+        i2c->read (devAddr, MPU6050_RA_EXT_SENS_DATA_00 + position, buffer, 4);
         return (((uint32_t)buffer[0]) << 24) | (((uint32_t)buffer[1]) << 16) | (((uint16_t)buffer[2]) << 8) | buffer[3];
 }
 
@@ -2702,7 +2704,7 @@ void Mpu6050::setStandbyZGyroEnabled (bool enabled) { writeBit (devAddr, MPU6050
  */
 uint16_t Mpu6050::getFIFOCount ()
 {
-        readBytes (devAddr, MPU6050_RA_FIFO_COUNTH, 2, buffer);
+        i2c->read (devAddr, MPU6050_RA_FIFO_COUNTH, buffer, 2);
         return (((uint16_t)buffer[0]) << 8) | buffer[1];
 }
 
@@ -2738,10 +2740,11 @@ uint8_t Mpu6050::getFIFOByte ()
         readByte (devAddr, MPU6050_RA_FIFO_R_W, buffer);
         return buffer[0];
 }
+
 void Mpu6050::getFIFOBytes (uint8_t *data, uint8_t length)
 {
         if (length > 0) {
-                readBytes (devAddr, MPU6050_RA_FIFO_R_W, length, data);
+                i2c->read (devAddr, MPU6050_RA_FIFO_R_W, data, length);
         }
         else {
                 *data = 0;
@@ -3210,13 +3213,55 @@ uint8_t MPU6050::getDMPConfig2 ()
 void MPU6050::setDMPConfig2 (uint8_t config) { writeByte (devAddr, MPU6050_RA_DMP_CFG_2, config); }
 #endif
 
-size_t Mpu6050::readBit (uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data) {}
-size_t Mpu6050::readBits (uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data) {}
-size_t Mpu6050::readByte (uint8_t devAddr, uint8_t regAddr, uint8_t *data) {}
-size_t Mpu6050::readBytes (uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data) {}
+/*****************************************************************************/
 
-bool Mpu6050::writeBit (uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data) {}
-bool Mpu6050::writeBits (uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data) {}
-bool Mpu6050::writeByte (uint8_t devAddr, uint8_t regAddr, uint8_t data) {}
-bool Mpu6050::writeBytes (uint8_t devAddr, uint8_t regAddr, uint8_t length, uint8_t *data) {}
-bool Mpu6050::writeWord (uint8_t devAddr, uint8_t regAddr, uint16_t data) {}
+void Mpu6050::readBit (uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t *data)
+{
+        uint8_t b;
+        readByte (devAddr, regAddr, &b);
+        *data = b & (1 << bitNum);
+}
+
+/*****************************************************************************/
+
+void Mpu6050::readBits (uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t *data)
+{
+        uint8_t b;
+        readByte (devAddr, regAddr, &b);
+        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        b &= mask;
+        b >>= (bitStart - length + 1);
+        *data = b;
+}
+
+/*****************************************************************************/
+
+void Mpu6050::readByte (uint8_t devAddr, uint8_t regAddr, uint8_t *data) { i2c->read (devAddr, regAddr, data, 1); }
+
+/*****************************************************************************/
+
+void Mpu6050::writeBit (uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data)
+{
+        uint8_t b;
+        readByte (devAddr, regAddr, &b);
+        b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+        return writeByte (devAddr, regAddr, b);
+}
+
+/*****************************************************************************/
+
+void Mpu6050::writeBits (uint8_t devAddr, uint8_t regAddr, uint8_t bitStart, uint8_t length, uint8_t data)
+{
+        uint8_t b;
+        readByte (devAddr, regAddr, &b);
+        uint8_t mask = ((1 << length) - 1) << (bitStart - length + 1);
+        data <<= (bitStart - length + 1); // shift data into correct position
+        data &= mask;                     // zero all non-important bits in data
+        b &= ~(mask);                     // zero all important bits in existing byte
+        b |= data;                        // combine data with existing byte
+        writeByte (devAddr, regAddr, b);
+}
+
+/*****************************************************************************/
+
+void Mpu6050::writeByte (uint8_t devAddr, uint8_t regAddr, uint8_t data) { i2c->write (devAddr, regAddr, &data, 1); }

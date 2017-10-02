@@ -13,14 +13,14 @@
 
 struct IGyroscope {
 
-        struct Data {
+        struct GData {
                 int16_t x;
                 int16_t y;
                 int16_t z;
         };
 
         virtual ~IGyroscope () {}
-        virtual Data getData () const = 0;
+        virtual GData getGData () const = 0;
 };
 
 #endif // IACCELEROMETER_H
