@@ -9,7 +9,10 @@
 #ifndef MICROLIB_HAL_H
 #define MICROLIB_HAL_H
 
-// TODO ifdefs
+#if defined(LIB_MICRO_STM32F0)
 #include "HalStm32F0.h"
+#elif defined(LIB_MICRO_STM32F4)
+#include "HalStm32F4.h"
+#endif
 
 #endif // HAL_H

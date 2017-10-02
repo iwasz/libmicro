@@ -1,5 +1,5 @@
 #include "Timer.h"
-#include <stm32f0xx_hal.h>
+#include "Hal.h"
 
 Timer::Timer () : startTime (0), interval (0) {}
 

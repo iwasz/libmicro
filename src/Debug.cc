@@ -1,6 +1,14 @@
+/****************************************************************************
+ *                                                                          *
+ *  Author : lukasz.iwaszkiewicz@gmail.com                                  *
+ *  ~~~~~~~~                                                                *
+ *  License : see COPYING file for details.                                 *
+ *  ~~~~~~~~~                                                               *
+ ****************************************************************************/
+
 #include "Debug.h"
 #include "ErrorHandler.h"
-#include "config.h"
+#include "Hal.h"
 #include <cstring>
 
 Debug *Debug::singleton ()
@@ -13,17 +21,7 @@ Debug *Debug::singleton ()
 
 void Debug::init (uint32_t speed)
 {
-        __HAL_RCC_GPIOA_CLK_ENABLE ();
-        GPIO_InitTypeDef gpioInitStruct;
-        gpioInitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_10;
-        gpioInitStruct.Mode = GPIO_MODE_AF_PP;
-        gpioInitStruct.Pull = GPIO_PULLUP;
-        gpioInitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-        gpioInitStruct.Alternate = GPIO_AF1_USART1;
-        HAL_GPIO_Init (GPIOA, &gpioInitStruct);
-
-        __HAL_RCC_USART1_CLK_ENABLE ();
-        huart.Instance = USART1;
+        huart.Instance = USART3;
         huart.Init.BaudRate = speed;
         huart.Init.WordLength = UART_WORDLENGTH_8B;
         huart.Init.StopBits = UART_STOPBITS_1;
@@ -31,9 +29,10 @@ void Debug::init (uint32_t speed)
         huart.Init.Mode = UART_MODE_TX_RX;
         huart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
         huart.Init.OverSampling = UART_OVERSAMPLING_16;
-        huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-        huart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+//        huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+//        huart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
+        __HAL_RCC_USART3_CLK_ENABLE ();
         if (HAL_UART_Init (&huart) != HAL_OK) {
                 Error_Handler ();
         }

@@ -97,7 +97,8 @@ void Gpio::set (bool on)
                 port->BSRR = gpioInitStructure.Pin;
         }
         else {
-                port->BRR = gpioInitStructure.Pin;
+//                port->BRR = gpioInitStructure.Pin;
+                port->BSRR = gpioInitStructure.Pin << 16;
         }
 }
 

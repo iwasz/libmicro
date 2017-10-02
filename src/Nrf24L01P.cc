@@ -11,7 +11,18 @@
 
 /*****************************************************************************/
 
-Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin) : spi (spi), cePin (cePin), irqPin (irqPin) {}
+Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin) : spi (spi), cePin (cePin), irqPin (irqPin)
+{
+        if (irqPin) {
+                irqPin->setOnToggle ([this] {
+                        writeRegister (Nrf24L01P::STATUS, RX_DR);
+
+                        if (onData) {
+                                onData ();
+                        }
+                });
+        }
+}
 
 /*****************************************************************************/
 

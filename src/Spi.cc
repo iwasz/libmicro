@@ -13,7 +13,7 @@
 Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarity)
 {
         spiHandle.Instance = spi;
-        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
         spiHandle.Init.Direction = SPI_DIRECTION_2LINES;
         spiHandle.Init.CLKPhase = phase;
         spiHandle.Init.CLKPolarity = polarity;
@@ -22,7 +22,9 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
         spiHandle.Init.DataSize = dataSize;
         spiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
         spiHandle.Init.NSS = SPI_NSS_SOFT;
+#ifdef LIB_MICRO_STM32F0
         spiHandle.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+#endif
         spiHandle.Init.TIMode = SPI_TIMODE_DISABLE;
         spiHandle.Init.Mode = mode;
 
@@ -45,8 +47,10 @@ void Spi::transmit (uint8_t *txData, uint8_t *rxData, uint16_t size)
 
 /*****************************************************************************/
 
+#if 0
 uint16_t Spi::transmit (uint16_t word)
 {
+        // TODO!
         nssPin->set (false);
 
         __HAL_SPI_ENABLE (&spiHandle);
@@ -68,6 +72,7 @@ uint16_t Spi::transmit (uint16_t word)
         nssPin->set (true);
         return *(__IO uint8_t *)&spiHandle.Instance->DR;
 }
+#endif
 
 /*****************************************************************************/
 

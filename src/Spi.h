@@ -22,7 +22,7 @@ public:
         ~Spi () { clkDisable (); }
 
         void transmit (uint8_t *pTxData, uint8_t *pRxData, uint16_t Size);
-        uint16_t transmit (uint16_t word);
+//        uint16_t transmit (uint16_t word);
 
         //        void setCallback (std::function<void(uint8_t)> const &f) { fff = f; }
 

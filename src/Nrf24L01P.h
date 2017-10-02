@@ -11,6 +11,7 @@
 
 #include "Gpio.h"
 #include "Spi.h"
+#include <functional>
 
 /**
  * States:
@@ -35,7 +36,7 @@ public:
         Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin);
 
         enum ConfigBit { EN_CRC = 3, CRCO = 2, PWR_UP = 1, PRIM_RX = 0 };
-        enum IrqSource {
+        enum MaskIrqSource {
                 MASK_RX_DR = 1 << 6, // Block RX IRQ
                 MASK_TX_DS = 1 << 5, // Block TX IRQ
                 MASK_MAX_RT = 1 << 4,
@@ -103,7 +104,8 @@ public:
         enum Gain { DBM_18 = 0 << 1, DBM_12 = 1 << 1, DBM_6 = 2 << 1, DBM_0 = 3 << 1 };
         void setDataRate (DataRate dr, Gain g) { writeRegister (RF_SETUP, dr | g); }
 
-        // TODO Status
+        enum IrqSource { RX_DR = 1 << 6, TX_DS = 1 << 5, MAX_RT = 1 << 4, IRQ_ALL = RX_DR | TX_DS | MAX_RT };
+        uint8_t getStatus () const { return readRegister (STATUS); }
 
         void getObserve (uint8_t *lostPackets, uint8_t *retransmittedPackets) const
         {
@@ -131,8 +133,9 @@ public:
         void transmit (uint8_t *data, size_t len);
         void receive (uint8_t *data, size_t len);
 
-        // TODO private
-public:
+        void setOnData (std::function<void(void)> const &t) { onData = t; }
+
+private:
         void writeRegister (uint8_t reg, uint8_t value);
         void writeRegister (uint8_t reg, uint8_t *data, uint8_t len);
         uint8_t readRegister (uint8_t reg) const;
@@ -186,6 +189,7 @@ private:
         Gpio *cePin;
         Gpio *irqPin;
         uint8_t configRegisterCopy = 0x08;
+        std::function<void(void)> onData;
 };
 
 #endif // NRF24L0P_H
