@@ -29,8 +29,8 @@ void Debug::init (uint32_t speed)
         huart.Init.Mode = UART_MODE_TX_RX;
         huart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
         huart.Init.OverSampling = UART_OVERSAMPLING_16;
-//        huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-//        huart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+        //        huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+        //        huart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
 
         __HAL_RCC_USART3_CLK_ENABLE ();
         if (HAL_UART_Init (&huart) != HAL_OK) {
@@ -144,3 +144,7 @@ void Debug::printTime (uint16_t time)
         itoa (sec100, buf, 2);
         print (buf);
 }
+
+/*****************************************************************************/
+
+extern "C" void debugPrint (uint8_t *data, size_t len) { Debug::singleton ()->print (data, len); }

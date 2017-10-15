@@ -1,16 +1,16 @@
 #include "Timer.h"
 #include "Hal.h"
 
-Timer::Timer () : startTime (0), interval (0) {}
+Timer::Timer () : startTime (0), intervalMs (0) {}
 
 /*****************************************************************************/
 
 void Timer::start (uint32_t interval)
 {
         startTime = HAL_GetTick ();
-        this->interval = interval;
+        this->intervalMs = interval;
 }
 
 /*****************************************************************************/
 
-bool Timer::isExpired () const { return HAL_GetTick () - startTime > interval; }
+bool Timer::isExpired () const { return HAL_GetTick () - startTime > intervalMs; }
