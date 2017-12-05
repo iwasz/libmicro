@@ -121,21 +121,13 @@ void Nrf24L01P::transmit (uint8_t *data, size_t len)
 
 /*****************************************************************************/
 
-void Nrf24L01P::receive (uint8_t *data, size_t len)
+uint8_t *Nrf24L01P::receive (uint8_t *data, size_t len)
 {
-#if 1
-        // TODO jakoś to dynamicznie, czy coś.
         static uint8_t tmp[33] = {
                 R_RX_PAYLOAD,
                 0,
         };
 
         spi->transmit (tmp, data, len + 1);
-#else
-        uint8_t dummy[2];
-        uint8_t tmp[2];
-        tmp[0] = R_RX_PAYLOAD;
-        spi->transmit (tmp, dummy, 2);
-        data[0] = dummy[1];
-#endif
+        return data + 1;
 }

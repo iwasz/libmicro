@@ -131,7 +131,14 @@ public:
         void setFeature (uint8_t f) { writeRegister (FEATURE, f); }
 
         void transmit (uint8_t *data, size_t len);
-        void receive (uint8_t *data, size_t len);
+
+        /**
+         * @brief receive Gets the data somebody sent to us over the air.
+         * @param data Input buffer.
+         * @param len
+         * @return Pointer to some place in the input buffer. Beware, that ret != data !!!
+         */
+        uint8_t *receive(uint8_t *data, size_t len);
 
         void setOnData (std::function<void(void)> const &t) { onData = t; }
 
