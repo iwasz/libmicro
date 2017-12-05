@@ -34,18 +34,18 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
 /*****************************************************************************/
 
-void Spi::transmit (uint8_t *txData, uint8_t *rxData, uint16_t size)
+void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
 {
         nssPin->set (false);
 
-        if (HAL_SPI_TransmitReceive (&spiHandle, txData, rxData, size, 500) != HAL_OK) {
+        if (HAL_SPI_TransmitReceive (&spiHandle, const_cast<uint8_t *> (txData), rxData, size, 500) != HAL_OK) {
                 Error_Handler ();
         }
 
         nssPin->set (true);
 }
 
-/*****************************************************************************/
+        /*****************************************************************************/
 
 #if 0
 uint16_t Spi::transmit (uint16_t word)

@@ -65,6 +65,8 @@ public:
          */
         static int pinNumber (uint32_t pinDef);
 
+        GPIO_TypeDef *getPort () { return port; }
+
 private:
         FRIEND_ALL_GPIO_IRQS
 

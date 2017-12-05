@@ -46,7 +46,7 @@ Gpio::~Gpio ()
 void Gpio::clkEnable (GPIO_TypeDef *port)
 {
         if (port == GPIOA) {
-                __HAL_RCC_GPIOB_CLK_ENABLE ();
+                __HAL_RCC_GPIOA_CLK_ENABLE ();
         }
         else if (port == GPIOB) {
                 __HAL_RCC_GPIOB_CLK_ENABLE ();
@@ -70,7 +70,7 @@ void Gpio::clkEnable (GPIO_TypeDef *port)
 void Gpio::clkDisable (GPIO_TypeDef *port)
 {
         if (port == GPIOA) {
-                __HAL_RCC_GPIOB_CLK_DISABLE ();
+                __HAL_RCC_GPIOA_CLK_DISABLE ();
         }
         else if (port == GPIOB) {
                 __HAL_RCC_GPIOB_CLK_DISABLE ();

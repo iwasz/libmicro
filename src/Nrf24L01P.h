@@ -43,7 +43,7 @@ public:
                 MASK_ALL_IRQ = MASK_RX_DR | MASK_TX_DS | MASK_MAX_RT,
                 MASK_NO_IRQ = 0
         };
-        enum CrcLength { CRC_LEN_1 = 0, CRC_LEN_2 = 1 << EN_CRC };
+        enum CrcLength { CRC_LEN_1 = 0, CRC_LEN_2 = 1 << CRCO };
         void setConfig (uint8_t maskIrqSource, bool crcEnable, CrcLength crcLength);
 
         enum Mode { TX, RX };
@@ -100,7 +100,7 @@ public:
 
         void setChannel (uint8_t channel) { writeRegister (RF_CH, channel); }
 
-        enum DataRate { MBPS_1 = 0 << 3, MBPS_2 = 1 << 3, KBPS_250 = 2 << 3 };
+        enum DataRate { MBPS_1 = 0 , MBPS_2 = 1 << 3, KBPS_250 = 1 << 5 };
         enum Gain { DBM_18 = 0 << 1, DBM_12 = 1 << 1, DBM_6 = 2 << 1, DBM_0 = 3 << 1 };
         void setDataRate (DataRate dr, Gain g) { writeRegister (RF_SETUP, dr | g); }
 
@@ -115,8 +115,8 @@ public:
         }
 
         bool getReceivedPowerDetector () const { return readRegister (RPD) & 1; }
-        void setRxAddress (uint8_t dataPipeNo, uint8_t address[5], uint8_t addressLen) { writeRegister (RX_ADDR_P0 + dataPipeNo, address, addressLen); }
-        void setTxAddress (uint8_t address[5], uint8_t addressLen) { writeRegister (TX_ADDR, address, addressLen); }
+        void setRxAddress (uint8_t dataPipeNo, uint8_t const *address, uint8_t addressLen) { writeRegister (RX_ADDR_P0 + dataPipeNo, address, addressLen); }
+        void setTxAddress (uint8_t const *address, uint8_t addressLen) { writeRegister (TX_ADDR, address, addressLen); }
 
         enum DynamicPayloadLength { DPL_P5 = 1 << 5, DPL_p4 = 1 << 4, DPL_P3 = 1 << 3, DPL_P2 = 1 << 2, DPL_P1 = 1 << 1, DPL_P0 = 1 << 0 };
         void setPayloadLength (uint8_t dataPipeNo, uint8_t len) { writeRegister (RX_PW_P0 + dataPipeNo, len); }
@@ -137,7 +137,7 @@ public:
 
 private:
         void writeRegister (uint8_t reg, uint8_t value);
-        void writeRegister (uint8_t reg, uint8_t *data, uint8_t len);
+        void writeRegister (uint8_t reg, uint8_t const *data, uint8_t len);
         uint8_t readRegister (uint8_t reg) const;
         void setCe (bool b) { cePin->set (b); }
 

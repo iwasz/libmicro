@@ -17,7 +17,7 @@ LIST (APPEND SOURCES "../src/storage/ICircullarQueueStorage.h")
 LIST (APPEND SOURCES "../src/storage/FlashEepromStorage.h")
 LIST (APPEND SOURCES "../src/storage/FileRandomAccessStorage.h")
 LIST (APPEND SOURCES "../src/ErrorHandler.h")
-LIST (APPEND SOURCES "../src/ErrorHandler.cc")
+LIST (APPEND SOURCES "../src/ErrorHandler.c")
 LIST (APPEND SOURCES "storageTest.cc")
 
 ADD_EXECUTABLE (unittest ${SOURCES})

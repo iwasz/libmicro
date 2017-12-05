@@ -12,6 +12,7 @@
 #include <stm32f0xx_hal.h>
 #include <stm32f0xx_hal_flash_ex.h>
 
+#ifdef __cplusplus
 extern "C" void EXTI0_1_IRQHandler ();
 extern "C" void EXTI2_3_IRQHandler ();
 extern "C" void EXTI4_15_IRQHandler ();
@@ -20,5 +21,6 @@ extern "C" void EXTI4_15_IRQHandler ();
         friend void EXTI0_1_IRQHandler ();                                                                                                                     \
         friend void EXTI2_3_IRQHandler ();                                                                                                                     \
         friend void EXTI4_15_IRQHandler ();
+#endif
 
 #endif // HALSTM32F0_H
