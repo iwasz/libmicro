@@ -96,11 +96,11 @@ public:
                 RETRANSMIT_15
         };
 
-        void setAutoRetransmit (RetransmitDelay d, RetransmitCount c) { writeRegister (SETUP_RETR, d | c); }
+        void setAutoRetransmit (RetransmitDelay d, RetransmitCount c) { writeRegister (SETUP_RETR, (d << 4) | c); }
 
         void setChannel (uint8_t channel) { writeRegister (RF_CH, channel); }
 
-        enum DataRate { MBPS_1 = 0 , MBPS_2 = 1 << 3, KBPS_250 = 1 << 5 };
+        enum DataRate { MBPS_1 = 0, MBPS_2 = 1 << 3, KBPS_250 = 1 << 5 };
         enum Gain { DBM_18 = 0 << 1, DBM_12 = 1 << 1, DBM_6 = 2 << 1, DBM_0 = 3 << 1 };
         void setDataRate (DataRate dr, Gain g) { writeRegister (RF_SETUP, dr | g); }
 
@@ -138,11 +138,14 @@ public:
          * @param len
          * @return Pointer to some place in the input buffer. Beware, that ret != data !!!
          */
-        uint8_t *receive(uint8_t *data, size_t len);
+        uint8_t *receive (uint8_t *data, size_t len);
 
         void setOnData (std::function<void(void)> const &t) { onData = t; }
 
-private:
+        void flushTx ();
+        void flushRx ();
+
+public:
         void writeRegister (uint8_t reg, uint8_t value);
         void writeRegister (uint8_t reg, uint8_t const *data, uint8_t len);
         uint8_t readRegister (uint8_t reg) const;

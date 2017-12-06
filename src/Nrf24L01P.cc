@@ -105,13 +105,27 @@ void Nrf24L01P::powerUp (Mode mode)
         writeRegister (STATUS, 0x70);
 }
 
+void Nrf24L01P::flushTx ()
+{
+        uint8_t bufTx = FLUSH_TX;
+        uint8_t bufRx;
+        spi->transmit (&bufTx, &bufRx, 1);
+}
+
+void Nrf24L01P::flushRx ()
+{
+        uint8_t bufTx = FLUSH_RX;
+        uint8_t bufRx;
+        spi->transmit (&bufTx, &bufRx, 1);
+}
+
 /*****************************************************************************/
 
 void Nrf24L01P::transmit (uint8_t *data, size_t len)
 {
         setCe (true);
-        uint8_t dummy[6];
-        uint8_t dummyRx[6];
+        uint8_t dummy[33];
+        uint8_t dummyRx[33];
         dummy[0] = W_TX_PAYLOAD;
         memcpy (dummy + 1, data, len);
         spi->transmit (dummy, dummyRx, len + 1);
