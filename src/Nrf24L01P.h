@@ -33,9 +33,52 @@
  */
 class Nrf24L01P {
 public:
-        Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin);
+        enum Register {
+                CONFIG = 0x00,
+                EN_AA = 0x01,
+                EN_RXADDR = 0x02,
+                SETUP_AW = 0x03,
+                SETUP_RETR = 0x04,
+                RF_CH = 0x05,
+                RF_SETUP = 0x06,
+                STATUS = 0x07,
+                OBSERVE_TX = 0x08,
+                RPD = 0x09,
+                RX_ADDR_P0 = 0x0A,
+                RX_ADDR_P1 = 0x0B,
+                RX_ADDR_P2 = 0x0C,
+                RX_ADDR_P3 = 0x0D,
+                RX_ADDR_P4 = 0x0E,
+                RX_ADDR_P5 = 0x0F,
+                TX_ADDR = 0x10,
+                RX_PW_P0 = 0x11,
+                RX_PW_P1 = 0x12,
+                RX_PW_P2 = 0x13,
+                RX_PW_P3 = 0x14,
+                RX_PW_P4 = 0x15,
+                RX_PW_P5 = 0x16,
+                FIFO_STATUS = 0x17,
+                DYNPD = 0x1C,
+                FEATURE = 0x1D
+        };
 
-        enum ConfigBit { EN_CRC = 3, CRCO = 2, PWR_UP = 1, PRIM_RX = 0 };
+        enum ConfigBit { PRIM_RX = 0, PWR_UP = 1, CRCO = 2, EN_CRC = 3 /*, MASK_MAX_RT, MASK_TX_DS, MASK_RX_DR*/ };
+        enum Status { TX_FULL_MASK = 0x01, RX_P_NO = 0x0e, MAX_RT = 1 << 4, TX_DS = 1 << 5, RX_DR = 1 << 6 };
+
+        enum Nrf24L01PCommands {
+                R_REGISTER = 0x00, // last 4 bits will indicate reg. address
+                W_REGISTER = 0x20, // last 4 bits will indicate reg. address
+                REGISTER_MASK = 0x1F,
+                R_RX_PAYLOAD = 0x61,
+                W_TX_PAYLOAD = 0xA0,
+                FLUSH_TX = 0xE1,
+                FLUSH_RX = 0xE2,
+                REUSE_TX_PL = 0xE3,
+                ACTIVATE = 0x50,
+                R_RX_PL_WID = 0x60,
+                NOP = 0xFF
+        };
+
         enum MaskIrqSource {
                 MASK_RX_DR = 1 << 6, // Block RX IRQ
                 MASK_TX_DS = 1 << 5, // Block TX IRQ
@@ -43,6 +86,9 @@ public:
                 MASK_ALL_IRQ = MASK_RX_DR | MASK_TX_DS | MASK_MAX_RT,
                 MASK_NO_IRQ = 0
         };
+
+        Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin);
+
         enum CrcLength { CRC_LEN_1 = 0, CRC_LEN_2 = 1 << CRCO };
         void setConfig (uint8_t maskIrqSource, bool crcEnable, CrcLength crcLength);
 
@@ -104,7 +150,7 @@ public:
         enum Gain { DBM_18 = 0 << 1, DBM_12 = 1 << 1, DBM_6 = 2 << 1, DBM_0 = 3 << 1 };
         void setDataRate (DataRate dr, Gain g) { writeRegister (RF_SETUP, dr | g); }
 
-        enum IrqSource { RX_DR = 1 << 6, TX_DS = 1 << 5, MAX_RT = 1 << 4, IRQ_ALL = RX_DR | TX_DS | MAX_RT };
+        enum IrqSource { /*RX_DR = 1 << 6, TX_DS = 1 << 5, MAX_RT = 1 << 4,*/ IRQ_ALL = RX_DR | TX_DS | MAX_RT };
         uint8_t getStatus () const { return readRegister (STATUS); }
 
         void getObserve (uint8_t *lostPackets, uint8_t *retransmittedPackets) const
@@ -150,49 +196,6 @@ public:
         void writeRegister (uint8_t reg, uint8_t const *data, uint8_t len);
         uint8_t readRegister (uint8_t reg) const;
         void setCe (bool b) { cePin->set (b); }
-
-        enum Register {
-                CONFIG = 0x00,
-                EN_AA = 0x01,
-                EN_RXADDR = 0x02,
-                SETUP_AW = 0x03,
-                SETUP_RETR = 0x04,
-                RF_CH = 0x05,
-                RF_SETUP = 0x06,
-                STATUS = 0x07,
-                OBSERVE_TX = 0x08,
-                RPD = 0x09,
-                RX_ADDR_P0 = 0x0A,
-                RX_ADDR_P1 = 0x0B,
-                RX_ADDR_P2 = 0x0C,
-                RX_ADDR_P3 = 0x0D,
-                RX_ADDR_P4 = 0x0E,
-                RX_ADDR_P5 = 0x0F,
-                TX_ADDR = 0x10,
-                RX_PW_P0 = 0x11,
-                RX_PW_P1 = 0x12,
-                RX_PW_P2 = 0x13,
-                RX_PW_P3 = 0x14,
-                RX_PW_P4 = 0x15,
-                RX_PW_P5 = 0x16,
-                FIFO_STATUS = 0x17,
-                DYNPD = 0x1C,
-                FEATURE = 0x1D
-        };
-
-        enum Nrf24L01PCommands {
-                R_REGISTER = 0x00, // last 4 bits will indicate reg. address
-                W_REGISTER = 0x20, // last 4 bits will indicate reg. address
-                REGISTER_MASK = 0x1F,
-                R_RX_PAYLOAD = 0x61,
-                W_TX_PAYLOAD = 0xA0,
-                FLUSH_TX = 0xE1,
-                FLUSH_RX = 0xE2,
-                REUSE_TX_PL = 0xE3,
-                ACTIVATE = 0x50,
-                R_RX_PL_WID = 0x60,
-                NOP = 0xFF
-        };
 
 private:
         Spi *spi;
