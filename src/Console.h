@@ -9,10 +9,9 @@
 #ifndef LIB_MICRO_CONSOLE_H
 #define LIB_MICRO_CONSOLE_H
 
-class Console
-{
+class Console {
 public:
-        Console();
+        Console ();
 };
 
 #endif // CONSOLE_H
