@@ -70,7 +70,7 @@ public:
 private:
         FRIEND_ALL_GPIO_IRQS
 
-        GPIO_InitTypeDef gpioInitStructure;
+        uint32_t pin;
         GPIO_TypeDef *port;
         std::function<void(void)> onToggle;
 

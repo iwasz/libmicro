@@ -6,29 +6,25 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef __DEBUG_DRIVER_H__
-#define __DEBUG_DRIVER_H__
+#ifndef LIB_MICRO_UART_H
+#define LIB_MICRO_UART_H
 
-#include <Hal.h>
-#include <cstdint>
-#include <cstdlib>
+#include "Hal.h"
 
-class Uart;
-
-class Debug {
+class Uart {
 public:
-        static Debug *&singleton ();
+        Uart (USART_TypeDef *instance, uint32_t baudRate);
+        ~Uart ();
 
-        Debug (Uart *uart) : uart (uart) {}
+        static void clkEnable (USART_TypeDef *instance);
+        static void clkDisable (USART_TypeDef *instance);
+        void clkEnable () { clkEnable (huart.Instance); }
+        void clkDisable () { clkDisable (huart.Instance); }
 
-        void print (const char *str);
-        void print (uint8_t *data, size_t len);
-        void print (int);
-        void printTime (uint16_t time);
+        void transmit (const uint8_t *str, size_t len);
 
-public:
-        Uart *uart;
-        static Debug *instance;
+private:
+        UART_HandleTypeDef huart;
 };
 
-#endif //__CMD_UART_H__
+#endif // UART_H

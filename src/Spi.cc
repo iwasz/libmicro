@@ -9,9 +9,13 @@
 #include "Spi.h"
 #include "ErrorHandler.h"
 #include "Gpio.h"
+#include <cstring>
+
+/*****************************************************************************/
 
 Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarity)
 {
+        memset (&spiHandle, 0, sizeof (spiHandle));
         spiHandle.Instance = spi;
         spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
         spiHandle.Init.Direction = SPI_DIRECTION_2LINES;

@@ -33,6 +33,8 @@
  */
 class Nrf24L01P {
 public:
+        enum { CHANNELS_NO_FOR_SANNER = 128 };
+
         enum Register {
                 CONFIG = 0x00,
                 EN_AA = 0x01,
@@ -191,6 +193,8 @@ public:
         void flushTx ();
         void flushRx ();
 
+        void poorMansScanner (int tries);
+
 public:
         void writeRegister (uint8_t reg, uint8_t value);
         void writeRegister (uint8_t reg, uint8_t const *data, uint8_t len);
@@ -201,7 +205,7 @@ private:
         Spi *spi;
         Gpio *cePin;
         Gpio *irqPin;
-        uint8_t configRegisterCopy = 0x08;
+        uint8_t configRegisterCopy;
         std::function<void(void)> onData;
 };
 

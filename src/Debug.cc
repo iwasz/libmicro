@@ -9,51 +9,12 @@
 #include "Debug.h"
 #include "ErrorHandler.h"
 #include "Hal.h"
+#include "Uart.h"
 #include <cstring>
 
-Debug *Debug::singleton ()
-{
-        static Debug instance;
-        return &instance;
-}
+Debug *Debug::instance;
 
-/*****************************************************************************/
-
-void Debug::init (uint32_t speed)
-{
-        huart.Instance = USART3;
-        huart.Init.BaudRate = speed;
-        huart.Init.WordLength = UART_WORDLENGTH_8B;
-        huart.Init.StopBits = UART_STOPBITS_1;
-        huart.Init.Parity = UART_PARITY_NONE;
-        huart.Init.Mode = UART_MODE_TX_RX;
-        huart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-        huart.Init.OverSampling = UART_OVERSAMPLING_16;
-        //        huart.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-        //        huart.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-
-        __HAL_RCC_USART3_CLK_ENABLE ();
-        if (HAL_UART_Init (&huart) != HAL_OK) {
-                Error_Handler ();
-        }
-
-        //        HAL_NVIC_SetPriority (USART1_IRQn, 1, 0);
-        //        HAL_NVIC_EnableIRQ (USART1_IRQn);
-
-        //        if (HAL_UART_Receive_IT (&huart, (uint8_t *)rxBufferObd, 1) != HAL_OK) {
-        //                /* Transfer error in reception process */
-        //                Error_Handler ();
-        //        }
-
-        //        /* Enable the UART Parity Error Interrupt */
-        //        __HAL_UART_ENABLE_IT (&huart, UART_IT_PE);
-
-        //        /* Enable the UART Error Interrupt: (Frame error, noise error, overrun error) */
-        //        __HAL_UART_ENABLE_IT (&huart, UART_IT_ERR);
-
-        //        /* Enable the UART Data Register not empty Interrupt */
-        //        __HAL_UART_ENABLE_IT (&huart, UART_IT_RXNE);
-}
+Debug *&Debug::singleton () { return instance; }
 
 /*****************************************************************************/
 
@@ -61,7 +22,7 @@ void Debug::print (const char *str)
 {
         // TODO DMA
         size_t len = strlen (str);
-        HAL_UART_Transmit (&huart, (uint8_t *)str, len, 5000);
+        uart->transmit ((uint8_t *)str, len);
 }
 
 /*****************************************************************************/
@@ -69,7 +30,7 @@ void Debug::print (const char *str)
 void Debug::print (uint8_t *data, size_t len)
 {
         // TODO DMA
-        HAL_UART_Transmit (&huart, data, len, 5000);
+        uart->transmit(data, len);
 }
 
 /* reverse:  reverse string s in place */
@@ -147,4 +108,4 @@ void Debug::printTime (uint16_t time)
 
 /*****************************************************************************/
 
-extern "C" void debugPrint (uint8_t *data, size_t len) { Debug::singleton ()->print (data, len); }
+extern "C" void debugPrint (uint8_t *data, size_t len) { /*Debug::singleton ()->print (data, len);*/}

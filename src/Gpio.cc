@@ -8,6 +8,7 @@
 
 #include "Gpio.h"
 #include "ErrorHandler.h"
+#include <cstring>
 
 /*****************************************************************************/
 
@@ -21,7 +22,10 @@ Gpio *Gpio::connectedExtis[16] = {
 
 Gpio::Gpio (GPIO_TypeDef *port, uint32_t pin, uint32_t mode, uint32_t pull, uint32_t speed, uint32_t alternate)
 {
+        GPIO_InitTypeDef gpioInitStructure;
+        memset (&gpioInitStructure, 0, sizeof (gpioInitStructure));
         this->port = port;
+        this->pin = pin;
         gpioInitStructure.Pin = pin;
         gpioInitStructure.Mode = mode;
         gpioInitStructure.Pull = pull;
@@ -36,8 +40,8 @@ Gpio::Gpio (GPIO_TypeDef *port, uint32_t pin, uint32_t mode, uint32_t pull, uint
 Gpio::~Gpio ()
 {
         clkDisable ();
-        HAL_GPIO_DeInit (port, gpioInitStructure.Pin);
-        int pinNo = pinNumber (gpioInitStructure.Pin);
+        HAL_GPIO_DeInit (port, pin);
+        int pinNo = pinNumber (pin);
         connectedExtis[pinNo] = nullptr;
 }
 
@@ -94,11 +98,11 @@ void Gpio::clkDisable (GPIO_TypeDef *port)
 void Gpio::set (bool on)
 {
         if (on) {
-                port->BSRR = gpioInitStructure.Pin;
+                port->BSRR = pin;
         }
         else {
-//                port->BRR = gpioInitStructure.Pin;
-                port->BSRR = gpioInitStructure.Pin << 16;
+                //                port->BRR = gpioInitStructure.Pin;
+                port->BSRR = pin << 16;
         }
 }
 
@@ -106,7 +110,7 @@ void Gpio::set (bool on)
 
 void Gpio::setOnToggle (std::function<void(void)> const &t)
 {
-        int pinNo = pinNumber (gpioInitStructure.Pin);
+        int pinNo = pinNumber (pin);
 
         if (connectedExtis[pinNo]) {
                 /*

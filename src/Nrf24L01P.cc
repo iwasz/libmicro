@@ -7,11 +7,12 @@
  ****************************************************************************/
 
 #include "Nrf24L01P.h"
+#include "Debug.h"
 #include <cstring>
 
 /*****************************************************************************/
 
-Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin) : spi (spi), cePin (cePin), irqPin (irqPin)
+Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin) : spi (spi), cePin (cePin), irqPin (irqPin), configRegisterCopy (0x08)
 {
         if (irqPin) {
                 irqPin->setOnToggle ([this] {
@@ -144,4 +145,52 @@ uint8_t *Nrf24L01P::receive (uint8_t *data, size_t len)
 
         spi->transmit (tmp, data, len + 1);
         return data + 1;
+}
+
+/*****************************************************************************/
+
+void Nrf24L01P::poorMansScanner (int tries)
+{
+        uint8_t channel[CHANNELS_NO_FOR_SANNER];
+        memset (channel, 0, CHANNELS_NO_FOR_SANNER);
+        Debug *d = Debug::singleton ();
+
+        for (int j = 0; j < tries; ++j) {
+                for (int i = 0; i < CHANNELS_NO_FOR_SANNER; ++i) {
+                        // select a new channel
+                        // setChannel ((128 * i) / CHANNELS_NO_FOR_SANNER);
+                        setChannel (i);
+
+                        // switch on RX
+                        powerUp (RX);
+
+                        // wait enough for RX-things to settle
+                        HAL_Delay (1);
+
+                        // this is actually the point where the RPD-flag
+                        // is set, when CE goes low
+                        setCe (false);
+
+                        // read out RPD flag; set to 1 if
+                        // received power > -64dBm
+                        uint8_t rpd = readRegister (RPD);
+
+                        if (rpd > 0) {
+                                ++channel[i];
+                        }
+
+                        //                        HAL_Delay (1);
+                }
+        }
+
+        for (int i = 0; i < CHANNELS_NO_FOR_SANNER; ++i) {
+                d->print (i);
+                d->print (" : ");
+
+                for (int j = 0; j < channel[i]; ++j) {
+                        d->print ("#");
+                }
+
+                d->print ("\n");
+        }
 }
