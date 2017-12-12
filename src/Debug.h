@@ -13,13 +13,13 @@
 #include <cstdint>
 #include <cstdlib>
 
-class Uart;
+class Usart;
 
 class Debug {
 public:
         static Debug *&singleton ();
 
-        Debug (Uart *uart) : uart (uart) {}
+        Debug (Usart *uart) : uart (uart) {}
 
         void print (const char *str);
         void print (uint8_t *data, size_t len);
@@ -27,7 +27,7 @@ public:
         void printTime (uint16_t time);
 
 public:
-        Uart *uart;
+        Usart *uart;
         static Debug *instance;
 };
 

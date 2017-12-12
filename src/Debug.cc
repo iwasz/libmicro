@@ -9,7 +9,7 @@
 #include "Debug.h"
 #include "ErrorHandler.h"
 #include "Hal.h"
-#include "Uart.h"
+#include "Usart.h"
 #include <cstring>
 
 Debug *Debug::instance;

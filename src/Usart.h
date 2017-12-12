@@ -10,15 +10,21 @@
 #define LIB_MICRO_UART_H
 
 #include "Hal.h"
+#include <functional>
 
+extern "C" void USART1_IRQHandler ();
+extern "C" void USART2_IRQHandler ();
 extern "C" void USART3_4_IRQHandler ();
 
-class Uart {
+/**
+ * @brief The Uart class
+ */
+class Usart {
 public:
         enum { MAX_RX_BUFFER = 128 };
 
-        Uart (USART_TypeDef *instance, uint32_t baudRate);
-        ~Uart ();
+        Usart (USART_TypeDef *instance, uint32_t baudRate);
+        ~Usart ();
 
         static void clkEnable (USART_TypeDef *instance);
         static void clkDisable (USART_TypeDef *instance);
@@ -26,7 +32,8 @@ public:
         void clkDisable () { clkDisable (huart.Instance); }
 
         void transmit (const uint8_t *str, size_t len);
-        void receive ();
+        void startReceive (std::function<void(uint8_t)> const &t);
+        void stopReceive ();
 
 private:
         UART_HandleTypeDef huart;
@@ -34,11 +41,15 @@ private:
         uint8_t *rxBufferObd;
 
         // TODO ????
+        friend void USART1_IRQHandler ();
+        friend void USART2_IRQHandler ();
         friend void USART3_4_IRQHandler ();
-        static Uart *usart1;
-        static Uart *usart2;
-        static Uart *usart3;
-        static Uart *usart4;
+        static Usart *usart1;
+        static Usart *usart2;
+        static Usart *usart3;
+        static Usart *usart4;
+        static void fireOnData (Usart *u);
+        std::function <void (uint8_t)> onData;
 };
 
 #endif // UART_H
