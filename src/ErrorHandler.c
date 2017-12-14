@@ -7,10 +7,6 @@
  ****************************************************************************/
 
 #include "ErrorHandler.h"
-#ifdef UNIT_TEST
-#include <cstring>
-#include <iostream>
-#endif
 
 /**
  * @brief  This function is executed in case of error occurrence.
@@ -19,10 +15,6 @@
  */
 void Error_Handler (void)
 {
-#ifdef UNIT_TEST
-        std::cerr << strerror (errno) << std::endl;
-#endif
-
         while (1) {
         }
 }

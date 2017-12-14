@@ -18,7 +18,7 @@ Usart *Usart::usart4;
 
 /*****************************************************************************/
 
-Usart::Usart (USART_TypeDef *instance, uint32_t baudRate) : rxBufferObdPos (0)
+Usart::Usart (USART_TypeDef *instance, uint32_t baudRate)
 {
         if (instance == USART1) {
                 usart1 = this;
@@ -55,7 +55,6 @@ Usart::Usart (USART_TypeDef *instance, uint32_t baudRate) : rxBufferObdPos (0)
 Usart::~Usart ()
 {
         clkDisable ();
-        delete[] rxBufferObd;
 }
 
 /*****************************************************************************/
@@ -103,7 +102,6 @@ void Usart::transmit (const uint8_t *str, size_t len) { HAL_UART_Transmit (&huar
 void Usart::startReceive (std::function<void(uint8_t)> const &t)
 {
         onData = t;
-        rxBufferObd = new uint8_t[MAX_RX_BUFFER];
 
         // Enable the UART Error Interrupt: (Frame error, noise error, overrun error)
         huart.Instance->CR3 |= USART_CR3_EIE;
@@ -116,9 +114,6 @@ void Usart::startReceive (std::function<void(uint8_t)> const &t)
 
 void Usart::stopReceive ()
 {
-        delete[] rxBufferObd;
-        rxBufferObd = nullptr;
-
         // Enable the UART Error Interrupt: (Frame error, noise error, overrun error)
         huart.Instance->CR3 &= ~USART_CR3_EIE;
 

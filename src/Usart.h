@@ -21,8 +21,6 @@ extern "C" void USART3_4_IRQHandler ();
  */
 class Usart {
 public:
-        enum { MAX_RX_BUFFER = 128 };
-
         Usart (USART_TypeDef *instance, uint32_t baudRate);
         ~Usart ();
 
@@ -37,8 +35,6 @@ public:
 
 private:
         UART_HandleTypeDef huart;
-        int rxBufferObdPos;
-        uint8_t *rxBufferObd;
 
         // TODO ????
         friend void USART1_IRQHandler ();
