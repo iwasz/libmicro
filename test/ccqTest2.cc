@@ -75,7 +75,7 @@ template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::pushBack (cha
                 input = buffer + len + 1;
         }
         else {
-                Error_Handler ();
+                return false;
         }
 
         *dest = len;
