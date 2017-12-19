@@ -28,6 +28,11 @@
  * Invariants:
  * - input always points to the empty space in buffer, where new data goes.
  * - output always points to the oldest chunk of data (data to be read first).
+ *
+ * Disclaimer:
+ * This collection is not intended to implement STL like behabiour.  It has very
+ * limited API, and was created for specified purpose. Thus method names were
+ * written in camel case to clearly show this.
  */
 template <size_t MAX_SIZE> class ContinuousCircularQueue {
 public:
@@ -69,10 +74,10 @@ template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::pushBack (cha
         char *dest;
         char *dataEnd = (output <= input) ? (buffer + MAX_SIZE) : (output);
 
+        // Special case where every byte of 'buffer' is used
         if (input == output && elementsNo) {
                 dataEnd = output;
         }
-
 
         // Is there free space at the end?
         if (input + len + 1 < dataEnd) {
@@ -118,7 +123,7 @@ template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::popFront ()
         size_t len = *output;
         output += len + 1;
 
-        if (output > buffer + MAX_SIZE || *output == char(EOB)) {
+        if (output >= buffer + MAX_SIZE || *output == char(EOB)) {
                 output = buffer;
         }
 
@@ -245,4 +250,51 @@ TEST_CASE ("push+pop", "[ccq2]")
          */
 
         REQUIRE (buf.front ().first == std::string ("psaA"));
+}
+
+/**
+ * @brief TEST_CASE
+ */
+TEST_CASE ("push+pop2", "[ccq2]")
+{
+        ContinuousCircularQueue<9> buf;
+
+        REQUIRE (buf.isEmpty ());
+        REQUIRE (buf.pushBack ("a"));
+        REQUIRE (buf.getSize () == 1);
+        REQUIRE (buf.pushBack ("b"));
+        REQUIRE (buf.getSize () == 2);
+        REQUIRE (buf.pushBack ("c"));
+        REQUIRE (buf.getSize () == 3);
+        REQUIRE (!buf.pushBack ("d"));
+
+        REQUIRE (buf.front ().first == std::string ("a"));
+        REQUIRE (buf.popFront ());
+        REQUIRE (buf.getSize () == 2);
+        REQUIRE (buf.front ().first == std::string ("b"));
+        REQUIRE (buf.pushBack ("d"));
+        REQUIRE (buf.getSize () == 3);
+
+        REQUIRE (buf.popFront ());
+        REQUIRE (buf.getSize () == 2);
+        REQUIRE (buf.front ().first == std::string ("c"));
+        REQUIRE (buf.popFront ());
+        REQUIRE (buf.getSize () == 1);
+        REQUIRE (buf.front ().first == std::string ("d"));
+        REQUIRE (buf.popFront ());
+        REQUIRE (buf.getSize () == 0);
+        REQUIRE (buf.isEmpty ());
+}
+
+/**
+ * @brief TEST_CASE
+ */
+TEST_CASE ("push to much", "[ccq2]")
+{
+        ContinuousCircularQueue<9> buf;
+
+        // Push so much, that all the space in buffer is used.
+        REQUIRE (buf.pushBack ("1234567"));
+        REQUIRE (buf.popFront ());
+        REQUIRE (!buf.pushBack ("12345678"));
 }
