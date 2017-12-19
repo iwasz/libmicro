@@ -19,6 +19,11 @@
  *
  * Description:
  *
+ * Limitations:
+ * - Elements (i.e. strings you push onto the stack) can be only EOB-1 long,
+ *   which currently equals 254 bytes (with '\0'). Of course if MAX_SIZE must be
+ *   taken into account.
+ * - Number of elements (strings) you can push is limited to 255.
  *
  * Invariants:
  * - input always points to the empty space in buffer, where new data goes.
@@ -26,24 +31,29 @@
  */
 template <size_t MAX_SIZE> class ContinuousCircularQueue {
 public:
-        // End Of Buffer
+        /// End Of Buffer
         enum { EOB = 0xff };
 
-        ContinuousCircularQueue () : input (buffer), output (buffer) /*, empty (false)*/ {}
+        ContinuousCircularQueue () : input (buffer), output (buffer), elementsNo (0) {}
 
         bool pushBack (char const *s);
         std::pair<char const *, uint8_t> front () const;
-        void popFront ();
-        size_t getSize () const;
-        bool isEmpty () const { return getSize () == 0; }
+        bool popFront ();
 
-        //        void clear ();
+        /**
+         * Returns number of elements pushed back. Warning : it does not tell you the
+         * number of bytes used to store your elemenets. Only the elements number.
+         */
+        size_t getSize () const { return elementsNo; }
+
+        /// Returns if the collection is empty.
+        bool isEmpty () const { return getSize () == 0; }
 
 private:
         char buffer[MAX_SIZE];
         char *input;
         char *output;
-        //        bool empty;
+        uint8_t elementsNo;
 };
 
 /*****************************************************************************/
@@ -58,6 +68,11 @@ template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::pushBack (cha
 
         char *dest;
         char *dataEnd = (output <= input) ? (buffer + MAX_SIZE) : (output);
+
+        if (input == output && elementsNo) {
+                dataEnd = output;
+        }
+
 
         // Is there free space at the end?
         if (input + len + 1 < dataEnd) {
@@ -80,6 +95,7 @@ template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::pushBack (cha
 
         *dest = len;
         memcpy (dest + 1, s, len);
+        ++elementsNo;
         return true;
 }
 
@@ -92,30 +108,24 @@ template <size_t MAX_SIZE> std::pair<char const *, uint8_t> ContinuousCircularQu
 
 /*****************************************************************************/
 
-template <size_t MAX_SIZE> void ContinuousCircularQueue<MAX_SIZE>::popFront ()
+template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::popFront ()
 {
+        if (!elementsNo) {
+                return false;
+        }
+
+        --elementsNo;
         size_t len = *output;
         output += len + 1;
 
         if (output > buffer + MAX_SIZE || *output == char(EOB)) {
                 output = buffer;
         }
+
+        return true;
 }
 
 /*****************************************************************************/
-
-template <size_t MAX_SIZE> size_t ContinuousCircularQueue<MAX_SIZE>::getSize () const
-{
-        //        if (empty) {
-        //                return 0;
-        //        }
-
-        //        if (input > output) {
-        //                return input - output;
-        //        }
-
-        //        return MAX_SIZE - output + input;
-}
 
 /**
  * @brief
@@ -161,7 +171,7 @@ TEST_CASE ("push+pop", "[ccq2]")
          */
 
         REQUIRE (buf.front ().first == std::string ("ala"));
-        buf.popFront ();
+        REQUIRE (buf.popFront ());
 
         /*            o       i
          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -179,7 +189,7 @@ TEST_CASE ("push+pop", "[ccq2]")
          */
 
         REQUIRE (buf.front ().first == std::string ("ma"));
-        buf.popFront ();
+        REQUIRE (buf.popFront ());
 
         /*                    o           i
          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -197,7 +207,7 @@ TEST_CASE ("push+pop", "[ccq2]")
          */
 
         REQUIRE (buf.front ().first == std::string ("kota"));
-        buf.popFront ();
+        REQUIRE (buf.popFront ());
 
         /*  o           i
          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -218,9 +228,21 @@ TEST_CASE ("push+pop", "[ccq2]")
         REQUIRE (!buf.pushBack ("abc"));
         REQUIRE (buf.pushBack ("ab"));
 
-        /*  o                               i?
+        /* io
          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
          * |5|o|r|a|z|0|5|p|s|a|A|0|3|a|b|0|
          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
          */
+
+        REQUIRE (buf.front ().first == std::string ("oraz"));
+        REQUIRE (!buf.pushBack ("ab"));
+        REQUIRE (buf.popFront ());
+
+        /*  i           o
+         * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         * | | | | | | |5|p|s|a|A|0|3|a|b|0|
+         * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+         */
+
+        REQUIRE (buf.front ().first == std::string ("psaA"));
 }
