@@ -20,6 +20,7 @@ LIST (APPEND SOURCES "../src/ErrorHandler.h")
 LIST (APPEND SOURCES "../src/ErrorHandler.c")
 LIST (APPEND SOURCES "storageTest.cc")
 LIST (APPEND SOURCES "ccqTest.cc")
+LIST (APPEND SOURCES "ccqTest2.cc")
 
 ADD_EXECUTABLE (unittest ${SOURCES})
 ADD_TEST (unittest unittest)

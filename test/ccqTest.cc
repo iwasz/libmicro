@@ -5,9 +5,10 @@
  *  License : see COPYING file for details.                                 *
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
-
+#if 0
 #include "catch.hpp"
 #include <ErrorHandler.h>
+#include <cstring>
 #include <utility>
 
 /**
@@ -46,7 +47,19 @@ template <typename T, size_t MAX_STORAGE_SIZE, size_t MAX_SIZE> bool ContinuousC
                 return false;
         }
 
-        backp = (backp + 1) % MAX_SIZE;
+        T *p;
+
+//        if (sizep) {
+//                p = queue[backp].start + queue[backp].len;
+//        }
+//        else {
+//                p =
+//        }
+
+//        memcpy(queue _ x, s, sizeof (T)*len);
+
+                backp
+                = (backp + 1) % MAX_SIZE;
         //        queue[backp] = Element ();
         // No tu kopiowanie
         ++sizep;
@@ -120,3 +133,4 @@ TEST_CASE ("Size", "[ccq]")
         REQUIRE (buf.getSize () == 3);
         REQUIRE (!buf.pushBack ("12345", 6));
 }
+#endif
