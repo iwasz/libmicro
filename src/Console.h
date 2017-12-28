@@ -10,32 +10,49 @@
 #define LIB_MICRO_CONSOLE_H
 
 #include "Usart.h"
+#include "character/ICharacterInput.h"
+#include "character/ICharacterOutput.h"
+#include "character/ICharacterSink.h"
+#include "collection/CharacterCircularQueue.h"
 #include <cstdint>
 
-class Console {
+/**
+ * A basic input console, LF end-of-lines.
+ */
+class Console : public ICharacterSink {
 public:
         enum { MAX_RX_BUFFER = 128 };
 
-        Console (Usart *u);
+        Console ();
         virtual ~Console () { delete[] rxBuffer; }
-
-        /**
-         * @brief Can be called by USART ISR or something similar.
-         * @param c
-         */
-        void onData (uint8_t c);
 
         /**
          * @brief To be called in the main loop.
          */
         void run ();
 
+        void setInput (ICharacterInput *i);
+        void setOutput (ICharacterOutput *o);
+
+protected:
         virtual void onNewLine (const char *str, size_t len);
 
 private:
-        Usart *usart;
+        /**
+         * @brief Can be called by USART ISR or something similar.
+         * @param c
+         */
+        void onData (char c);
+
+protected:
+        ICharacterInput *input;
+        ICharacterOutput *output;
+
+private:
         int rxBufferPos;
         char *rxBuffer;
+        // Collection of lines
+        CharacterCircularQueue<256> lineBuffer;
 };
 
 #endif // CONSOLE_H

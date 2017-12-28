@@ -30,7 +30,7 @@ void Debug::print (const char *str)
 void Debug::print (uint8_t *data, size_t len)
 {
         // TODO DMA
-        uart->transmit(data, len);
+        uart->transmit (data, len);
 }
 
 /* reverse:  reverse string s in place */
@@ -108,4 +108,4 @@ void Debug::printTime (uint16_t time)
 
 /*****************************************************************************/
 
-extern "C" void debugPrint (uint8_t *data, size_t len) { /*Debug::singleton ()->print (data, len);*/}
+extern "C" void debugPrint (uint8_t *data, size_t len) { Debug::singleton ()->print (data, len); }

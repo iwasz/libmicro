@@ -7,128 +7,8 @@
  ****************************************************************************/
 
 #include "catch.hpp"
-#include <ErrorHandler.h>
-#include <cstring>
+#include "collection/CharacterCircularQueue.h"
 #include <string>
-#include <utility>
-
-/**
- * Fancy byte-bassed circular queue which allows zero-copy reads.
- *
- * Usage example:
- *
- * Description:
- *
- * Limitations:
- * - Elements (i.e. strings you push onto the stack) can be only EOB-1 long,
- *   which currently equals 254 bytes (with '\0'). Of course if MAX_SIZE must be
- *   taken into account.
- * - Number of elements (strings) you can push is limited to 255.
- *
- * Invariants:
- * - input always points to the empty space in buffer, where new data goes.
- * - output always points to the oldest chunk of data (data to be read first).
- *
- * Disclaimer:
- * This collection is not intended to implement STL like behabiour.  It has very
- * limited API, and was created for specified purpose. Thus method names were
- * written in camel case to clearly show this.
- */
-template <size_t MAX_SIZE> class ContinuousCircularQueue {
-public:
-        /// End Of Buffer
-        enum { EOB = 0xff };
-
-        ContinuousCircularQueue () : input (buffer), output (buffer), elementsNo (0) {}
-
-        bool pushBack (char const *s);
-        std::pair<char const *, uint8_t> front () const;
-        bool popFront ();
-
-        /**
-         * Returns number of elements pushed back. Warning : it does not tell you the
-         * number of bytes used to store your elemenets. Only the elements number.
-         */
-        size_t getSize () const { return elementsNo; }
-
-        /// Returns if the collection is empty.
-        bool isEmpty () const { return getSize () == 0; }
-
-private:
-        char buffer[MAX_SIZE];
-        char *input;
-        char *output;
-        uint8_t elementsNo;
-};
-
-/*****************************************************************************/
-
-template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::pushBack (char const *s)
-{
-        size_t len = strlen (s) + 1;
-
-        if (len > EOB - 1) {
-                Error_Handler ();
-        }
-
-        char *dest;
-        char *dataEnd = (output <= input) ? (buffer + MAX_SIZE) : (output);
-
-        // Special case where every byte of 'buffer' is used
-        if (input == output && elementsNo) {
-                dataEnd = output;
-        }
-
-        // Is there free space at the end?
-        if (input + len + 1 < dataEnd) {
-                dest = input;
-                input += len + 1;
-        }
-        else if (input + len + 1 == dataEnd) {
-                dest = input;
-                input = buffer;
-        }
-        // Is here free space on the beginnig?
-        else if (buffer + len + 1 < output) {
-                *input = EOB;
-                dest = buffer;
-                input = buffer + len + 1;
-        }
-        else {
-                return false;
-        }
-
-        *dest = len;
-        memcpy (dest + 1, s, len);
-        ++elementsNo;
-        return true;
-}
-
-/*****************************************************************************/
-
-template <size_t MAX_SIZE> std::pair<char const *, uint8_t> ContinuousCircularQueue<MAX_SIZE>::front () const
-{
-        return std::make_pair<char const *, uint8_t> (output + 1, *output);
-}
-
-/*****************************************************************************/
-
-template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::popFront ()
-{
-        if (!elementsNo) {
-                return false;
-        }
-
-        --elementsNo;
-        size_t len = *output;
-        output += len + 1;
-
-        if (output >= buffer + MAX_SIZE || *output == char(EOB)) {
-                output = buffer;
-        }
-
-        return true;
-}
 
 /*****************************************************************************/
 
@@ -137,7 +17,7 @@ template <size_t MAX_SIZE> bool ContinuousCircularQueue<MAX_SIZE>::popFront ()
  */
 TEST_CASE ("push", "[ccq2]")
 {
-        ContinuousCircularQueue<16> buf;
+        CharacterCircularQueue<16> buf;
         buf.pushBack ("ala");
         REQUIRE (buf.front ().first == std::string ("ala"));
 
@@ -150,7 +30,7 @@ TEST_CASE ("push", "[ccq2]")
  */
 TEST_CASE ("push+pop", "[ccq2]")
 {
-        ContinuousCircularQueue<16> buf;
+        CharacterCircularQueue<16> buf;
 
         /* io
          * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -167,6 +47,7 @@ TEST_CASE ("push+pop", "[ccq2]")
          */
 
         REQUIRE (buf.front ().first == std::string ("ala"));
+        REQUIRE (buf.front ().second == 3);
         REQUIRE (buf.pushBack ("ma"));
 
         /*  o                 i
@@ -257,7 +138,7 @@ TEST_CASE ("push+pop", "[ccq2]")
  */
 TEST_CASE ("push+pop2", "[ccq2]")
 {
-        ContinuousCircularQueue<9> buf;
+        CharacterCircularQueue<9> buf;
 
         REQUIRE (buf.isEmpty ());
         REQUIRE (buf.pushBack ("a"));
@@ -291,10 +172,96 @@ TEST_CASE ("push+pop2", "[ccq2]")
  */
 TEST_CASE ("push to much", "[ccq2]")
 {
-        ContinuousCircularQueue<9> buf;
+        CharacterCircularQueue<9> buf;
 
         // Push so much, that all the space in buffer is used.
         REQUIRE (buf.pushBack ("1234567"));
         REQUIRE (buf.popFront ());
         REQUIRE (!buf.pushBack ("12345678"));
+}
+
+/**
+ * @brief TEST_CASE
+ */
+TEST_CASE ("push and remove at once", "[ccq2]")
+{
+        CharacterCircularQueue<9> buf;
+
+        /* io
+         * +-+-+-+-+-+-+-+-+-+
+         * | | | | | | | | | |
+         * +-+-+-+-+-+-+-+-+-+
+         */
+
+        REQUIRE (buf.pushBack ("12"));
+
+        /*  o       i
+         * +-+-+-+-+-+-+-+-+-+
+         * |3|1|2|0| | | | | |
+         * +-+-+-+-+-+-+-+-+-+
+         */
+
+        REQUIRE (buf.front ().first == std::string ("12"));
+        REQUIRE (buf.front ().second == 2);
+        REQUIRE (buf.popFront ());
+
+        /*         io
+         * +-+-+-+-+-+-+-+-+-+
+         * | | | | | | | | | |
+         * +-+-+-+-+-+-+-+-+-+
+         */
+
+        REQUIRE (buf.pushBack ("34"));
+
+        /*          o       i
+         * +-+-+-+-+-+-+-+-+-+
+         * | | | | |2|3|4|0| |
+         * +-+-+-+-+-+-+-+-+-+
+         */
+
+        REQUIRE (buf.front ().first == std::string ("34"));
+        REQUIRE (buf.front ().second == 2);
+        REQUIRE (buf.popFront ());
+
+        /*                 io
+         * +-+-+-+-+-+-+-+-+-+
+         * | | | | | | | | | |
+         * +-+-+-+-+-+-+-+-+-+
+         */
+
+        REQUIRE (buf.pushBack ("45"));
+        REQUIRE (buf.front ().first == std::string ("45"));
+        REQUIRE (buf.front ().second == 2);
+        REQUIRE (buf.popFront ());
+
+        REQUIRE (buf.pushBack ("67"));
+        REQUIRE (buf.front ().first == std::string ("67"));
+        REQUIRE (buf.front ().second == 2);
+        REQUIRE (buf.popFront ());
+}
+
+TEST_CASE ("push and remove instantly", "[ccq2]")
+{
+        CharacterCircularQueue<256> buf;
+
+        // Push so much, that all the space in buffer is used.
+        REQUIRE (buf.pushBack ("111111111111111111111111111111111111111111111111111111111111111111111111"));
+        REQUIRE (buf.front ().first == std::string ("111111111111111111111111111111111111111111111111111111111111111111111111"));
+        REQUIRE (buf.front ().second == 72);
+        REQUIRE (buf.popFront ());
+
+        REQUIRE (buf.pushBack ("22222222222222222222222222222222222222222222222222222222222222222222222222"));
+        REQUIRE (buf.front ().first == std::string ("22222222222222222222222222222222222222222222222222222222222222222222222222"));
+        REQUIRE (buf.front ().second == 74);
+        REQUIRE (buf.popFront ());
+
+        REQUIRE (buf.pushBack ("3333333333333333333333333333333333333333333333333333333333333333333333333333333"));
+        REQUIRE (buf.front ().first == std::string ("3333333333333333333333333333333333333333333333333333333333333333333333333333333"));
+        REQUIRE (buf.front ().second == 79);
+        REQUIRE (buf.popFront ());
+
+        REQUIRE (buf.pushBack ("44444444444444444444444444444444444444444444444444444444444444444444444444444444"));
+        REQUIRE (buf.front ().first == std::string ("44444444444444444444444444444444444444444444444444444444444444444444444444444444"));
+        REQUIRE (buf.front ().second == 80);
+        REQUIRE (buf.popFront ());
 }

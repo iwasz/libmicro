@@ -10,19 +10,17 @@
 #define LIB_MICRO_UART_H
 
 #include "Hal.h"
+#include "character/ICharacterInput.h"
+#include "character/ICharacterOutput.h"
 #include <functional>
-
-extern "C" void USART1_IRQHandler ();
-extern "C" void USART2_IRQHandler ();
-extern "C" void USART3_4_IRQHandler ();
 
 /**
  * @brief The Uart class
  */
-class Usart {
+class Usart : public ICharacterInput, public ICharacterOutput {
 public:
         Usart (USART_TypeDef *instance, uint32_t baudRate);
-        ~Usart ();
+        virtual ~Usart ();
 
         static void clkEnable (USART_TypeDef *instance);
         static void clkDisable (USART_TypeDef *instance);
@@ -30,22 +28,50 @@ public:
         void clkDisable () { clkDisable (huart.Instance); }
 
         void transmit (const uint8_t *str, size_t len);
-        void startReceive (std::function<void(uint8_t)> const &t);
+        void transmit (const char *str, size_t len);
+        void transmit (const char *str);
+
+        /// Turns on the data ready IRQ and sets the callback.
+        void startReceive ();
+
+        void setSink (ICharacterSink *s) { sink = s; }
+        void setOnData (std::function<void(uint8_t)> const &t) { onData = t; }
+
+        /// Turns off all IRQs of this usart
         void stopReceive ();
 
+        /// Turns off data ready IRQs of this usart
+        void pause ();
+
+        /// Turns on the data ready IRQ.
+        void resume ();
+
 private:
+        FRIEND_ALL_USART_IRQS
         UART_HandleTypeDef huart;
 
-        // TODO ????
-        friend void USART1_IRQHandler ();
-        friend void USART2_IRQHandler ();
-        friend void USART3_4_IRQHandler ();
+#if defined(USE_USART1) || defined(USE_UART1)
         static Usart *usart1;
+#endif
+#if defined(USE_USART2) || defined(USE_UART2)
         static Usart *usart2;
+#endif
+#if defined(USE_USART3) || defined(USE_UART3)
         static Usart *usart3;
+#endif
+#if defined(USE_USART4) || defined(USE_UART4)
         static Usart *usart4;
+#endif
+#if defined(USE_USART5) || defined(USE_UART5)
+        static Usart *usart5;
+#endif
+#if defined(USE_USART6) || defined(USE_UART6)
+        static Usart *usart6;
+#endif
+
         static void fireOnData (Usart *u);
-        std::function <void (uint8_t)> onData;
+        std::function<void(uint8_t)> onData;
+        ICharacterSink *sink;
 };
 
 #endif // UART_H

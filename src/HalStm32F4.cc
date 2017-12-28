@@ -8,6 +8,7 @@
 
 #include "HalStm32F4.h"
 #include "Gpio.h"
+#include "Usart.h"
 
 extern "C" void EXTI0_IRQHandler ()
 {
@@ -110,3 +111,12 @@ extern "C" void EXTI15_10_IRQHandler ()
 
         Gpio::connectedExtis[pinNo]->onToggle ();
 }
+
+/*****************************************************************************/
+
+extern "C" void USART1_IRQHandler () { Usart::fireOnData (Usart::usart1); }
+extern "C" void USART2_IRQHandler () { Usart::fireOnData (Usart::usart2); }
+extern "C" void USART3_IRQHandler () { Usart::fireOnData (Usart::usart3); }
+extern "C" void UART4_IRQHandler () { Usart::fireOnData (Usart::usart4); }
+extern "C" void UART5_IRQHandler () { Usart::fireOnData (Usart::usart5); }
+extern "C" void USART6_IRQHandler () { Usart::fireOnData (Usart::usart6); }
