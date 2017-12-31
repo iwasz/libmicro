@@ -7,49 +7,68 @@
  ****************************************************************************/
 
 #include "BipolarStepper.h"
+#include "Debug.h"
 #include "Gpio.h"
 #include <algorithm>
+#include <cmath>
+
+void BipolarStepper::timeStep ()
+{
+        if (speed) {
+                if (static_cast<uint32_t> (std::abs (speed)) == counter++) {
+                        counter = 0;
+                        if (speed > 0) {
+                                stepLeft ();
+                        }
+                        else {
+                                stepRight ();
+                        }
+                }
+        }
+}
 
 void BipolarStepper::setSpeed (int32_t speed)
 {
-        //        int newDuty = speed * factor;
-        //        newDuty = std::min<int> (std::abs (newDuty), fullScale);
-        //        pwm->setDuty (channel, newDuty);
-        //        direction->set (speed > 0);
+        this->speed = speed;
+        counter = 0;
 }
 
-/// Move n steps (- or +).
-void BipolarStepper::step (int n)
+void BipolarStepper::stepLeft ()
 {
-        bool dir = n > 0;
-
-        for (int i = 0; i < n; ++i) {
-                cycle = (cycle + 1) % 4;
-
-                switch (cycle) {
-                case 0:
-                        aPhasePin->set (true);
-                        bPhasePin->set (false);
-                        break;
-                case 1:
-                        aPhasePin->set (true);
-                        bPhasePin->set (true);
-                        break;
-                case 2:
-                        aPhasePin->set (false);
-                        bPhasePin->set (true);
-                        break;
-                case 3:
-                        aPhasePin->set (false);
-                        bPhasePin->set (false);
-                        break;
-                default:
-                        break;
-                }
-
-                HAL_Delay (1);
-        }
+        bPhasePin->set (cycle / 2);
+        cycle = uint8_t (cycle + 1) % 4;
+        aPhasePin->set (cycle / 2);
 }
+
+void BipolarStepper::stepRight ()
+{
+        aPhasePin->set (cycle / 2);
+        cycle = uint8_t (cycle + 1) % 4;
+        bPhasePin->set (cycle / 2);
+}
+
+///// Move n steps (- or +).
+// void BipolarStepper::step (int n)
+//{
+//        if (n > 0) {
+//                n = std::abs (n);
+//                for (int i = 0; i < n; ++i) {
+//                        bPhasePin->set (cycle / 2);
+//                        cycle = uint8_t (cycle + 1) % 4;
+//                        aPhasePin->set (cycle / 2);
+//                        //                        HAL_Delay (1);
+//                }
+//        }
+//        else {
+//                n = std::abs (n);
+//                for (int i = 0; i < n; ++i) {
+//                        aPhasePin->set (cycle / 2);
+//                        cycle = uint8_t (cycle + 1) % 4;
+//                        bPhasePin->set (cycle / 2);
+//                        //                        HAL_Delay (1);
+//                }
+//        }
+//}
 
 void BipolarStepper::power (bool on)
 {
