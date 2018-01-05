@@ -23,7 +23,9 @@ public:
 
         void print (const char *str);
         void print (uint8_t *data, size_t len);
+        void printArray (uint8_t *data, size_t len);
         void print (int);
+
         void printTime (uint16_t time);
 
 public:

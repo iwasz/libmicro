@@ -143,6 +143,7 @@ uint8_t *Nrf24L01P::receive (uint8_t *data, size_t len)
                 0,
         };
 
+        // TODO źle! W ten sposób wrzucamy do data len+1, a on będzie miał przecież tylk len!
         spi->transmit (tmp, data, len + 1);
         return data + 1;
 }

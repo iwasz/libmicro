@@ -21,6 +21,9 @@ class Gpio;
  * - microstepping (someday)
  * - setSpeed to act lineary, from -100 to 100.
  *
+ * Remrkas:
+ * - Linear acceleration control is harder to achieve than I thought. Links that helped me:
+ * AVR446 (http://www.microchip.com/wwwappnotes/appnotes.aspx?appnote=en591185)
  */
 class BipolarStepper {
 public:
