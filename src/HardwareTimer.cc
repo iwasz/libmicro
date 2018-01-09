@@ -31,6 +31,9 @@ HardwareTimer::HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_
          * Divides internal clock (CK_INT). This internal clock for some timers is APB1 clock
          * (for example 42MHz on STM32f407) and for some others is APB2 (84 MHz respectively).
          *
+         * WARNING 0! But remember, that if APBx prescaler (APB1 or APB2 in STM32F407) is something
+         * other than 1, then CK_INT is multiplied by 2, so ith becomes 84 and 168MHz respectively!
+         *
          * WARNING 1! Prescaler == 0 divides CK_INT by 1, Prescaler == 1 divides by 2 and so on.
          *
          * WARNING 2! Even though htim.Init.Prescaler is uint32_t, most of the timers are 16 bit!
