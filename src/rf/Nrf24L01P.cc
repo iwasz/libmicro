@@ -240,20 +240,20 @@ size_t Nrf24L01P::getPayloadLength () const
 
 uint8_t *Nrf24L01P::receive (uint8_t *data, size_t len)
 {
-        static uint8_t tmp[33] = {
-                R_RX_PAYLOAD,
-                0,
-        };
+        //        static uint8_t tmp[33] = {
+        //                R_RX_PAYLOAD,
+        //                0,
+        //        };
 
-        // TODO źle! W ten sposób wrzucamy do data len+1, a on będzie miał przecież tylk len!
-        spi->transmit (tmp, data, len + 1);
-        return data + 1;
+        //        // TODO źle! W ten sposób wrzucamy do data len+1, a on będzie miał przecież tylk len!
+        //        spi->transmit (tmp, data, len + 1);
+        //        return data + 1;
 
-        //        spi->setNss (false);
-        //        spi->transmit8 (R_RX_PAYLOAD);
-        //        // spi->receive (data, len);
-        //        spi->setNss (true);
-        //        return data;
+        spi->setNss (false);
+        spi->transmit8 (R_RX_PAYLOAD);
+        spi->receive8 (data, len);
+        spi->setNss (true);
+        return data;
 }
 
 /*****************************************************************************/

@@ -48,27 +48,14 @@ void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
         setNss (true);
 }
 
-// void Spi::transmit1 (uint8_t const *txData, uint16_t size)
-//{
-//        setNss (false);
-
-//        if (HAL_SPI_Transmit (&spiHandle, const_cast<uint8_t *> (txData), size, 500) != HAL_OK) {
-//                Error_Handler ();
-//        }
-
-//        setNss (true);
-//}
-
 /*****************************************************************************/
 
 void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay)
 {
         SPI_TypeDef *spi = spiHandle.Instance;
 
-        size_t txRemainig = (!txData) ? (0) : (size);
+        size_t txRemainig = size;
         size_t rxRemainig = (!rxData) ? (0) : (size);
-        // size_t txRemainig = size;
-        // size_t rxRemainig = size;
 
         if (rxRemainig > 1) {
                 // set fiforxthreshold according the reception data length: 16bit
@@ -141,6 +128,72 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
                 tmp = spi->DR;
                 tmp = spi->SR;
                 (void)tmp;
+        }
+}
+/*****************************************************************************/
+
+void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
+{
+        SPI_TypeDef *spi = spiHandle.Instance;
+
+        size_t rxRemainig = (!rxData) ? (0) : (size);
+
+        if (rxRemainig > 1) {
+                // set fiforxthreshold according the reception data length: 16bit
+                CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
+        }
+        else {
+                // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
+                SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
+        }
+
+        bool txAllowed = true;
+
+        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+                __HAL_SPI_ENABLE (&spiHandle);
+        }
+
+        // Based on HAL code.
+        while (rxRemainig) {
+
+                // Sending part. TXE true means, old data has been sent, and we can push more bytes.
+                if (txAllowed && (spi->SR & SPI_FLAG_TXE)) {
+                        if (rxRemainig > 1) {
+                                spi->DR = 0xffff;
+                        }
+                        else {
+                                *(__IO uint8_t *)&spi->DR = 0xff;
+                        }
+
+                        // Next Data is a reception (Rx). Tx not allowed
+                        txAllowed = false;
+                }
+
+                // Receive block.  When RXNE flag set, it means that there is new data.
+                if (spi->SR & SPI_FLAG_RXNE) {
+
+                        if (rxRemainig > 1) {
+                                *((uint16_t *)rxData) = spi->DR;
+                                rxData += sizeof (uint16_t);
+                                rxRemainig -= 2;
+
+                                if (rxRemainig <= 1) {
+                                        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
+                                        SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
+                                }
+                        }
+                        else {
+                                (*(uint8_t *)rxData++) = *(__IO uint8_t *)&spi->DR;
+                                --rxRemainig;
+                        }
+
+                        // Next Data is a Transmission (Tx). Tx is allowed
+                        txAllowed = true;
+                }
+
+                for (size_t i = 0; i < bogoDelay; ++i) {
+                        __asm("nop");
+                }
         }
 }
 

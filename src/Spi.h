@@ -24,7 +24,7 @@ public:
 
         // Obsolete if transmit8 prove to be ok.
         void transmit (uint8_t const *pTxData, uint8_t *pRxData, uint16_t Size);
-//        void transmit1 (uint8_t const *pTxData, uint16_t Size);
+        //        void transmit1 (uint8_t const *pTxData, uint16_t Size);
 
         /**
          * @brief Transmit and receive at the same time in 8 bits mode.
@@ -35,6 +35,8 @@ public:
          * @param rxData Leave nullptr if not interested.
          */
         void transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData = nullptr, size_t bogoDelay = 0);
+
+        void receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay = 0);
 
         /**
          * @brief Transmit one byte, and return what has been sent back.
