@@ -9,10 +9,8 @@
 #ifndef LIB_MICRO_SPI_H
 #define LIB_MICRO_SPI_H
 
+#include "Gpio.h"
 #include "Hal.h"
-#include <functional>
-
-class Gpio;
 
 class Spi {
 public:
@@ -22,9 +20,7 @@ public:
         ~Spi () { clkDisable (); }
 
         void transmit (uint8_t const *pTxData, uint8_t *pRxData, uint16_t Size);
-//        uint16_t transmit (uint16_t word);
-
-        //        void setCallback (std::function<void(uint8_t)> const &f) { fff = f; }
+        uint8_t transmit8 (uint8_t word);
 
         /**
          * @brief clkEnable Runs __HAL_RCC_SPIx_CLK_ENABLE for a SPIx.
@@ -48,11 +44,11 @@ public:
          */
         void clkDisable () { clkDisable (&spiHandle); }
 
-        void setNssPin (Gpio *n) { nssPin = n; }
+        void setNssGpio (Gpio *n) { nssPin = n; }
+        void setNss (bool b) { nssPin->set (b); }
 
 private:
         SPI_HandleTypeDef spiHandle;
-        //        std::function<void(uint8_t)> fff;
         Gpio *nssPin;
 };
 

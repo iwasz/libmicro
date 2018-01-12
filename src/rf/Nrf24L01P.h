@@ -23,7 +23,17 @@ public:
          * @brief onRx
          */
         virtual void onRx (uint8_t *data, size_t len) = 0;
+
+        /**
+         * IRQ when data was sent. If you do not need this method to be run in vain every time you send something, simply set MASK_TX_DS in
+         * CONFIG register : nrfTx.setConfig (Nrf24L01P::MASK_TX_DS, x, y);
+         */
         virtual void onTx () {}
+
+        /**
+         * IRQ when data was sent. If you do not need this method to be run in vain every time you send something, simply set MASK_MAX_RT in
+         * CONFIG register : nrfTx.setConfig (Nrf24L01P::MASK_MAX_RT, x, y);
+         */
         virtual void onMaxRt () {}
 };
 

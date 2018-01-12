@@ -52,9 +52,10 @@ Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
                         /*
                          * Data Sent TX FIFO interrupt. Asserted when packet transmitted on TX. If AUTO_ACK is activated, this bit is set high
                          * only when ACK is received. Write 1 to clear bit.
+                         *
+                         * You can use : nrfTx.setConfig (Nrf24L01P::MASK_TX_DS, x, y) if callback->onTx () is not necessary.
                          */
                         if (s & TX_DS) {
-                                // TODO to się wykonuje nawet gdy jest niepotrzebne :(
                                 if (callback) {
                                         callback->onTx ();
                                 }
@@ -90,14 +91,19 @@ void Nrf24L01P::setConfig (uint8_t maskIrqSource, bool crcEnable, CrcLength crcL
 
 void Nrf24L01P::writeRegister (uint8_t reg, uint8_t value)
 {
-        // TODO delete this
-        uint8_t dummy[2];
-        uint8_t buf[2];
-        buf[0] = reg | W_REGISTER;
-        buf[1] = value;
-        spi->transmit (buf, dummy, 2);
+        //        // TODO delete this
+        //        uint8_t dummy[2];
+        //        uint8_t buf[2];
+        //        buf[0] = reg | W_REGISTER;
+        //        buf[1] = value;
+        //        spi->transmit (buf, dummy, 2);
 
         // TODO use 2 spi->trasmit calls. First with reg-address, and second with value.
+
+        spi->setNss (false);
+        spi->transmit8 (reg | W_REGISTER);
+        spi->transmit8 (value);
+        spi->setNss (true);
 }
 
 // void Nrf24L01P::writeCommand (uint8_t command, uint8_t *data, uint8_t len)
@@ -126,12 +132,18 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
 
 uint8_t Nrf24L01P::readRegister (uint8_t reg) const
 {
-        uint8_t bufRx[2];
-        uint8_t bufTx[2];
-        bufTx[0] = reg | R_REGISTER;
-        bufTx[1] = NOP;
-        spi->transmit (bufTx, bufRx, 2);
-        return bufRx[1];
+        //        uint8_t bufRx[2];
+        //        uint8_t bufTx[2];
+        //        bufTx[0] = reg | R_REGISTER;
+        //        bufTx[1] = NOP;
+        //        spi->transmit (bufTx, bufRx, 2);
+        //        return bufRx[1];
+
+        spi->setNss (false);
+        spi->transmit8 (reg | R_REGISTER);
+        uint8_t ret = spi->transmit8 (NOP);
+        spi->setNss (true);
+        return ret;
 }
 
 /*****************************************************************************/

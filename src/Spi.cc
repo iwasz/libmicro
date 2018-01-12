@@ -8,12 +8,11 @@
 
 #include "Spi.h"
 #include "ErrorHandler.h"
-#include "Gpio.h"
 #include <cstring>
 
 /*****************************************************************************/
 
-Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarity)
+Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarity) : nssPin (nullptr)
 {
         memset (&spiHandle, 0, sizeof (spiHandle));
         spiHandle.Instance = spi;
@@ -40,25 +39,25 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
 void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
 {
-        nssPin->set (false);
+        setNss (false);
 
         if (HAL_SPI_TransmitReceive (&spiHandle, const_cast<uint8_t *> (txData), rxData, size, 500) != HAL_OK) {
                 Error_Handler ();
         }
 
-        nssPin->set (true);
+        setNss (true);
 }
 
-        /*****************************************************************************/
+/*****************************************************************************/
 
-#if 0
-uint16_t Spi::transmit (uint16_t word)
+uint8_t Spi::transmit8 (uint8_t word)
 {
-        // TODO!
-        nssPin->set (false);
-
+        // Doesn't work without it
         __HAL_SPI_ENABLE (&spiHandle);
-        CLEAR_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+        // CLEAR_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD_HF);
+
+        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
+        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
 
         // Wait for tx buffer to be empty
         while (!(spiHandle.Instance->SR & SPI_FLAG_TXE))
@@ -73,10 +72,8 @@ uint16_t Spi::transmit (uint16_t word)
         while (!(spiHandle.Instance->SR & SPI_FLAG_RXNE))
                 ;
 
-        nssPin->set (true);
         return *(__IO uint8_t *)&spiHandle.Instance->DR;
 }
-#endif
 
 /*****************************************************************************/
 
