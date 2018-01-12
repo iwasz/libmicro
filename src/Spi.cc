@@ -148,10 +148,9 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
         if (!rxData) {
                 CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
                 volatile uint16_t tmp = spi->DR;
-                tmp = spi->SR;
                 tmp = spi->DR;
                 tmp = spi->SR;
-                __HAL_SPI_CLEAR_OVRFLAG (&spiHandle);
+                (void)tmp;
         }
 }
 
