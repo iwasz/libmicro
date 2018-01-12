@@ -11,7 +11,21 @@
 
 #include "Gpio.h"
 #include "Spi.h"
-#include <functional>
+
+/**
+ * IRQ callback. Remember, this gets called in IRQ handler!
+ */
+class Nrf24L01PCallback {
+public:
+        virtual ~Nrf24L01PCallback () {}
+
+        /**
+         * @brief onRx
+         */
+        virtual void onRx (uint8_t *data, size_t len) = 0;
+        virtual void onTx () {}
+        virtual void onMaxRt () {}
+};
 
 /**
  * States:
@@ -29,7 +43,15 @@
  * - This "Enhanced ShockBurst" thing is ON by default (?)
  * - Static payload length is the default.
  * - An ACK packet can contain an optional payload from PRX to PTX. In order to use this feature, the
- * Dynamic Payload Length (DPL) feature must be enabled. W_ACK_PAYLOAD is used for this.
+ * Dynamic Payload Length (DPL) feature must be enabled. W_ACK_PAYLOAD command is used for this.
+ * - Shock Burst and Enchanced Shock Burst are two separate things. As far as I understand always either
+ * of them is working. Differences are in features they provide and packet its format (most notably ESB
+ * allows for bidirectional communication).
+ *
+ * Examples:
+ * - Simple example (static payload length, no auto ack, 1 pipe).
+ * - Static payload length, autoack. Ack without payload.
+ * - Dynamic payload length, auto-ack, ack with payload (dynamic payload legth is required for ACK with payload to work).
  */
 class Nrf24L01P {
 public:
@@ -68,16 +90,25 @@ public:
         enum Status { TX_FULL_MASK = 0x01, RX_P_NO = 0x0e, MAX_RT = 1 << 4, TX_DS = 1 << 5, RX_DR = 1 << 6 };
 
         enum Nrf24L01PCommands {
-                R_REGISTER = 0x00, // last 4 bits will indicate reg. address
-                W_REGISTER = 0x20, // last 4 bits will indicate reg. address
-                REGISTER_MASK = 0x1F,
-                R_RX_PAYLOAD = 0x61,
-                W_TX_PAYLOAD = 0xA0,
+                R_REGISTER = 0x00, /// Read command and status registers. Last 5 bits (AAAAA) are Register Map Address
+                W_REGISTER = 0x20, /// Write command and status registers. Last 5 bits are Register Map Address. Execute in power down or standby
+                                   /// modes only.
+                REGISTER_MASK = 0x1F, /// Mask for the register address for commands listed above.
+                R_RX_PAYLOAD = 0x61,  /// Read RX-payload: 1 – 32 bytes. A read operation always starts at byte 0. Payload is deleted from FIFO
+                                      /// after it is read. Used in RX mode. See R_RX_PL_WID.
+                W_TX_PAYLOAD = 0xA0,  /// Write TX-payload: 1 – 32 bytes. A write operation always starts at byte 0 used in TX payload.
                 FLUSH_TX = 0xE1,
                 FLUSH_RX = 0xE2,
                 REUSE_TX_PL = 0xE3,
-                ACTIVATE = 0x50,
-                R_RX_PL_WID = 0x60,
+                R_RX_PL_WID = 0x60,   /// Read RX payload width for the top R_RX_PAYLOAD in the RX FIFO. Note: Flush RX FIFO if the read value is
+                                      /// larger than 32 bytes. The bits in the FEATURE register shown in Table 28. on page 63 have to be set for
+                                      /// this command to work.
+                W_ACK_PAYLOAD = 0xa8, /// Used in RX mode. Write Payload to be transmitted together with ACK packet on PIPE PPP. (PPP valid in
+                                      /// the range from 000 to 101). Maximum three ACK packet payloads can be pending. Payloads with same PPP
+                                      /// are handled using first in -first out principle. Write payload: 1– 32 bytes. A write operation always
+                                      /// starts at byte 0. The bits in the FEATURE register shown in Table 28. on page 63 have to be set.
+                W_TX_PAYLOAD_NO_ACK = 0xb0, /// Used in TX mode. Disables AUTOACK on this specific packet (if auto ack is ON). The bits in the
+                                            /// FEATURE register shown in Table 28. on page 63 have to be set.
                 NOP = 0xFF
         };
 
@@ -107,22 +138,22 @@ public:
         void setAdressWidth (AddressWidth aw) { writeRegister (SETUP_AW, aw); }
 
         enum RetransmitDelay {
-                WAIT_250,
-                WAIT_500,
-                WAIT_750,
-                WAIT_1000,
-                WAIT_1250,
-                WAIT_1500,
-                WAIT_1750,
-                WAIT_2000,
-                WAIT_2250,
-                WAIT_2500,
-                WAIT_2750,
-                WAIT_3000,
-                WAIT_3250,
-                WAIT_3500,
-                WAIT_3750,
-                WAIT_4000
+                WAIT_250_US,
+                WAIT_500_US,
+                WAIT_750_US,
+                WAIT_1000_US,
+                WAIT_1250_US,
+                WAIT_1500_US,
+                WAIT_1750_US,
+                WAIT_2000_US,
+                WAIT_2250_US,
+                WAIT_2500_US,
+                WAIT_2750_US,
+                WAIT_3000_US,
+                WAIT_3250_US,
+                WAIT_3500_US,
+                WAIT_3750_US,
+                WAIT_4000_US
         };
 
         enum RetransmitCount {
@@ -144,6 +175,12 @@ public:
                 RETRANSMIT_15
         };
 
+        /**
+         * Works only in Enchanced Shock Burst.
+         * Please take care when setting this parameter. If the ACK payload is more than 15 byte in 2Mbps mode the ARD must be 500μS or more, if
+         * the ACK payload is more than 5byte in 1Mbps mode the ARD must be 500μS or more. In 250kbps mode (even when the payload is not in ACK)
+         * the ARD must be 500μS or more. Please see section 7.4.2 on page 33 for more information.
+         */
         void setAutoRetransmit (RetransmitDelay d, RetransmitCount c) { writeRegister (SETUP_RETR, (d << 4) | c); }
 
         void setChannel (uint8_t channel) { writeRegister (RF_CH, channel); }
@@ -163,22 +200,66 @@ public:
         }
 
         bool getReceivedPowerDetector () const { return readRegister (RPD) & 1; }
-        void setRxAddress (uint8_t dataPipeNo, uint8_t const *address, uint8_t addressLen) { writeRegister (RX_ADDR_P0 + dataPipeNo, address, addressLen); }
+        void setRxAddress (uint8_t dataPipeNo, uint8_t const *address, uint8_t addressLen)
+        {
+                writeRegister (RX_ADDR_P0 + dataPipeNo, address, addressLen);
+        }
         void setTxAddress (uint8_t const *address, uint8_t addressLen) { writeRegister (TX_ADDR, address, addressLen); }
 
-        enum DynamicPayloadLength { DPL_P5 = 1 << 5, DPL_p4 = 1 << 4, DPL_P3 = 1 << 3, DPL_P2 = 1 << 2, DPL_P1 = 1 << 1, DPL_P0 = 1 << 0 };
         void setPayloadLength (uint8_t dataPipeNo, uint8_t len) { writeRegister (RX_PW_P0 + dataPipeNo, len); }
 
-        /// Mask with something
+        /// Fifo status values. Use with getFifoStatus.
+        enum FifoStatus {
+                TX_REUSE = 1 << 6, /// Used for a PTX device. Pulse the rfce high for at least 10μs to Reuse last transmitted payload. TX payload
+                                   /// reuse is active until W_TX_PAYLOAD or FLUSH TX is executed. TX_REUSE is set by the SPI command REUSE_TX_PL
+                                   /// , and is reset by the SPI commands W_TX_PAYLOAD or FLUSH TX.
+                TX_FULL = 1 << 5,  /// TX FIFO full flag. 1: TX FIFO full. 0: Available locations in TX FIFO.
+                TX_EMPTY = 1 << 4, /// TX FIFO empty flag. 1: TX FIFO empty. 0: Data in TX FIFO.
+                RX_FULL = 1 << 1,  /// RX FIFO full flag. 1: RX FIFO full. 0: Available locations in RX FIFO.
+                RX_EMPTY = 1 << 0  /// RX FIFO empty flag. 1: RX FIFO empty. 0: Data in RX FIFO.
+        };
+
+        /// Gets fifo satus. Mask with FifoStatus enum values to check for something useful.
         uint8_t getFifoStatus () const { return readRegister (FIFO_STATUS); }
 
         /// DynamicPayloadLength
+        enum DynamicPayloadLength { DPL_P5 = 1 << 5, DPL_P4 = 1 << 4, DPL_P3 = 1 << 3, DPL_P2 = 1 << 2, DPL_P1 = 1 << 1, DPL_P0 = 1 << 0 };
+
+        /// Sets DynamicPayloadLength. setFeature (EN_DPL) must be set for this to work.
         void setEnableDynamicPayload (uint8_t dpl) { writeRegister (DYNPD, dpl); }
+
+        /// Feature register values, to be used with setFeature.
+        enum Feature {
+                EN_DPL = 1 << 2,     /// Enables Dynamic Payload Length
+                EN_ACK_PAY = 1 << 1, /// Enables Payload with ACK
+                EN_DYN_ACK = 1       /// Enables the W_TX_PAYLOAD_NOACK command
+        };
 
         /// Feature
         void setFeature (uint8_t f) { writeRegister (FEATURE, f); }
 
-        void transmit (uint8_t *data, size_t len);
+        void setCallback (Nrf24L01PCallback *c) { callback = c; }
+        void poorMansScanner (int tries);
+
+        /*****************************************************************************/
+        /* Commands. TODO implement all.                                             */
+        /*****************************************************************************/
+
+        /**
+         * @brief transmit
+         * @param data The data.
+         * @param len Length of the data obviously.
+         * @param noAck If true, it disables auto-ack feature for this particular packet. Has effect only if auto-ack is active.
+         */
+        void transmit (uint8_t *data, size_t len, bool noAck = false);
+
+        /**
+         * Sets payload when using auto-ack with dynamic payload length in device in PRX mode.
+         * This can set up to 3 payloads (since TX FIFO has 3 slots) that will be sent to the
+         * PTX. setFeature (EN_DPL | EN_ACK_PAY) must be set for this to work.
+         * @param forPipe Pipe number from 0 to 5.
+         */
+        void setAckPayload (uint8_t forPipe, uint8_t *data, size_t len);
 
         /**
          * @brief receive Gets the data somebody sent to us over the air.
@@ -188,17 +269,24 @@ public:
          */
         uint8_t *receive (uint8_t *data, size_t len);
 
-        void setOnData (std::function<void(void)> const &t) { onData = t; }
-
         void flushTx ();
         void flushRx ();
 
-        void poorMansScanner (int tries);
+        /**
+         * @brief Read RX payload width for the top R_RX_PAYLOAD in the RX FIFO. According to the datasheet (as far as I understood) this feature
+         * only works if dynamic payload length is turned on, but my experiments show, that it works for static payloads lengths also, which is
+         * very convenient! Note: Flush RX FIFO if the read value is larger than 32 bytes.
+         * @return
+         */
+        size_t getPayloadLength () const;
 
-public:
+private:
         void writeRegister (uint8_t reg, uint8_t value);
         void writeRegister (uint8_t reg, uint8_t const *data, uint8_t len);
         uint8_t readRegister (uint8_t reg) const;
+
+        /*****************************************************************************/
+
         void setCe (bool b) { cePin->set (b); }
 
 private:
@@ -206,7 +294,8 @@ private:
         Gpio *cePin;
         Gpio *irqPin;
         uint8_t configRegisterCopy;
-        std::function<void(void)> onData;
+        Nrf24L01PCallback *callback;
+        uint8_t bufferRx[33];
 };
 
 #endif // NRF24L0P_H

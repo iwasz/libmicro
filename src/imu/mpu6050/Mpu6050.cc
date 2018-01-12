@@ -56,8 +56,6 @@ THE SOFTWARE.
 Mpu6050::Mpu6050 (I2c *i2c, uint8_t address) : i2c (i2c), devAddr (address)
 {
         setClockSource (MPU6050_CLOCK_PLL_XGYRO);
-        setFullScaleGyroRange (MPU6050_GYRO_FS_250);
-        setFullScaleAccelRange (MPU6050_ACCEL_FS_2);
         setSleepEnabled (false); // thanks to Jack Elston for pointing this one out!
 }
 
@@ -1791,6 +1789,18 @@ void Mpu6050::getMotion6 (int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, in
         *gy = (((int16_t)buffer[10]) << 8) | buffer[11];
         *gz = (((int16_t)buffer[12]) << 8) | buffer[13];
 }
+
+void Mpu6050::getMotion6 (float *ax, float *ay, float *az, float *gx, float *gy, float *gz)
+{
+        i2c->read (devAddr, MPU6050_RA_ACCEL_XOUT_H, buffer, 14);
+        *ax = (((int16_t)buffer[0]) << 8) | buffer[1];
+        *ay = (((int16_t)buffer[2]) << 8) | buffer[3];
+        *az = (((int16_t)buffer[4]) << 8) | buffer[5];
+        *gx = (((int16_t)buffer[8]) << 8) | buffer[9];
+        *gy = (((int16_t)buffer[10]) << 8) | buffer[11];
+        *gz = (((int16_t)buffer[12]) << 8) | buffer[13];
+}
+
 /** Get 3-axis accelerometer readings.
  * These registers store the most recent accelerometer measurements.
  * Accelerometer measurements are written to these registers at the Sample Rate
@@ -1871,10 +1881,10 @@ int16_t Mpu6050::getAccelerationZ ()
  * @return Temperature reading in 16-bit 2's complement format
  * @see MPU6050_RA_TEMP_OUT_H
  */
-int16_t Mpu6050::getTemperature ()
+float Mpu6050::getTemperature ()
 {
         i2c->read (devAddr, MPU6050_RA_TEMP_OUT_H, buffer, 2);
-        return (((int16_t)buffer[0]) << 8) | buffer[1];
+        return ((((int16_t)buffer[0]) << 8) | buffer[1]) / 340 + 36.53;
 }
 
 // GYRO_*OUT_* registers
@@ -2781,7 +2791,7 @@ uint8_t Mpu6050::getDeviceID ()
  */
 void Mpu6050::setDeviceID (uint8_t id) { writeBits (devAddr, MPU6050_RA_WHO_AM_I, MPU6050_WHO_AM_I_BIT, MPU6050_WHO_AM_I_LENGTH, id); }
 
-// ======== UNDOCUMENTED/DMP REGISTERS/METHODS ========
+        // ======== UNDOCUMENTED/DMP REGISTERS/METHODS ========
 
 #if defined(MPU6050_INCLUDE_DMP_MOTIONAPPS20) || defined(MPU6050_INCLUDE_DMP_MOTIONAPPS41)
 

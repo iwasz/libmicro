@@ -12,14 +12,66 @@
 
 /*****************************************************************************/
 
-Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin) : spi (spi), cePin (cePin), irqPin (irqPin), configRegisterCopy (0x08)
+Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
+    : spi (spi), cePin (cePin), irqPin (irqPin), configRegisterCopy (0x08), callback (nullptr)
 {
         if (irqPin) {
                 irqPin->setOnToggle ([this] {
-                        writeRegister (Nrf24L01P::STATUS, RX_DR);
+                        uint8_t s = getStatus ();
 
-                        if (onData) {
-                                onData ();
+                        /*
+                         * From the datasheet:
+                         * The RX_DR IRQ is asserted by a new packet arrival event. The procedure for handling this interrupt should
+                         * be: 1) read payload through SPI, 2) clear RX_DR IRQ, 3) read FIFO_STATUS to check if there are more
+                         * payloads available in RX FIFO, 4) if there are more data in RX FIFO, repeat from step 1).
+                         *
+                         * Note: Always check if the packet width reported is 32 bytes or shorter when using the R_RX_PL_WID command. If its
+                         * width is longer than 32 bytes then the packet contains errors and must be discarded. Discard the packet by using the
+                         * Flush_RX command.
+                         */
+                        if (s & RX_DR) {
+                                // readFifostatus
+                                while (!(readRegister (Nrf24L01P::FIFO_STATUS) & RX_EMPTY)) {
+                                        size_t payloadLen = getPayloadLength ();
+
+                                        if (payloadLen > 32 || payloadLen <= 0) {
+                                                flushRx ();
+                                                writeRegister (Nrf24L01P::STATUS, RX_DR);
+                                                return;
+                                        }
+
+                                        uint8_t *out = receive (bufferRx, payloadLen);
+                                        writeRegister (Nrf24L01P::STATUS, RX_DR);
+
+                                        if (callback) {
+                                                callback->onRx (out, payloadLen);
+                                        }
+                                }
+                        }
+
+                        /*
+                         * Data Sent TX FIFO interrupt. Asserted when packet transmitted on TX. If AUTO_ACK is activated, this bit is set high
+                         * only when ACK is received. Write 1 to clear bit.
+                         */
+                        if (s & TX_DS) {
+                                // TODO to się wykonuje nawet gdy jest niepotrzebne :(
+                                if (callback) {
+                                        callback->onTx ();
+                                }
+
+                                writeRegister (Nrf24L01P::STATUS, TX_DS);
+                        }
+
+                        /*
+                         * Maximum number of TX retransmits interrupt Write 1 to clear bit. If MAX_RT is asserted it must be cleared to enable
+                         * further communication.
+                         */
+                        if (s & MAX_RT) {
+                                if (callback) {
+                                        callback->onMaxRt ();
+                                }
+
+                                writeRegister (Nrf24L01P::STATUS, MAX_RT);
                         }
                 });
         }
@@ -106,12 +158,16 @@ void Nrf24L01P::powerUp (Mode mode)
         writeRegister (STATUS, 0x70);
 }
 
+/*****************************************************************************/
+
 void Nrf24L01P::flushTx ()
 {
         uint8_t bufTx = FLUSH_TX;
         uint8_t bufRx;
         spi->transmit (&bufTx, &bufRx, 1);
 }
+
+/*****************************************************************************/
 
 void Nrf24L01P::flushRx ()
 {
@@ -122,16 +178,47 @@ void Nrf24L01P::flushRx ()
 
 /*****************************************************************************/
 
-void Nrf24L01P::transmit (uint8_t *data, size_t len)
+void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 {
+        // TODO zoptymalizować, te metody są bez sensu, memcpy jest bez sensu, przeciez można wysyłać bezpośrednio data i nie potrzeba dummyRx
         setCe (true);
         uint8_t dummy[33];
         uint8_t dummyRx[33];
-        dummy[0] = W_TX_PAYLOAD;
+
+        if (noAck) {
+                dummy[0] = W_TX_PAYLOAD_NO_ACK;
+        }
+        else {
+                dummy[0] = W_TX_PAYLOAD;
+        }
+
         memcpy (dummy + 1, data, len);
         spi->transmit (dummy, dummyRx, len + 1);
-        HAL_Delay (1);
         setCe (false);
+}
+
+/*****************************************************************************/
+
+void Nrf24L01P::setAckPayload (uint8_t forPipe, uint8_t *data, size_t len)
+{
+        // TODO zoptymalizować, te metody są bez sensu, memcpy jest bez sensu, przeciez można wysyłać bezpośrednio data i nie potrzeba dummyRx
+        //        setCe (true);
+        uint8_t dummy[33];
+        uint8_t dummyRx[33];
+        dummy[0] = W_ACK_PAYLOAD | forPipe;
+        memcpy (dummy + 1, data, len);
+        spi->transmit (dummy, dummyRx, len + 1);
+        //        setCe (false);
+}
+
+/*****************************************************************************/
+
+size_t Nrf24L01P::getPayloadLength () const
+{
+        uint8_t in[2], out[2];
+        in[0] = R_RX_PL_WID;
+        spi->transmit (in, out, 2);
+        return out[1];
 }
 
 /*****************************************************************************/

@@ -617,13 +617,14 @@ public:
         // ACCEL_*OUT_* registers
         void getMotion9 (int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz, int16_t *mx, int16_t *my, int16_t *mz);
         void getMotion6 (int16_t *ax, int16_t *ay, int16_t *az, int16_t *gx, int16_t *gy, int16_t *gz);
+        void getMotion6 (float *ax, float *ay, float *az, float *gx, float *gy, float *gz);
         void getAcceleration (int16_t *x, int16_t *y, int16_t *z);
         int16_t getAccelerationX ();
         int16_t getAccelerationY ();
         int16_t getAccelerationZ ();
 
         // TEMP_OUT_* registers
-        int16_t getTemperature ();
+        float getTemperature();
 
         // GYRO_*OUT_* registers
         void getRotation (int16_t *x, int16_t *y, int16_t *z);
