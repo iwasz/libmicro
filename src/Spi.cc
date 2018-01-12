@@ -48,7 +48,7 @@ void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
         setNss (true);
 }
 
-//void Spi::transmit1 (uint8_t const *txData, uint16_t size)
+// void Spi::transmit1 (uint8_t const *txData, uint16_t size)
 //{
 //        setNss (false);
 
@@ -111,14 +111,8 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
                 if (rxRemainig && (spi->SR & SPI_FLAG_RXNE)) {
 
                         if (rxRemainig > 1) {
-                                // TODO nie umiem bez odczytywania.
-                                uint16_t tmp = spi->DR;
-
-                                if (rxData) {
-                                        *((uint16_t *)rxData) = tmp;
-                                        rxData += sizeof (uint16_t);
-                                }
-
+                                *((uint16_t *)rxData) = spi->DR;
+                                rxData += sizeof (uint16_t);
                                 rxRemainig -= 2;
 
                                 if (rxRemainig <= 1) {
@@ -127,11 +121,7 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
                                 }
                         }
                         else {
-                                uint8_t tmp = *(__IO uint8_t *)&spi->DR;
-
-                                if (rxData) {
-                                        (*(uint8_t *)rxData++) = tmp;
-                                }
+                                (*(uint8_t *)rxData++) = *(__IO uint8_t *)&spi->DR;
                                 --rxRemainig;
                         }
 
@@ -140,7 +130,7 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
                 }
 
                 for (size_t i = 0; i < bogoDelay; ++i) {
-                        __asm ("nop");
+                        __asm("nop");
                 }
         }
 
