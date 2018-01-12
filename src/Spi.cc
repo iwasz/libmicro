@@ -61,7 +61,7 @@ void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
 
 /*****************************************************************************/
 
-void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
+void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay)
 {
         SPI_TypeDef *spi = spiHandle.Instance;
 
@@ -105,9 +105,6 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
                                 // Next Data is a reception (Rx). Tx not allowed
                                 txAllowed = false;
                         }
-                        else {
-                                HAL_Delay(1);
-                        }
                 }
 
                 // Receive block.  When RXNE flag set, it means that there is new data.
@@ -140,6 +137,10 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 
                         // Next Data is a Transmission (Tx). Tx is allowed
                         txAllowed = true;
+                }
+
+                for (size_t i = 0; i < bogoDelay; ++i) {
+                        __asm ("nop");
                 }
         }
 

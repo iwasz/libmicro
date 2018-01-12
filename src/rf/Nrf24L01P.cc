@@ -114,7 +114,7 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
         //        uint8_t dummy[6];
         spi->setNss (false);
         spi->transmit8 (reg | W_REGISTER);
-        spi->transmit8 (data, len /*, dummy*/);
+        spi->transmit8 (data, len, nullptr, 10);
         spi->setNss (true);
 }
 
@@ -181,7 +181,7 @@ void Nrf24L01P::reuseTx ()
 uint8_t Nrf24L01P::nop ()
 {
         spi->setNss (false);
-        uint8_t r = spi->transmit8 (REUSE_TX_PL);
+        uint8_t r = spi->transmit8 (NOP);
         spi->setNss (true);
         return r;
 }
@@ -200,7 +200,7 @@ void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
                 spi->transmit8 (W_TX_PAYLOAD);
         }
 
-        spi->transmit8 (data, len);
+        spi->transmit8 (data, len, nullptr, 10);
         spi->setNss (true);
         setCe (false);
 }
@@ -217,16 +217,23 @@ void Nrf24L01P::setAckPayload (uint8_t forPipe, uint8_t *data, size_t len)
         memcpy (dummy + 1, data, len);
         spi->transmit (dummy, dummyRx, len + 1);
         //        setCe (false);
+
+        // TODO To nie działa nie wiedzieć czemu!!!!
+        //        spi->setNss (false);
+        //        spi->transmit8 (W_ACK_PAYLOAD | forPipe);
+        //        spi->transmit8 (data, len, nullptr, 10);
+        //        spi->setNss (true);
 }
 
 /*****************************************************************************/
 
 size_t Nrf24L01P::getPayloadLength () const
 {
-        uint8_t in[2], out[2];
-        in[0] = R_RX_PL_WID;
-        spi->transmit (in, out, 2);
-        return out[1];
+        spi->setNss (false);
+        spi->transmit8 (R_RX_PL_WID);
+        uint8_t r = spi->transmit8 (NOP);
+        spi->setNss (true);
+        return r;
 }
 
 /*****************************************************************************/
@@ -241,6 +248,12 @@ uint8_t *Nrf24L01P::receive (uint8_t *data, size_t len)
         // TODO źle! W ten sposób wrzucamy do data len+1, a on będzie miał przecież tylk len!
         spi->transmit (tmp, data, len + 1);
         return data + 1;
+
+        //        spi->setNss (false);
+        //        spi->transmit8 (R_RX_PAYLOAD);
+        //        // spi->receive (data, len);
+        //        spi->setNss (true);
+        //        return data;
 }
 
 /*****************************************************************************/
