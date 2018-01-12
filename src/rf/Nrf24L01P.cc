@@ -114,7 +114,7 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
         uint8_t dummy[6];
         spi->setNss (false);
         spi->transmit8 (reg | W_REGISTER);
-        spi->transmit8 (data, len , dummy);
+        spi->transmit8 (data, len /*, dummy*/);
         spi->setNss (true);
 }
 
