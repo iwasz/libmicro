@@ -48,16 +48,16 @@ void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
         setNss (true);
 }
 
-void Spi::transmit1 (uint8_t const *txData, uint16_t size)
-{
-        setNss (false);
+//void Spi::transmit1 (uint8_t const *txData, uint16_t size)
+//{
+//        setNss (false);
 
-        if (HAL_SPI_Transmit (&spiHandle, const_cast<uint8_t *> (txData), size, 500) != HAL_OK) {
-                Error_Handler ();
-        }
+//        if (HAL_SPI_Transmit (&spiHandle, const_cast<uint8_t *> (txData), size, 500) != HAL_OK) {
+//                Error_Handler ();
+//        }
 
-        setNss (true);
-}
+//        setNss (true);
+//}
 
 /*****************************************************************************/
 
@@ -65,8 +65,10 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 {
         SPI_TypeDef *spi = spiHandle.Instance;
 
-        size_t txRemainig = /*(!txData) ? (0) :*/ (size);
-        size_t rxRemainig = /*(!rxData) ? (0) :*/ (size);
+        size_t txRemainig = (!txData) ? (0) : (size);
+        size_t rxRemainig = (!rxData) ? (0) : (size);
+        // size_t txRemainig = size;
+        // size_t rxRemainig = size;
 
         if (rxRemainig > 1) {
                 // set fiforxthreshold according the reception data length: 16bit
@@ -88,6 +90,7 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 
                 // Sending part. TXE true means, old data has been sent, and we can push more bytes.
                 if (txAllowed && txRemainig && (spi->SR & SPI_FLAG_TXE)) {
+
                         if (txRemainig > 1) {
                                 spi->DR = *((uint16_t *)txData);
                                 txData += sizeof (uint16_t);
@@ -101,6 +104,9 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
                         if (rxRemainig) {
                                 // Next Data is a reception (Rx). Tx not allowed
                                 txAllowed = false;
+                        }
+                        else {
+                                HAL_Delay(1);
                         }
                 }
 
@@ -138,12 +144,14 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
         }
 
         // In 2way mode (I don't use 1way modes), when we haven't read, the OVR will  occur. So we clear it.
-        //        if (!rxData) {
-        //                CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
-        //                volatile uint16_t tmp = spi->DR;
-        //                tmp = spi->DR;
-        //                __HAL_SPI_CLEAR_OVRFLAG (&spiHandle);
-        //        }
+        if (!rxData) {
+                CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
+                volatile uint16_t tmp = spi->DR;
+                tmp = spi->SR;
+                tmp = spi->DR;
+                tmp = spi->SR;
+                __HAL_SPI_CLEAR_OVRFLAG (&spiHandle);
+        }
 }
 
 /*****************************************************************************/
