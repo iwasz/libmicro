@@ -115,7 +115,10 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
                 }
         }
 
-        // setNss (true);
+        // In 2way mode (I don't use 1way modes), when we haven't read, the OVR will  occur. So we clear it.
+        if (!rxData) {
+                __HAL_SPI_CLEAR_OVRFLAG (&spiHandle);
+        }
 }
 
 /*****************************************************************************/

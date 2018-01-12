@@ -101,7 +101,7 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t value)
 
 void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
 {
-        //        uint8_t dummy[6];
+        uint8_t dummy[6];
         //        uint8_t buf[6];
 
         //        spi->transmit8 (reg | W_REGISTER);
@@ -112,7 +112,7 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
 
         spi->setNss (false);
         spi->transmit8 (reg | W_REGISTER);
-        spi->transmit8 (data, len);
+        spi->transmit8 (data, len, dummy);
         spi->setNss (true);
 }
 
@@ -190,18 +190,24 @@ void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 {
         // TODO zoptymalizować, te metody są bez sensu, memcpy jest bez sensu, przeciez można wysyłać bezpośrednio data i nie potrzeba dummyRx
         setCe (true);
+//        spi->setNss (false);
+
         uint8_t dummy[33];
         uint8_t dummyRx[33];
 
         if (noAck) {
-                dummy[0] = W_TX_PAYLOAD_NO_ACK;
+                 dummy[0] = W_TX_PAYLOAD_NO_ACK;
+//                spi->transmit8 (W_TX_PAYLOAD_NO_ACK);
         }
         else {
-                dummy[0] = W_TX_PAYLOAD;
+                 dummy[0] = W_TX_PAYLOAD;
+//                spi->transmit8 (W_TX_PAYLOAD);
         }
 
-        memcpy (dummy + 1, data, len);
-        spi->transmit (dummy, dummyRx, len + 1);
+         memcpy (dummy + 1, data, len);
+         spi->transmit (dummy, dummyRx, len + 1);
+//        spi->transmit8 (data, len);
+//        spi->setNss (true);
         setCe (false);
 }
 
