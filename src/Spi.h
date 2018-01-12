@@ -24,6 +24,7 @@ public:
 
         // Obsolete if transmit8 prove to be ok.
         void transmit (uint8_t const *pTxData, uint8_t *pRxData, uint16_t Size);
+        void transmit1 (uint8_t const *pTxData, uint16_t Size);
 
         /**
          * @brief Transmit and receive at the same time in 8 bits mode.

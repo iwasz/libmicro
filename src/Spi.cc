@@ -48,17 +48,25 @@ void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
         setNss (true);
 }
 
+void Spi::transmit1 (uint8_t const *txData, uint16_t size)
+{
+        setNss (false);
+
+        if (HAL_SPI_Transmit (&spiHandle, const_cast<uint8_t *> (txData), size, 500) != HAL_OK) {
+                Error_Handler ();
+        }
+
+        setNss (true);
+}
+
 /*****************************************************************************/
 
 void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 {
         SPI_TypeDef *spi = spiHandle.Instance;
 
-        // Doesn't work without it
-        __HAL_SPI_ENABLE (&spiHandle);
-
-        size_t txRemainig = (!txData) ? (0) : (size);
-        size_t rxRemainig = (!rxData) ? (0) : (size);
+        size_t txRemainig = /*(!txData) ? (0) :*/ (size);
+        size_t rxRemainig = /*(!rxData) ? (0) :*/ (size);
 
         if (rxRemainig > 1) {
                 // set fiforxthreshold according the reception data length: 16bit
@@ -71,11 +79,15 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 
         bool txAllowed = true;
 
+        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+                __HAL_SPI_ENABLE (&spiHandle);
+        }
+
         // Based on HAL code.
         while (txRemainig || rxRemainig) {
 
                 // Sending part. TXE true means, old data has been sent, and we can push more bytes.
-                if (txAllowed && txRemainig && spi->SR & SPI_FLAG_TXE) {
+                if (txAllowed && txRemainig && (spi->SR & SPI_FLAG_TXE)) {
                         if (txRemainig > 1) {
                                 spi->DR = *((uint16_t *)txData);
                                 txData += sizeof (uint16_t);
@@ -93,11 +105,17 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
                 }
 
                 // Receive block.  When RXNE flag set, it means that there is new data.
-                if (rxRemainig && spi->SR & SPI_FLAG_RXNE) {
+                if (rxRemainig && (spi->SR & SPI_FLAG_RXNE)) {
 
                         if (rxRemainig > 1) {
-                                *((uint16_t *)rxData) = spi->DR;
-                                rxData += sizeof (uint16_t);
+                                // TODO nie umiem bez odczytywania.
+                                uint16_t tmp = spi->DR;
+
+                                if (rxData) {
+                                        *((uint16_t *)rxData) = tmp;
+                                        rxData += sizeof (uint16_t);
+                                }
+
                                 rxRemainig -= 2;
 
                                 if (rxRemainig <= 1) {
@@ -106,7 +124,11 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
                                 }
                         }
                         else {
-                                (*(uint8_t *)rxData++) = *(__IO uint8_t *)&spi->DR;
+                                uint8_t tmp = *(__IO uint8_t *)&spi->DR;
+
+                                if (rxData) {
+                                        (*(uint8_t *)rxData++) = tmp;
+                                }
                                 --rxRemainig;
                         }
 
@@ -116,20 +138,25 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData)
         }
 
         // In 2way mode (I don't use 1way modes), when we haven't read, the OVR will  occur. So we clear it.
-        if (!rxData) {
-                __HAL_SPI_CLEAR_OVRFLAG (&spiHandle);
-        }
+        //        if (!rxData) {
+        //                CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
+        //                volatile uint16_t tmp = spi->DR;
+        //                tmp = spi->DR;
+        //                __HAL_SPI_CLEAR_OVRFLAG (&spiHandle);
+        //        }
 }
 
 /*****************************************************************************/
 
 uint8_t Spi::transmit8 (uint8_t word)
 {
-        // Doesn't work without it
-        __HAL_SPI_ENABLE (&spiHandle);
-
         // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
         SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+
+        // Doesn't work without it
+        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+                __HAL_SPI_ENABLE (&spiHandle);
+        }
 
         // Wait for tx buffer to be empty
         while (!(spiHandle.Instance->SR & SPI_FLAG_TXE))
