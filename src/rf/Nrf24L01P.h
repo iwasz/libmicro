@@ -49,9 +49,39 @@ public:
  * allows for bidirectional communication).
  *
  * Examples:
- * - Simple example (static payload length, no auto ack, 1 pipe).
- * - Static payload length, autoack. Ack without payload.
- * - Dynamic payload length, auto-ack, ack with payload (dynamic payload legth is required for ACK with payload to work).
+ *
+ *   // Simplest : no auto-ack, static payloads
+ *   Nrf24L01P nrfTx (&spiTx, &ceTx, &irqTx);
+ *   nrfTx.setPayloadLength (0, PACKET_SIZE);
+ *   nrfTx.setEnableDataPipe (Nrf24L01P::ERX_P0);
+ *   nrfTx.powerUp (Nrf24L01P::TX);
+ *
+ *   // Still no auto-ack, but dynamic payloads
+ *   Nrf24L01P nrfTx (&spiTx, &ceTx, &irqTx);
+ *   nrfTx.setEnableDataPipe (Nrf24L01P::ERX_P0);
+ *   nrfTx.setAutoRetransmit (Nrf24L01P::WAIT_1000_US, Nrf24L01P::RETRANSMIT_15);
+ *   nrfTx.setEnableDynamicPayload (Nrf24L01P::DPL_P0);
+ *   nrfTx.setFeature (Nrf24L01P::EN_DPL);
+ *   nrfTx.powerUp (Nrf24L01P::TX);
+ *
+ *   // Dynamic payloads, and autoack (ack without payload)
+ *   Nrf24L01P nrfTx (&spiTx, &ceTx, &irqTx);
+ *   nrfTx.setAutoAck (Nrf24L01P::ENAA_P0);
+ *   nrfTx.setEnableDataPipe (Nrf24L01P::ERX_P0);
+ *   nrfTx.setAutoRetransmit (Nrf24L01P::WAIT_1000_US, Nrf24L01P::RETRANSMIT_15);
+ *   nrfTx.setPayloadLength (0, PACKET_SIZE);
+ *   nrfTx.powerUp (Nrf24L01P::TX);
+ *
+ *   // Dynamic pauloads and auto ack with dynamic payload (dynamic payload obligatory for auto-ack with payloads)
+ *   Nrf24L01P nrfTx (&spiTx, &ceTx, &irqTx);
+ *   nrfTx.setAutoAck (Nrf24L01P::ENAA_P0);
+ *   nrfTx.setEnableDataPipe (Nrf24L01P::ERX_P0);
+ *   nrfTx.setAutoRetransmit (Nrf24L01P::WAIT_1000_US, Nrf24L01P::RETRANSMIT_15);
+ *   nrfTx.setEnableDynamicPayload (Nrf24L01P::DPL_P0);
+ *   nrfTx.setFeature (Nrf24L01P::EN_ACK_PAY | Nrf24L01P::EN_DPL);
+ *   nrfTx.powerUp (Nrf24L01P::TX);
+ *   // ...
+ *   nrfRx.setAckPayload (0, ackPayload, 3);
  */
 class Nrf24L01P {
 public:
@@ -242,7 +272,7 @@ public:
         void poorMansScanner (int tries);
 
         /*****************************************************************************/
-        /* Commands. TODO implement all.                                             */
+        /* Commands.                                                                 */
         /*****************************************************************************/
 
         /**
@@ -276,9 +306,20 @@ public:
          * @brief Read RX payload width for the top R_RX_PAYLOAD in the RX FIFO. According to the datasheet (as far as I understood) this feature
          * only works if dynamic payload length is turned on, but my experiments show, that it works for static payloads lengths also, which is
          * very convenient! Note: Flush RX FIFO if the read value is larger than 32 bytes.
-         * @return
          */
         size_t getPayloadLength () const;
+
+        /**
+         * Used for a PTX device. Reuse last transmitted payload. TX payload reuse is active until W_TX_PAYLOAD or FLUSH TX is executed. TX
+         * payload reuse must not be activated or deacti- vated during package transmission.
+         *
+         * I've never used it personally but I think this is useful if you don't need to send anything, but you want to receive ACKs with
+         * payloads. Using this method you can avoid transfering data to TX FIFO in vain.
+         */
+        void reuseTx ();
+
+        /// No Operation. Might be used to read the STATUS register.
+        uint8_t nop ();
 
 private:
         void writeRegister (uint8_t reg, uint8_t value);

@@ -178,6 +178,25 @@ void Nrf24L01P::flushRx ()
 
 /*****************************************************************************/
 
+void Nrf24L01P::reuseTx ()
+{
+        uint8_t bufTx = REUSE_TX_PL;
+        uint8_t bufRx;
+        spi->transmit (&bufTx, &bufRx, 1);
+}
+
+/*****************************************************************************/
+
+uint8_t Nrf24L01P::nop ()
+{
+        uint8_t bufTx = NOP;
+        uint8_t bufRx;
+        spi->transmit (&bufTx, &bufRx, 1);
+        return bufRx;
+}
+
+/*****************************************************************************/
+
 void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 {
         // TODO zoptymalizować, te metody są bez sensu, memcpy jest bez sensu, przeciez można wysyłać bezpośrednio data i nie potrzeba dummyRx
