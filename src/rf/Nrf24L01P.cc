@@ -91,54 +91,35 @@ void Nrf24L01P::setConfig (uint8_t maskIrqSource, bool crcEnable, CrcLength crcL
 
 void Nrf24L01P::writeRegister (uint8_t reg, uint8_t value)
 {
-        //        // TODO delete this
-        //        uint8_t dummy[2];
-        //        uint8_t buf[2];
-        //        buf[0] = reg | W_REGISTER;
-        //        buf[1] = value;
-        //        spi->transmit (buf, dummy, 2);
-
-        // TODO use 2 spi->trasmit calls. First with reg-address, and second with value.
-
         spi->setNss (false);
         spi->transmit8 (reg | W_REGISTER);
         spi->transmit8 (value);
         spi->setNss (true);
 }
 
-// void Nrf24L01P::writeCommand (uint8_t command, uint8_t *data, uint8_t len)
-//{
-//        uint8_t dummy[2];
-//        uint8_t buf[2];
-//        buf[0] = command;
-//        buf[1] = value;
-//        spi->transmit (buf, dummy, 2);
-
-//        // TODO use 2 spi->trasmit calls. First with reg-address, and second with value.
-//}
-
 /*****************************************************************************/
 
 void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
 {
-        uint8_t dummy[6];
-        uint8_t buf[6];
-        buf[0] = reg | W_REGISTER;
-        memcpy (buf + 1, data, len);
-        spi->transmit (buf, dummy, len + 1);
+        //        uint8_t dummy[6];
+        //        uint8_t buf[6];
+
+        //        spi->transmit8 (reg | W_REGISTER);
+
+        //        buf[0] = reg | W_REGISTER;
+        //        memcpy (buf + 1, data, len);
+        //        spi->transmit (buf, dummy, len + 1);
+
+        spi->setNss (false);
+        spi->transmit8 (reg | W_REGISTER);
+        spi->transmit8 (data, len);
+        spi->setNss (true);
 }
 
 /*****************************************************************************/
 
 uint8_t Nrf24L01P::readRegister (uint8_t reg) const
 {
-        //        uint8_t bufRx[2];
-        //        uint8_t bufTx[2];
-        //        bufTx[0] = reg | R_REGISTER;
-        //        bufTx[1] = NOP;
-        //        spi->transmit (bufTx, bufRx, 2);
-        //        return bufRx[1];
-
         spi->setNss (false);
         spi->transmit8 (reg | R_REGISTER);
         uint8_t ret = spi->transmit8 (NOP);
@@ -159,12 +140,8 @@ void Nrf24L01P::powerUp (Mode mode)
         }
 
         // Clear FIFOS
-        uint8_t bufTx = FLUSH_TX;
-        uint8_t bufRx;
-        spi->transmit (&bufTx, &bufRx, 1);
-
-        bufTx = FLUSH_RX;
-        spi->transmit (&bufTx, &bufRx, 1);
+        flushTx ();
+        flushRx ();
 
         // Clear IRQS
         writeRegister (STATUS, 0x70);
@@ -174,37 +151,37 @@ void Nrf24L01P::powerUp (Mode mode)
 
 void Nrf24L01P::flushTx ()
 {
-        uint8_t bufTx = FLUSH_TX;
-        uint8_t bufRx;
-        spi->transmit (&bufTx, &bufRx, 1);
+        spi->setNss (false);
+        spi->transmit8 (FLUSH_TX);
+        spi->setNss (true);
 }
 
 /*****************************************************************************/
 
 void Nrf24L01P::flushRx ()
 {
-        uint8_t bufTx = FLUSH_RX;
-        uint8_t bufRx;
-        spi->transmit (&bufTx, &bufRx, 1);
+        spi->setNss (false);
+        spi->transmit8 (FLUSH_RX);
+        spi->setNss (true);
 }
 
 /*****************************************************************************/
 
 void Nrf24L01P::reuseTx ()
 {
-        uint8_t bufTx = REUSE_TX_PL;
-        uint8_t bufRx;
-        spi->transmit (&bufTx, &bufRx, 1);
+        spi->setNss (false);
+        spi->transmit8 (REUSE_TX_PL);
+        spi->setNss (true);
 }
 
 /*****************************************************************************/
 
 uint8_t Nrf24L01P::nop ()
 {
-        uint8_t bufTx = NOP;
-        uint8_t bufRx;
-        spi->transmit (&bufTx, &bufRx, 1);
-        return bufRx;
+        spi->setNss (false);
+        uint8_t r = spi->transmit8 (REUSE_TX_PL);
+        spi->setNss (true);
+        return r;
 }
 
 /*****************************************************************************/
