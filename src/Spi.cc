@@ -50,14 +50,14 @@ void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
 
 /*****************************************************************************/
 
-void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay)
+void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay, bool dataPacking)
 {
         SPI_TypeDef *spi = spiHandle.Instance;
 
         size_t txRemainig = size;
         size_t rxRemainig = (!rxData) ? (0) : (size);
 
-        if (rxRemainig > 1) {
+        if (dataPacking && rxRemainig > 1) {
                 // set fiforxthreshold according the reception data length: 16bit
                 CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
         }
@@ -78,7 +78,7 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
                 // Sending part. TXE true means, old data has been sent, and we can push more bytes.
                 if (txAllowed && txRemainig && (spi->SR & SPI_FLAG_TXE)) {
 
-                        if (txRemainig > 1) {
+                        if (dataPacking && txRemainig > 1) {
                                 spi->DR = *((uint16_t *)txData);
                                 txData += sizeof (uint16_t);
                                 txRemainig -= 2;
@@ -97,7 +97,7 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
                 // Receive block.  When RXNE flag set, it means that there is new data.
                 if (rxRemainig && (spi->SR & SPI_FLAG_RXNE)) {
 
-                        if (rxRemainig > 1) {
+                        if (dataPacking && rxRemainig > 1) {
                                 *((uint16_t *)rxData) = spi->DR;
                                 rxData += sizeof (uint16_t);
                                 rxRemainig -= 2;
@@ -123,9 +123,13 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
 
         // In 2way mode (I don't use 1way modes), when we haven't read, the OVR will  occur. So we clear it.
         if (!rxData) {
-                CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
-                volatile uint16_t tmp = spi->DR;
-                tmp = spi->DR;
+                SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
+                volatile uint16_t tmp;
+
+                while (spi->SR & SPI_FLAG_RXNE) {
+                        tmp = *(__IO uint8_t *)&spi->DR;
+                }
+
                 tmp = spi->SR;
                 (void)tmp;
         }
@@ -201,9 +205,6 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
 
 uint8_t Spi::transmit8 (uint8_t word)
 {
-        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
-        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
-
         // Doesn't work without it
         if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
                 __HAL_SPI_ENABLE (&spiHandle);
@@ -214,6 +215,9 @@ uint8_t Spi::transmit8 (uint8_t word)
                 ;
 
         *(__IO uint8_t *)&spiHandle.Instance->DR = word;
+
+        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
+        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
 
         while (!(spiHandle.Instance->SR & SPI_FLAG_RXNE))
                 ;

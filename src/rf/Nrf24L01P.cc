@@ -18,6 +18,8 @@ Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
         if (irqPin) {
                 irqPin->setOnToggle ([this] {
                         uint8_t s = getStatus ();
+                        Debug::singleton ()->print (s);
+                        Debug::singleton ()->print ("\n");
 
                         /*
                          * From the datasheet:
@@ -30,7 +32,7 @@ Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
                          * Flush_RX command.
                          */
                         if (s & RX_DR) {
-                                // readFifostatus
+                                // readFifostatus TODO za pierwszm razme nie powinniśmy tego czytać. Powinno być do {} while.
                                 while (!(readRegister (Nrf24L01P::FIFO_STATUS) & RX_EMPTY)) {
                                         size_t payloadLen = getPayloadLength ();
 
@@ -182,7 +184,7 @@ void Nrf24L01P::reuseTx ()
 
 /*****************************************************************************/
 
-uint8_t Nrf24L01P::nop ()
+uint8_t Nrf24L01P::nop () const
 {
         spi->setNss (false);
         uint8_t r = spi->transmit8 (NOP);
@@ -225,18 +227,18 @@ void Nrf24L01P::setAckPayload (uint8_t forPipe, uint8_t *data, size_t len)
 //        spi->transmit8 (dummy, len+1, nullptr, 10);
 //        spi->setNss (true);
 #else
-        // TODO To nie działa nie wiedzieć czemu!!!!
-        //        spi->setNss (false);
-        //        spi->transmit8 (W_ACK_PAYLOAD | forPipe);
-        //        spi->transmit8 (data, len, nullptr, 10);
-        //        spi->setNss (true);
-
+        //        // TODO To nie działa nie wiedzieć czemu!!!!
         spi->setNss (false);
         spi->transmit8 (W_ACK_PAYLOAD | forPipe);
-        spi->transmit8 (data[0]);
-        spi->transmit8 (data[1]);
-        spi->transmit8 (data[2]);
+        spi->transmit8 (data, len, nullptr, 10, false);
         spi->setNss (true);
+
+        //        spi->setNss (false);
+        //        spi->transmit8 (W_ACK_PAYLOAD | forPipe);
+        //        spi->transmit8 (data[0]);
+        //        spi->transmit8 (data[1]);
+        //        spi->transmit8 (data[2]);
+        //        spi->setNss (true);
 
 #endif
 }

@@ -230,7 +230,7 @@ public:
         void setDataRate (DataRate dr, Gain g) { writeRegister (RF_SETUP, dr | g); }
 
         enum IrqSource { /*RX_DR = 1 << 6, TX_DS = 1 << 5, MAX_RT = 1 << 4,*/ IRQ_ALL = RX_DR | TX_DS | MAX_RT };
-        uint8_t getStatus () const { return readRegister (STATUS); }
+        uint8_t getStatus () const { return nop (); }
 
         void getObserve (uint8_t *lostPackets, uint8_t *retransmittedPackets) const
         {
@@ -329,9 +329,10 @@ public:
         void reuseTx ();
 
         /// No Operation. Might be used to read the STATUS register.
-        uint8_t nop ();
+        uint8_t nop () const;
 
-private:
+        // TODO private
+public:
         void writeRegister (uint8_t reg, uint8_t value);
         void writeRegister (uint8_t reg, uint8_t const *data, uint8_t len);
         uint8_t readRegister (uint8_t reg) const;
