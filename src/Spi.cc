@@ -123,15 +123,7 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
 
         // In 2way mode (I don't use 1way modes), when we haven't read, the OVR will  occur. So we clear it.
         if (!rxData) {
-                SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
-                volatile uint16_t tmp;
-
-                while (spi->SR & SPI_FLAG_RXNE) {
-                        tmp = *(__IO uint8_t *)&spi->DR;
-                }
-
-                tmp = spi->SR;
-                (void)tmp;
+                clearOvr ();
         }
 }
 /*****************************************************************************/
@@ -251,4 +243,19 @@ void Spi::clkDisable (SPI_HandleTypeDef *spiX)
         }
 
         __HAL_SPI_DISABLE (spiX);
+}
+
+/*****************************************************************************/
+
+void Spi::clearOvr ()
+{
+        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+        volatile uint16_t tmp;
+
+        while (spiHandle.Instance->SR & SPI_FLAG_RXNE) {
+                tmp = *(__IO uint8_t *)&spiHandle.Instance->DR;
+        }
+
+        tmp = spiHandle.Instance->SR;
+        (void)tmp;
 }

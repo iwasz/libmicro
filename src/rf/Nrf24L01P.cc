@@ -18,8 +18,6 @@ Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
         if (irqPin) {
                 irqPin->setOnToggle ([this] {
                         uint8_t s = getStatus ();
-                        Debug::singleton ()->print (s);
-                        Debug::singleton ()->print ("\n");
 
                         /*
                          * From the datasheet:
@@ -107,17 +105,6 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t value)
 
 void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
 {
-        //        uint8_t dummy[6];
-        //        uint8_t buf[6];
-
-        //        spi->transmit8 (reg | W_REGISTER);
-
-        //        buf[0] = reg | W_REGISTER;
-        //        memcpy (buf + 1, data, len);
-        //        //spi->transmit (buf, dummy, len + 1);
-        //        spi->transmit1 (buf, len + 1);
-
-        //        uint8_t dummy[6];
         spi->setNss (false);
         spi->transmit8 (reg | W_REGISTER);
         spi->transmit8 (data, len, nullptr, 10);
@@ -215,32 +202,11 @@ void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 
 void Nrf24L01P::setAckPayload (uint8_t forPipe, uint8_t *data, size_t len)
 {
-#if 0
-        // TODO zoptymalizować, te metody są bez sensu, memcpy jest bez sensu, przeciez można wysyłać bezpośrednio data i nie potrzeba dummyRx
-        uint8_t dummy[33];
-        uint8_t dummyRx[33];
-        dummy[0] = W_ACK_PAYLOAD | forPipe;
-        memcpy (dummy + 1, data, len);
-        spi->transmit (dummy, dummyRx, len + 1);
-//        spi->setNss (false);
-//        spi->transmit8 (W_ACK_PAYLOAD | forPipe);
-//        spi->transmit8 (dummy, len+1, nullptr, 10);
-//        spi->setNss (true);
-#else
-        //        // TODO To nie działa nie wiedzieć czemu!!!!
+
         spi->setNss (false);
         spi->transmit8 (W_ACK_PAYLOAD | forPipe);
-        spi->transmit8 (data, len, nullptr, 10, false);
+        spi->transmit8 (data, len, nullptr, 10);
         spi->setNss (true);
-
-        //        spi->setNss (false);
-        //        spi->transmit8 (W_ACK_PAYLOAD | forPipe);
-        //        spi->transmit8 (data[0]);
-        //        spi->transmit8 (data[1]);
-        //        spi->transmit8 (data[2]);
-        //        spi->setNss (true);
-
-#endif
 }
 
 /*****************************************************************************/

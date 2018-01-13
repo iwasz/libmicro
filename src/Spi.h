@@ -69,6 +69,12 @@ public:
         void setNssGpio (Gpio *n) { nssPin = n; }
         void setNss (bool b) { nssPin->set (b); }
 
+        /**
+         * Clears RX FIFO overflow. Overflow occurs in 2-way communications when you write data to DR register, but you don't read DR. Reading DR
+         * frees RX FIFO.
+         */
+        void clearOvr ();
+
 private:
         SPI_HandleTypeDef spiHandle;
         Gpio *nssPin;
