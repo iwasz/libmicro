@@ -41,6 +41,8 @@ Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
                                         }
 
                                         uint8_t *out = receive (bufferRx, payloadLen);
+
+                                        // Clear status
                                         writeRegister (Nrf24L01P::STATUS, RX_DR);
 
                                         if (callback) {
@@ -60,6 +62,7 @@ Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
                                         callback->onTx ();
                                 }
 
+                                // Clear status
                                 writeRegister (Nrf24L01P::STATUS, TX_DS);
                         }
 
@@ -72,6 +75,7 @@ Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
                                         callback->onMaxRt ();
                                 }
 
+                                // Clear status
                                 writeRegister (Nrf24L01P::STATUS, MAX_RT);
                         }
                 });
@@ -209,20 +213,32 @@ void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 
 void Nrf24L01P::setAckPayload (uint8_t forPipe, uint8_t *data, size_t len)
 {
+#if 0
         // TODO zoptymalizować, te metody są bez sensu, memcpy jest bez sensu, przeciez można wysyłać bezpośrednio data i nie potrzeba dummyRx
-        //        setCe (true);
         uint8_t dummy[33];
         uint8_t dummyRx[33];
         dummy[0] = W_ACK_PAYLOAD | forPipe;
         memcpy (dummy + 1, data, len);
         spi->transmit (dummy, dummyRx, len + 1);
-        //        setCe (false);
-
+//        spi->setNss (false);
+//        spi->transmit8 (W_ACK_PAYLOAD | forPipe);
+//        spi->transmit8 (dummy, len+1, nullptr, 10);
+//        spi->setNss (true);
+#else
         // TODO To nie działa nie wiedzieć czemu!!!!
         //        spi->setNss (false);
         //        spi->transmit8 (W_ACK_PAYLOAD | forPipe);
         //        spi->transmit8 (data, len, nullptr, 10);
         //        spi->setNss (true);
+
+        spi->setNss (false);
+        spi->transmit8 (W_ACK_PAYLOAD | forPipe);
+        spi->transmit8 (data[0]);
+        spi->transmit8 (data[1]);
+        spi->transmit8 (data[2]);
+        spi->setNss (true);
+
+#endif
 }
 
 /*****************************************************************************/
@@ -240,15 +256,6 @@ size_t Nrf24L01P::getPayloadLength () const
 
 uint8_t *Nrf24L01P::receive (uint8_t *data, size_t len)
 {
-        //        static uint8_t tmp[33] = {
-        //                R_RX_PAYLOAD,
-        //                0,
-        //        };
-
-        //        // TODO źle! W ten sposób wrzucamy do data len+1, a on będzie miał przecież tylk len!
-        //        spi->transmit (tmp, data, len + 1);
-        //        return data + 1;
-
         spi->setNss (false);
         spi->transmit8 (R_RX_PAYLOAD);
         spi->receive8 (data, len);
