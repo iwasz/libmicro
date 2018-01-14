@@ -182,10 +182,6 @@ uint8_t Nrf24L01P::nop () const
 
 void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 {
-        Debug::singleton ()->print ("trans ->");
-        Debug::singleton ()->printArray (data, len);
-        Debug::singleton ()->print ("\n");
-
         spi->setNss (false);
 
         if (noAck) {
@@ -197,8 +193,12 @@ void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 
         spi->transmit8 (data, len, nullptr, bogoDelay);
         spi->setNss (true);
+
         setCe (true);
-        HAL_Delay (1);
+
+        for (uint32_t i = 0; i < bogoDelay; ++i)
+                ;
+
         setCe (false);
 }
 
@@ -206,9 +206,6 @@ void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 
 void Nrf24L01P::setAckPayload (uint8_t forPipe, uint8_t *data, size_t len)
 {
-        Debug::singleton ()->print ("ackPay ->");
-        Debug::singleton ()->printArray (data, len);
-        Debug::singleton ()->print ("\n");
 
         spi->setNss (false);
         spi->transmit8 (W_ACK_PAYLOAD | forPipe);
