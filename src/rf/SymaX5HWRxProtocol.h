@@ -26,7 +26,7 @@
  * https://github.com/Suxsem/symaxrx
  * https://github.com/DeviationTX/deviation
  */
-class SymaX5HWRxProtocol {
+class SymaX5HWRxProtocol : public Nrf24L01PCallback {
 public:
         struct RxValues {
                 uint8_t throttle;    // 0...255
@@ -44,8 +44,12 @@ public:
         };
 
         SymaX5HWRxProtocol (Nrf24L01P *n) : nrf (n), state (BINDING), mRfChNum (0), packetNo (0) {}
+        virtual ~SymaX5HWRxProtocol () {}
 
         void onPacket (uint8_t *packet);
+        virtual void onRx (uint8_t *data, size_t len) { onPacket (data); }
+        virtual void onTx () {}
+        virtual void onMaxRt () {}
         void run ();
 
         static constexpr int RX_PACKET_SIZE = 10;

@@ -160,7 +160,7 @@ public:
                 MASK_NO_IRQ = 0
         };
 
-        Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin);
+        Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin, uint32_t bd = 0);
 
         enum CrcLength { CRC_LEN_1 = 0, CRC_LEN_2 = 1 << CRCO };
         void setConfig (uint8_t maskIrqSource, bool crcEnable, CrcLength crcLength);
@@ -331,8 +331,10 @@ public:
         /// No Operation. Might be used to read the STATUS register.
         uint8_t nop () const;
 
-        // TODO private
-public:
+        /// Bogo-delay between bytes sent over SPI.
+        void setBogoDelay (uint32_t b) { bogoDelay = b; }
+
+private:
         void writeRegister (uint8_t reg, uint8_t value);
         void writeRegister (uint8_t reg, uint8_t const *data, uint8_t len);
         uint8_t readRegister (uint8_t reg) const;
@@ -348,6 +350,7 @@ private:
         uint8_t configRegisterCopy;
         Nrf24L01PCallback *callback;
         uint8_t bufferRx[33];
+        uint32_t bogoDelay;
 };
 
 #endif // NRF24L0P_H

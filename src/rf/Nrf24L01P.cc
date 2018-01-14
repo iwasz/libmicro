@@ -12,8 +12,8 @@
 
 /*****************************************************************************/
 
-Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
-    : spi (spi), cePin (cePin), irqPin (irqPin), configRegisterCopy (0x08), callback (nullptr)
+Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin, uint32_t bd)
+    : spi (spi), cePin (cePin), irqPin (irqPin), configRegisterCopy (0x08), callback (nullptr), bogoDelay (bd)
 {
         if (irqPin) {
                 irqPin->setOnToggle ([this] {
@@ -30,7 +30,7 @@ Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin)
                          * Flush_RX command.
                          */
                         if (s & RX_DR) {
-                                // readFifostatus TODO za pierwszm razme nie powinniśmy tego czytać. Powinno być do {} while.
+                                //  TODO za pierwszm razme nie powinniśmy tego czytać. Powinno być do {} while.
                                 while (!(readRegister (Nrf24L01P::FIFO_STATUS) & RX_EMPTY)) {
                                         size_t payloadLen = getPayloadLength ();
 
@@ -107,7 +107,7 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
 {
         spi->setNss (false);
         spi->transmit8 (reg | W_REGISTER);
-        spi->transmit8 (data, len, nullptr, 10);
+        spi->transmit8 (data, len, nullptr, bogoDelay);
         spi->setNss (true);
 }
 
@@ -183,17 +183,25 @@ uint8_t Nrf24L01P::nop () const
 
 void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
 {
+        //        setCe (true);
+        //        spi->setNss (false);
+
+        //        if (noAck) {
+        //                spi->transmit8 (W_TX_PAYLOAD_NO_ACK);
+        //        }
+        //        else {
+        //                spi->transmit8 (W_TX_PAYLOAD);
+        //        }
+
+        //        spi->transmit8 (data, len, nullptr, bogoDelay);
+        //        spi->setNss (true);
+        //        setCe (false);
+
         setCe (true);
-        spi->setNss (false);
-
-        if (noAck) {
-                spi->transmit8 (W_TX_PAYLOAD_NO_ACK);
-        }
-        else {
-                spi->transmit8 (W_TX_PAYLOAD);
-        }
-
-        spi->transmit8 (data, len, nullptr, 10);
+        uint8_t bufTx[33], bufRx[33];
+        bufTx[0] = spi->transmit8 (W_TX_PAYLOAD);
+        memcpy (bufTx + 1, data, len);
+        spi->transmit (bufTx, bufRx, len);
         spi->setNss (true);
         setCe (false);
 }
@@ -205,7 +213,7 @@ void Nrf24L01P::setAckPayload (uint8_t forPipe, uint8_t *data, size_t len)
 
         spi->setNss (false);
         spi->transmit8 (W_ACK_PAYLOAD | forPipe);
-        spi->transmit8 (data, len, nullptr, 10);
+        spi->transmit8 (data, len, nullptr, bogoDelay);
         spi->setNss (true);
 }
 
@@ -226,7 +234,7 @@ uint8_t *Nrf24L01P::receive (uint8_t *data, size_t len)
 {
         spi->setNss (false);
         spi->transmit8 (R_RX_PAYLOAD);
-        spi->receive8 (data, len);
+        spi->receive8 (data, len, bogoDelay);
         spi->setNss (true);
         return data;
 }
