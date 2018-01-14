@@ -92,6 +92,9 @@ public:
  *   nrfTx.powerUp (Nrf24L01P::TX);
  *   // ...
  *   nrfRx.setAckPayload (0, ackPayload, 3);
+ *
+ * Bugs:
+ * - Sometimes I have to reset 2 boards at once. Othewise no communication is established.
  */
 class Nrf24L01P {
 public:
