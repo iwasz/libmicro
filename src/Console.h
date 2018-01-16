@@ -23,7 +23,7 @@ class Console : public ICharacterSink {
 public:
         enum { MAX_RX_BUFFER = 128 };
 
-        Console ();
+        Console (bool echo = true, const char *prompt = "$");
         virtual ~Console () { delete[] rxBuffer; }
 
         /**
@@ -53,6 +53,8 @@ private:
         char *rxBuffer;
         // Collection of lines
         CharacterCircularQueue<256> lineBuffer;
+        const char *prompt;
+        bool echo;
 };
 
 #endif // CONSOLE_H

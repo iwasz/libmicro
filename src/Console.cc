@@ -12,7 +12,10 @@
 
 /*****************************************************************************/
 
-Console::Console () : input (nullptr), output (nullptr), rxBufferPos (0) { rxBuffer = new char[MAX_RX_BUFFER]; }
+Console::Console (bool echo, const char *prompt) : input (nullptr), output (nullptr), rxBufferPos (0), prompt (prompt), echo (echo)
+{
+        rxBuffer = new char[MAX_RX_BUFFER];
+}
 
 /*****************************************************************************/
 
@@ -26,7 +29,10 @@ void Console::setInput (ICharacterInput *i)
 
 void Console::setOutput (ICharacterOutput *o)
 {
-        o->transmit ("$");
+        if (prompt) {
+                o->transmit (prompt);
+        }
+
         output = o;
 }
 
@@ -39,11 +45,15 @@ void Console::onData (char c)
 
                 if (rxBufferPos >= MAX_RX_BUFFER - 2) {
                         // Bell
-                        output->transmit ("\a");
+                        if (echo) {
+                                output->transmit ("\a");
+                        }
                 }
                 else {
                         // Echo
-                        output->transmit (&c, 1);
+                        if (echo) {
+                                output->transmit (&c, 1);
+                        }
                         ++rxBufferPos;
                 }
         }
@@ -56,7 +66,9 @@ void Console::onData (char c)
                 }
 
                 // Echo
-                output->transmit ("\n", 1);
+                if (echo) {
+                        output->transmit ("\n", 1);
+                }
 
                 // Just to be sure, but it has to be configured in NVIC anyway (preemption).
                 input->pause ();
@@ -75,7 +87,10 @@ void Console::run ()
         while (!lineBuffer.isEmpty ()) {
                 line = lineBuffer.front ();
                 onNewLine (line.first, line.second);
-                output->transmit ("$", 1);
+
+                if (prompt) {
+                        output->transmit (prompt);
+                }
 
                 input->pause ();
                 lineBuffer.popFront ();
