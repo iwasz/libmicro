@@ -12,6 +12,7 @@
 #include "Hal.h"
 #include <functional>
 
+extern "C" void TIM2_IRQHandler ();
 extern "C" void TIM3_IRQHandler ();
 
 class HardwareTimer;
@@ -21,6 +22,11 @@ public:
         virtual ~AbstractTimerChannel () {}
 
         void setOnIrq (std::function<void(void)> const &onIrq) { this->onIrq = onIrq; }
+
+        /**
+         * Converts channel number 0, 1, 2 etc to HAL channel number like TIM_CHANNEL_1, TIM_CHANNEL_2 respectively
+         */
+        static int channelNumberToHal (int number);
 
 protected:
         friend class HardwareTimer;
@@ -39,9 +45,23 @@ public:
         virtual void onIrq () = 0;
 };
 
+/**
+ * @brief The InputCaptureChannel class
+ */
+class InputCaptureChannel : public AbstractTimerChannel {
+public:
+        InputCaptureChannel (HardwareTimer *timer, int channelNumber, bool withIrq = false);
+        virtual ~InputCaptureChannel () {}
+};
+
+/**
+ * @brief The HardwareTimer class
+ */
 class HardwareTimer {
 public:
         HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_t period);
+
+        friend class InputCaptureChannel;
 
         /**
          * @brief clkEnable Runs __HAL_RCC_GPIOx_ENABLE for a GPIOx port.
@@ -77,17 +97,19 @@ public:
 
         void setChannel (size_t i, AbstractTimerChannel *ch) { channel[i] = ch; }
 
-
         std::function<void(void)> onUpdate;
 
-private:
+        //        TODO private
+//private:
         TIM_HandleTypeDef htim;
         AbstractTimerChannel *channel[4];
 
         // TODO some ifdefs.
         static HardwareTimer *timer3;
+        static HardwareTimer *timer2;
         static void serviceIrq (HardwareTimer *that);
 
+        friend void TIM2_IRQHandler ();
         friend void TIM3_IRQHandler ();
 };
 

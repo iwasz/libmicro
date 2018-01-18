@@ -7,10 +7,13 @@
  ****************************************************************************/
 
 #include "HardwareTimer.h"
+// TODO delete
+#include "Debug.h"
 #include "ErrorHandler.h"
 #include <cstring>
 
 // TODO dome ifdefs
+HardwareTimer *HardwareTimer::timer2;
 HardwareTimer *HardwareTimer::timer3;
 
 HardwareTimer::HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_t period)
@@ -21,7 +24,10 @@ HardwareTimer::HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_
         channel[3] = nullptr;
 
         // TODO ifdefs
-        if (instance == TIM3) {
+        if (instance == TIM2) {
+                timer2 = this;
+        }
+        else if (instance == TIM3) {
                 timer3 = this;
         }
 
@@ -57,7 +63,11 @@ HardwareTimer::HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_
 
         clkEnable ();
 
-        if (HAL_TIM_OC_Init (&htim) != HAL_OK) {
+        /*
+         * HAL_TIM_Base_Init, HAL_TIM_OC_Init and HAL_TIM_IC_Init are almost the same, the only
+         * difference being the MSP routines which I don't use anyway.
+         */
+        if (HAL_TIM_Base_Init (&htim) != HAL_OK) {
                 Error_Handler ();
         }
 
@@ -174,7 +184,7 @@ void HardwareTimer::serviceIrq (HardwareTimer *that)
         TIM_HandleTypeDef *htim = &that->htim;
         TIM_TypeDef *instance = htim->Instance;
 
-        // Capture compare 1 event
+        // This reacts both to OutputCompare and InputCapture events depending which mode is currently in operation
         // Checks if a) particular interupt is enabled b) if the interrupt is pending
         if (instance->DIER & TIM_IT_CC1 && instance->SR & TIM_FLAG_CC1) {
                 // Clears the interrupt
@@ -199,6 +209,35 @@ void HardwareTimer::serviceIrq (HardwareTimer *that)
                 }
         }
 
+        // TODO get rid of thic copy&pasted code.
+        if (instance->DIER & TIM_IT_CC2 && instance->SR & TIM_FLAG_CC2) {
+                // Clears the interrupt
+                instance->SR = ~TIM_FLAG_CC2;
+
+                //                if (!that->channel[1] || !that->channel[1]->onIrq) {
+                //                        return;
+                //                }
+
+                // Input capture event
+                if (htim->Instance->CCMR1 & TIM_CCMR1_CC2S) {
+                        // HAL_TIM_IC_CaptureCallback (htim);
+                        // that->channel[1]->onIrq ();
+                        TIM2->CNT = 0;
+//                        Debug::singleton ()->print (TIM2->CCR2);
+//                        Debug::singleton ()->print (" ");
+//                        Debug::singleton ()->print (TIM2->CNT);
+//                        Debug::singleton ()->print ("\n");
+                }
+                // Output compare event
+                else {
+                        // HAL_TIM_OC_DelayElapsedCallback (htim);
+                        // HAL_TIM_PWM_PulseFinishedCallback(htim);
+
+                        // TODO dynamic_cast???
+                        that->channel[1]->onIrq ();
+                }
+        }
+
         // Timer update event (UEV)
         if (instance->DIER & TIM_IT_UPDATE && instance->SR & TIM_FLAG_UPDATE) {
                 // Clears the interrupt
@@ -212,5 +251,39 @@ void HardwareTimer::serviceIrq (HardwareTimer *that)
         }
 }
 
+/*****************************************************************************/
+
 // TODO przenieść do plików HAL, zaimplementować dla F0 i F4, zaimplementować inne zegary niż TIM3
 extern "C" void TIM3_IRQHandler () { HardwareTimer::serviceIrq (HardwareTimer::timer3); }
+extern "C" void TIM2_IRQHandler () { HardwareTimer::serviceIrq (HardwareTimer::timer2); }
+
+/*****************************************************************************/
+
+int AbstractTimerChannel::channelNumberToHal (int number) { return number * 4; }
+
+/*****************************************************************************/
+
+InputCaptureChannel::InputCaptureChannel (HardwareTimer *timer, int channelNumber, bool withIrq)
+{
+        // Dotycząca timera
+        TIM_IC_InitTypeDef sICConfig;
+        sICConfig.ICPolarity = TIM_ICPOLARITY_RISING;
+        sICConfig.ICSelection = TIM_ICSELECTION_DIRECTTI;
+        sICConfig.ICFilter = 0;
+        sICConfig.ICPrescaler = TIM_ICPSC_DIV1;
+
+        if (HAL_TIM_IC_ConfigChannel (&timer->htim, &sICConfig, channelNumberToHal (channelNumber)) != HAL_OK) {
+                Error_Handler ();
+        }
+
+        if (withIrq) {
+                if (HAL_TIM_IC_Start_IT (&timer->htim, channelNumberToHal (channelNumber)) != HAL_OK) {
+                        Error_Handler ();
+                }
+        }
+        else {
+                if (HAL_TIM_IC_Start (&timer->htim, channelNumberToHal (channelNumber)) != HAL_OK) {
+                        Error_Handler ();
+                }
+        }
+}
