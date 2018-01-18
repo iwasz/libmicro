@@ -19,6 +19,7 @@ class HardwareTimer;
 
 class AbstractTimerChannel {
 public:
+        AbstractTimerChannel (HardwareTimer *timer, int channelNumber);
         virtual ~AbstractTimerChannel () {}
 
         void setOnIrq (std::function<void(void)> const &onIrq) { this->onIrq = onIrq; }
@@ -61,8 +62,6 @@ class HardwareTimer {
 public:
         HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_t period);
 
-        friend class InputCaptureChannel;
-
         /**
          * @brief clkEnable Runs __HAL_RCC_GPIOx_ENABLE for a GPIOx port.
          * @param gpiox The port.
@@ -85,6 +84,7 @@ public:
          */
         void clkDisable () { clkDisable (&htim); }
 
+        // TODO use 0, 1, 2, 3 raw numers instead of thi enum, to be consistent with channle classes
         enum Channel { CHANNEL1 = 0x01, CHANNEL2 = 0x02, CHANNEL3 = 0x04, CHANNEL4 = 0x08 };
 
         /**
@@ -95,12 +95,13 @@ public:
 
         void setDuty (uint8_t channel, uint32_t duty);
 
+        void setOnUpdate (std::function<void(void)> const &o) { onUpdate = o; }
+
+private:
         void setChannel (size_t i, AbstractTimerChannel *ch) { channel[i] = ch; }
 
+private:
         std::function<void(void)> onUpdate;
-
-        //        TODO private
-//private:
         TIM_HandleTypeDef htim;
         AbstractTimerChannel *channel[4];
 
@@ -111,6 +112,9 @@ public:
 
         friend void TIM2_IRQHandler ();
         friend void TIM3_IRQHandler ();
+        friend class AbstractTimerChannel;
+        friend class OutputCompareChannel;
+        friend class InputCaptureChannel;
 };
 
 #endif // HARDWARETIMER_H

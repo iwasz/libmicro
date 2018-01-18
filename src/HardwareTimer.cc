@@ -184,6 +184,10 @@ void HardwareTimer::serviceIrq (HardwareTimer *that)
         TIM_HandleTypeDef *htim = &that->htim;
         TIM_TypeDef *instance = htim->Instance;
 
+        /*+-------------------------------------------------------------------------+*/
+        /*| Channel 1                                                               |*/
+        /*+-------------------------------------------------------------------------+*/
+
         // This reacts both to OutputCompare and InputCapture events depending which mode is currently in operation
         // Checks if a) particular interupt is enabled b) if the interrupt is pending
         if (instance->DIER & TIM_IT_CC1 && instance->SR & TIM_FLAG_CC1) {
@@ -203,40 +207,70 @@ void HardwareTimer::serviceIrq (HardwareTimer *that)
                 else {
                         // HAL_TIM_OC_DelayElapsedCallback (htim);
                         // HAL_TIM_PWM_PulseFinishedCallback(htim);
-
-                        // TODO dynamic_cast???
                         that->channel[0]->onIrq ();
                 }
         }
 
-        // TODO get rid of thic copy&pasted code.
+        /*+-------------------------------------------------------------------------+*/
+        /*| Channel 2                                                               |*/
+        /*+-------------------------------------------------------------------------+*/
+
         if (instance->DIER & TIM_IT_CC2 && instance->SR & TIM_FLAG_CC2) {
-                // Clears the interrupt
                 instance->SR = ~TIM_FLAG_CC2;
 
-                //                if (!that->channel[1] || !that->channel[1]->onIrq) {
-                //                        return;
-                //                }
-
-                // Input capture event
-                if (htim->Instance->CCMR1 & TIM_CCMR1_CC2S) {
-                        // HAL_TIM_IC_CaptureCallback (htim);
-                        // that->channel[1]->onIrq ();
-                        TIM2->CNT = 0;
-//                        Debug::singleton ()->print (TIM2->CCR2);
-//                        Debug::singleton ()->print (" ");
-//                        Debug::singleton ()->print (TIM2->CNT);
-//                        Debug::singleton ()->print ("\n");
+                if (!that->channel[1] || !that->channel[1]->onIrq) {
+                        return;
                 }
-                // Output compare event
-                else {
-                        // HAL_TIM_OC_DelayElapsedCallback (htim);
-                        // HAL_TIM_PWM_PulseFinishedCallback(htim);
 
-                        // TODO dynamic_cast???
+                if (htim->Instance->CCMR1 & TIM_CCMR1_CC2S) {
+                        that->channel[1]->onIrq ();
+                }
+                else {
                         that->channel[1]->onIrq ();
                 }
         }
+
+        /*+-------------------------------------------------------------------------+*/
+        /*| Channel 3                                                               |*/
+        /*+-------------------------------------------------------------------------+*/
+
+        if (instance->DIER & TIM_IT_CC3 && instance->SR & TIM_FLAG_CC3) {
+                instance->SR = ~TIM_FLAG_CC3;
+
+                if (!that->channel[2] || !that->channel[2]->onIrq) {
+                        return;
+                }
+
+                if (htim->Instance->CCMR2 & TIM_CCMR2_CC3S) {
+                        that->channel[2]->onIrq ();
+                }
+                else {
+                        that->channel[2]->onIrq ();
+                }
+        }
+
+        /*+-------------------------------------------------------------------------+*/
+        /*| Channel 4                                                               |*/
+        /*+-------------------------------------------------------------------------+*/
+
+        if (instance->DIER & TIM_IT_CC4 && instance->SR & TIM_FLAG_CC4) {
+                instance->SR = ~TIM_FLAG_CC4;
+
+                if (!that->channel[3] || !that->channel[3]->onIrq) {
+                        return;
+                }
+
+                if (htim->Instance->CCMR2 & TIM_CCMR2_CC4S) {
+                        that->channel[3]->onIrq ();
+                }
+                else {
+                        that->channel[3]->onIrq ();
+                }
+        }
+
+        /*+-------------------------------------------------------------------------+*/
+        /*| Update event (UEV) from timer base.                                     |*/
+        /*+-------------------------------------------------------------------------+*/
 
         // Timer update event (UEV)
         if (instance->DIER & TIM_IT_UPDATE && instance->SR & TIM_FLAG_UPDATE) {
@@ -259,11 +293,13 @@ extern "C" void TIM2_IRQHandler () { HardwareTimer::serviceIrq (HardwareTimer::t
 
 /*****************************************************************************/
 
+AbstractTimerChannel::AbstractTimerChannel (HardwareTimer *timer, int channelNumber) { timer->setChannel (channelNumber, this); }
+
 int AbstractTimerChannel::channelNumberToHal (int number) { return number * 4; }
 
 /*****************************************************************************/
 
-InputCaptureChannel::InputCaptureChannel (HardwareTimer *timer, int channelNumber, bool withIrq)
+InputCaptureChannel::InputCaptureChannel (HardwareTimer *timer, int channelNumber, bool withIrq) : AbstractTimerChannel (timer, channelNumber)
 {
         // Dotycząca timera
         TIM_IC_InitTypeDef sICConfig;
