@@ -13,7 +13,7 @@ void Timer::start (uint32_t interval)
 
 /*****************************************************************************/
 
-/* TODO !!!!!!!!!!!!!! tu powinno być >= !!!!!!!!!
+/*
  *          _,.-------.,_
  *      ,;~'             '~;,
  *    ,;                     ;,
@@ -38,6 +38,6 @@ void Timer::start (uint32_t interval)
  *          \.    ^    ./
  *            ^~~~^~~~^
  *
- * TODO
+ *
  */
 bool Timer::isExpired () const { return HAL_GetTick () - startTime >= intervalMs; }
