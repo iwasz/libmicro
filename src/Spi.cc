@@ -16,7 +16,7 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 {
         memset (&spiHandle, 0, sizeof (spiHandle));
         spiHandle.Instance = spi;
-        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
         spiHandle.Init.Direction = SPI_DIRECTION_2LINES;
         spiHandle.Init.CLKPhase = phase;
         spiHandle.Init.CLKPolarity = polarity;
