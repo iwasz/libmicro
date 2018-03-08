@@ -6,55 +6,54 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#include "HalStm32F4.h"
+#include "HalStm32F0.h"
 #include "Gpio.h"
-#include "Usart.h"
 
-extern "C" void EXTI0_IRQHandler ()
-{
-        __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_0);
-        Gpio::connectedExtis[0]->onToggle ();
-}
-
-/*****************************************************************************/
-
-extern "C" void EXTI1_IRQHandler ()
-{
-        __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_1);
-        Gpio::connectedExtis[1]->onToggle ();
-}
-
-/*****************************************************************************/
-
-extern "C" void EXTI2_IRQHandler ()
-{
-        __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_2);
-        Gpio::connectedExtis[2]->onToggle ();
-}
-
-/*****************************************************************************/
-
-extern "C" void EXTI3_IRQHandler ()
-{
-        __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_3);
-        Gpio::connectedExtis[3]->onToggle ();
-}
-
-/*****************************************************************************/
-
-extern "C" void EXTI4_IRQHandler ()
-{
-        __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_4);
-        Gpio::connectedExtis[4]->onToggle ();
-}
-
-/*****************************************************************************/
-
-extern "C" void EXTI9_5_IRQHandler ()
+extern "C" void EXTI0_1_IRQHandler ()
 {
         uint8_t pinNo;
 
-        if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_5) != RESET) {
+        if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_0) != RESET) {
+                __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_0);
+                pinNo = 0;
+        }
+        else if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_1) != RESET) {
+                __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_1);
+                pinNo = 1;
+        }
+
+        Gpio::connectedExtis[pinNo]->onToggle ();
+}
+
+/*****************************************************************************/
+
+extern "C" void EXTI2_3_IRQHandler ()
+{
+        uint8_t pinNo;
+
+        if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_2) != RESET) {
+                __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_2);
+                pinNo = 2;
+        }
+        else if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_3) != RESET) {
+                __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_3);
+                pinNo = 3;
+        }
+
+        Gpio::connectedExtis[pinNo]->onToggle ();
+}
+
+/*****************************************************************************/
+
+extern "C" void EXTI4_15_IRQHandler ()
+{
+        uint8_t pinNo;
+
+        if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_4) != RESET) {
+                __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_4);
+                pinNo = 4;
+        }
+        else if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_5) != RESET) {
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_5);
                 pinNo = 5;
         }
@@ -74,17 +73,7 @@ extern "C" void EXTI9_5_IRQHandler ()
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_9);
                 pinNo = 9;
         }
-
-        Gpio::connectedExtis[pinNo]->onToggle ();
-}
-
-/*****************************************************************************/
-
-extern "C" void EXTI15_10_IRQHandler ()
-{
-        uint8_t pinNo;
-
-        if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_10) != RESET) {
+        else if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_10) != RESET) {
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_10);
                 pinNo = 10;
         }
@@ -112,11 +101,3 @@ extern "C" void EXTI15_10_IRQHandler ()
         Gpio::connectedExtis[pinNo]->onToggle ();
 }
 
-/*****************************************************************************/
-
-extern "C" void USART1_IRQHandler () { Usart::fireOnData (Usart::usart1); }
-extern "C" void USART2_IRQHandler () { Usart::fireOnData (Usart::usart2); }
-extern "C" void USART3_IRQHandler () { Usart::fireOnData (Usart::usart3); }
-extern "C" void UART4_IRQHandler () { Usart::fireOnData (Usart::usart4); }
-extern "C" void UART5_IRQHandler () { Usart::fireOnData (Usart::usart5); }
-extern "C" void USART6_IRQHandler () { Usart::fireOnData (Usart::usart6); }

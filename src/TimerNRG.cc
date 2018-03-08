@@ -6,20 +6,24 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef LIB_MICRO_TIMER_H
-#define LIB_MICRO_TIMER_H
-
+#include "Hal.h"
+#include "Timer.h"
 #include <cstdint>
 
-class Timer {
-public:
-        Timer ();
-        void start (uint32_t intervalMs);
-        bool isExpired () const;
+static volatile uint32_t sysTickCount;
 
-protected:
-        uint32_t startTime;
-        uint32_t intervalMs;
-};
+/*****************************************************************************/
 
-#endif //__TIMER_H__
+void HAL_IncTick () { sysTickCount++; }
+
+/*****************************************************************************/
+
+void HAL_InitTick ()
+{
+        /** Configure SysTick to generate Interrupt with 1ms period */
+        SysTick_Config (SYSCLK_FREQ / 1000 - 1);
+}
+
+/*****************************************************************************/
+
+uint32_t HAL_GetTick () { return sysTickCount; }
