@@ -6,52 +6,49 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#include "Spi.h"
 #include "ErrorHandler.h"
+#include "Spi.h"
 #include <cstring>
 
 /*****************************************************************************/
 
-Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarity) : nssPin (nullptr)
+Spi::Spi (uint8_t mode, uint32_t baudRate, uint8_t dataSize, uint8_t phase, uint8_t polarityClockSteadyState) : nssPin (nullptr)
 {
-        memset (&spiHandle, 0, sizeof (spiHandle));
-        spiHandle.Instance = spi;
-        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
-        spiHandle.Init.Direction = SPI_DIRECTION_2LINES;
-        spiHandle.Init.CLKPhase = phase;
-        spiHandle.Init.CLKPolarity = polarity;
-        spiHandle.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-        spiHandle.Init.CRCPolynomial = 7;
-        spiHandle.Init.DataSize = dataSize;
-        spiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
-        spiHandle.Init.NSS = SPI_NSS_SOFT;
-#ifdef LIB_MICRO_STM32F0
-        spiHandle.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
-#endif
-        spiHandle.Init.TIMode = SPI_TIMODE_DISABLE;
-        spiHandle.Init.Mode = mode;
+        SPI_InitType spiInitStructure;
+        memset (&spiInitStructure, 0, sizeof (spiInitStructure));
 
-        clkEnable ();
-        HAL_SPI_Init (&spiHandle);
+        SPI_StructInit (&spiInitStructure);
+        spiInitStructure.SPI_Mode = mode;
+        spiInitStructure.SPI_DataSize = dataSize;
+        spiInitStructure.SPI_CPOL = polarityClockSteadyState;
+        spiInitStructure.SPI_CPHA = phase;
+        spiInitStructure.SPI_BaudRate = baudRate;
+
+        SysCtrl_PeripheralClockCmd (CLOCK_PERIPH_SPI, ENABLE);
+        SPI_Init (&spiInitStructure);
+
+        SPI_ClearTXFIFO ();
+        SPI_ClearRXFIFO ();
+        SPI_SetDummyCharacter (0xFF);
+        SPI_SetMasterCommunicationMode (SPI_FULL_DUPLEX_MODE);
+
+        // Enable SPI functionality
+        SPI_Cmd (ENABLE);
 }
 
 /*****************************************************************************/
 
-void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
+Spi::~Spi ()
 {
-        setNss (false);
-
-        if (HAL_SPI_TransmitReceive (&spiHandle, const_cast<uint8_t *> (txData), rxData, size, 500) != HAL_OK) {
-                Error_Handler ();
-        }
-        // HAL_SPI_Transmit()
-        setNss (true);
+        SPI_Cmd (DISABLE);
+        SysCtrl_PeripheralClockCmd (CLOCK_PERIPH_SPI, DISABLE);
 }
 
 /*****************************************************************************/
 
 void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay, bool dataPacking)
 {
+#if 0
         SPI_TypeDef *spi = spiHandle.Instance;
 
         size_t txRemainig = size;
@@ -133,11 +130,13 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
         if (!rxData) {
                 clearOvr ();
         }
+#endif
 }
 /*****************************************************************************/
 
 void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
 {
+#if 0
         SPI_TypeDef *spi = spiHandle.Instance;
 
         size_t rxRemainig = (!rxData) ? (0) : (size);
@@ -208,66 +207,51 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
                         __asm("nop");
                 }
         }
+#endif
 }
 
 /*****************************************************************************/
 
 uint8_t Spi::transmit8 (uint8_t word)
 {
-        // Doesn't work without it
-        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
-                __HAL_SPI_ENABLE (&spiHandle);
-        }
-
-        // Wait for tx buffer to be empty
-        while (!(spiHandle.Instance->SR & SPI_FLAG_TXE))
+        while (!(SPI->SR & SPI_FLAG_TFE))
                 ;
 
-        *(__IO uint8_t *)&spiHandle.Instance->DR = word;
+        SPI->DR = word;
 
-#ifndef LIB_MICRO_STM32F4
-        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
-        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
-#endif
-
-        while (!(spiHandle.Instance->SR & SPI_FLAG_RXNE))
+        while (!(SPI->SR & SPI_FLAG_RNE))
                 ;
 
-        return *(__IO uint8_t *)&spiHandle.Instance->DR;
-}
+        uint8_t ret = SPI->DR;
 
-/*****************************************************************************/
+        while (!(SPI->SR & SPI_FLAG_BSY))
+                ;
 
-void Spi::clkEnable (SPI_HandleTypeDef *spiX)
-{
-        if (spiX->Instance == SPI1) {
-                __HAL_RCC_SPI1_CLK_ENABLE ();
-        }
-        else if (spiX->Instance == SPI2) {
-                __HAL_RCC_SPI2_CLK_ENABLE ();
-        }
+        return ret;
 
-        __HAL_SPI_ENABLE (spiX);
-}
 
-/*****************************************************************************/
+//        // Wait for tx buffer to be empty
+//        while (!(spiHandle.Instance->SR & SPI_FLAG_TXE))
+//                ;
 
-void Spi::clkDisable (SPI_HandleTypeDef *spiX)
-{
-        if (spiX->Instance == SPI1) {
-                __HAL_RCC_SPI1_CLK_DISABLE ();
-        }
-        else if (spiX->Instance == SPI2) {
-                __HAL_RCC_SPI2_CLK_DISABLE ();
-        }
+//        *(__IO uint8_t *)&spiHandle.Instance->DR = word;
 
-        __HAL_SPI_DISABLE (spiX);
+//#ifndef LIB_MICRO_STM32F4
+//        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
+//        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+//#endif
+
+//        while (!(spiHandle.Instance->SR & SPI_FLAG_RXNE))
+//                ;
+
+//        return *(__IO uint8_t *)&spiHandle.Instance->DR;
 }
 
 /*****************************************************************************/
 
 void Spi::clearOvr ()
 {
+#if 0
 #ifndef LIB_MICRO_STM32F4
         SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
 #endif
@@ -279,4 +263,5 @@ void Spi::clearOvr ()
 
         tmp = spiHandle.Instance->SR;
         (void)tmp;
+#endif
 }

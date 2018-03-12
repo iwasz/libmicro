@@ -39,22 +39,23 @@ extern "C" void Error_Handler (void);
 void Lsm6ds3SpiBsp::writeRegister (uint8_t addr, uint8_t value)
 {
         spi->setNss (false);
-        spi->transmit8 (WRITE_MASK | addr);
+        spi->transmit8 (WRITE_MASK & addr);
         spi->transmit8 (value);
         spi->setNss (true);
 }
 
+/*****************************************************************************/
+
 uint8_t Lsm6ds3SpiBsp::readRegister (uint8_t addr)
 {
         spi->setNss (false);
-        HAL_Delay(1);
         spi->transmit8 (READ_MASK | addr);
-        HAL_Delay(1);
         uint8_t ret = spi->transmit8 (0x00);
-        HAL_Delay(1);
         spi->setNss (true);
         return ret;
 }
+
+/*****************************************************************************/
 
 void Lsm6ds3SpiBsp::writeRegister (uint8_t addr, uint8_t *buffer, uint16_t len)
 {

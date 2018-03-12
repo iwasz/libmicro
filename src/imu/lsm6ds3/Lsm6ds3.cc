@@ -34,9 +34,9 @@ Lsm6ds3::AData Lsm6ds3::getRawAData () const
 {
         AData ret;
         // TODO I think this can be read in 1 readRegister (OUTX_L_XL, 6) invocation, if some auto increment magic kicked in.
-        ret.x = ((uint16_t)bsp->readRegister (LSM6DS3_ACC_GYRO_OUTX_H_XL) << 8) | bsp->readRegister (LSM6DS3_ACC_GYRO_OUTX_L_XL);
-        ret.y = ((uint16_t)bsp->readRegister (LSM6DS3_ACC_GYRO_OUTY_H_XL) << 8) | bsp->readRegister (LSM6DS3_ACC_GYRO_OUTY_L_XL);
-        ret.z = ((uint16_t)bsp->readRegister (LSM6DS3_ACC_GYRO_OUTZ_H_XL) << 8) | bsp->readRegister (LSM6DS3_ACC_GYRO_OUTZ_L_XL);
+        ret.x = ((uint16_t)bsp->readRegister (OUTX_H_XL) << 8) | bsp->readRegister (OUTX_L_XL);
+        ret.y = ((uint16_t)bsp->readRegister (OUTY_H_XL) << 8) | bsp->readRegister (OUTY_L_XL);
+        ret.z = ((uint16_t)bsp->readRegister (OUTZ_H_XL) << 8) | bsp->readRegister (OUTZ_L_XL);
         return ret;
 }
 
@@ -50,9 +50,9 @@ Lsm6ds3::GData Lsm6ds3::getRawGData () const
 {
         GData ret;
         // TODO I think this can be read in 1 readRegister (OUTX_L_XL, 6) invocation, if some auto increment magic kicked in.
-        ret.x = ((uint16_t)bsp->readRegister (LSM6DS3_ACC_GYRO_OUTX_H_G) << 8) | bsp->readRegister (LSM6DS3_ACC_GYRO_OUTX_L_G);
-        ret.y = ((uint16_t)bsp->readRegister (LSM6DS3_ACC_GYRO_OUTY_H_G) << 8) | bsp->readRegister (LSM6DS3_ACC_GYRO_OUTY_L_G);
-        ret.z = ((uint16_t)bsp->readRegister (LSM6DS3_ACC_GYRO_OUTZ_H_G) << 8) | bsp->readRegister (LSM6DS3_ACC_GYRO_OUTZ_L_G);
+        ret.x = ((uint16_t)bsp->readRegister (OUTX_H_G) << 8) | bsp->readRegister (OUTX_L_G);
+        ret.y = ((uint16_t)bsp->readRegister (OUTY_H_G) << 8) | bsp->readRegister (OUTY_L_G);
+        ret.z = ((uint16_t)bsp->readRegister (OUTZ_H_G) << 8) | bsp->readRegister (OUTZ_L_G);
         return ret;
 }
 

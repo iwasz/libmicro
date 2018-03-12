@@ -19,7 +19,7 @@
 class Gpio {
 public:
         /// Initializes, and turns the clock on.
-        Gpio (uint32_t pin, uint32_t mode = GPIO_Output, FunctionalState pull = DISABLE, FunctionalState hipower = ENABLE);
+        Gpio (uint32_t pin, uint32_t mode = GPIO_Output, FunctionalState pull = DISABLE, FunctionalState hipower = DISABLE);
 
         ~Gpio ();
 

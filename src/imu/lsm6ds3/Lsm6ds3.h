@@ -29,30 +29,40 @@ public:
         GData getGData () const;
         GData getRawGData () const;
 
-        /*****************************************************************************/
+        // TODO hide.
         uint8_t readRegister (uint8_t r) { return bsp->readRegister (r); }
-        /*---------------------------------------------------------------------------*/
 
+        /*****************************************************************************/
+        /*                                                                           */
+        /*****************************************************************************/
+
+        enum { WHO_AM_I_ADDRESS = 0x69 };
         /// Should return 0x69
-        uint8_t getWhoAmI () const { return bsp->readRegister (LSM6DS3_ACC_GYRO_WHO_AM_I_REG); }
+        uint8_t getWhoAmI () const { return bsp->readRegister (WHO_AM_I_REG); }
 
-        /*---------------------------------------------------------------------------*/
+        /*****************************************************************************/
+        /* CTRL3_C                                                                   */
+        /*****************************************************************************/
+
+        enum { BOOT = 0x80, BOOT_MASK = 0x80 };
+        void rebootMemory () { writeRegister (CTRL3_C, BOOT_MASK, BOOT); }
 
         /// Block Data Update
         enum Bdu { CONTINUOS = 0x00, BLOCK_UPDATE = 0x40, BDU_MASK = 0x40 };
+        Bdu getBdu () const { return static_cast<Bdu> (bsp->readRegister (CTRL3_C) & BDU_MASK); }
+        void setBdu (Bdu b) { writeRegister (CTRL3_C, BDU_MASK, b); }
 
-        Bdu getBdu () const { return static_cast<Bdu> (bsp->readRegister (LSM6DS3_ACC_GYRO_CTRL3_C) & BDU_MASK); }
-        void setBdu (Bdu b) { writeRegister (LSM6DS3_ACC_GYRO_CTRL3_C, BDU_MASK, b); }
+        enum { SW_RESET = 0x01, SW_RESET_MASK = 0x01 };
+        void softwareReset () { writeRegister (CTRL3_C, SW_RESET_MASK, SW_RESET); }
 
-        /*---------------------------------------------------------------------------*/
+        /*****************************************************************************/
+        /*                                                                           */
+        /*****************************************************************************/
 
         enum AccelFullScale { FS_2G = 0x00, FS_16G = 0x04, FS_4G = 0x08, FS_8G = 0x0C, ACCEL_FS_MASK = 0x0c };
 
-        AccelFullScale getAccelFullScale () const
-        {
-                return static_cast<AccelFullScale> (bsp->readRegister (LSM6DS3_ACC_GYRO_CTRL1_XL) & ACCEL_FS_MASK);
-        }
-        void setAccelFullScale (AccelFullScale a) { writeRegister (LSM6DS3_ACC_GYRO_CTRL1_XL, ACCEL_FS_MASK, a); }
+        AccelFullScale getAccelFullScale () const { return static_cast<AccelFullScale> (bsp->readRegister (CTRL1_XL) & ACCEL_FS_MASK); }
+        void setAccelFullScale (AccelFullScale a) { writeRegister (CTRL1_XL, ACCEL_FS_MASK, a); }
 
         /*---------------------------------------------------------------------------*/
 
@@ -71,28 +81,27 @@ public:
                 ACCEL_ODR_MASK = 0xF0
         };
 
-        AccelOdr getAccelOdr () const { return static_cast<AccelOdr> (bsp->readRegister (LSM6DS3_ACC_GYRO_CTRL1_XL) & ACCEL_ODR_MASK); }
-        void setAccelOdr (AccelOdr b) { writeRegister (LSM6DS3_ACC_GYRO_CTRL1_XL, ACCEL_ODR_MASK, b); }
+        AccelOdr getAccelOdr () const { return static_cast<AccelOdr> (bsp->readRegister (CTRL1_XL) & ACCEL_ODR_MASK); }
+        void setAccelOdr (AccelOdr b) { writeRegister (CTRL1_XL, ACCEL_ODR_MASK, b); }
 
         /*---------------------------------------------------------------------------*/
 
         enum AntiAliasingBandwidth { BW_400Hz = 0x00, BW_200Hz = 0x01, BW_100Hz = 0x02, BW_50Hz = 0x03, BW_MASK = 0x03 };
         AntiAliasingBandwidth getAntiAliasingBandwidth () const
         {
-                return static_cast<AntiAliasingBandwidth> (bsp->readRegister (LSM6DS3_ACC_GYRO_CTRL1_XL) & BW_MASK);
+                return static_cast<AntiAliasingBandwidth> (bsp->readRegister (CTRL1_XL) & BW_MASK);
         }
 
-        void setAntiAliasingBandwidth (AntiAliasingBandwidth b) { writeRegister (LSM6DS3_ACC_GYRO_CTRL1_XL, BW_MASK, b); }
+        void setAntiAliasingBandwidth (AntiAliasingBandwidth b) { writeRegister (CTRL1_XL, BW_MASK, b); }
 
+        /*****************************************************************************/
+        /*                                                                           */
         /*****************************************************************************/
 
         enum GyroFullScale { FS_245dps = 0x00, FS_500dps = 0x04, FS_1000dps = 0x08, FS_2000dps = 0x0C, GYRO_FS_MASK = 0x0c };
 
-        GyroFullScale getGyroFullScale () const
-        {
-                return static_cast<GyroFullScale> (bsp->readRegister (LSM6DS3_ACC_GYRO_CTRL2_G) & GYRO_FS_MASK);
-        }
-        void setGyroFullScale (GyroFullScale a) { writeRegister (LSM6DS3_ACC_GYRO_CTRL2_G, GYRO_FS_MASK, a); }
+        GyroFullScale getGyroFullScale () const { return static_cast<GyroFullScale> (bsp->readRegister (CTRL2_G) & GYRO_FS_MASK); }
+        void setGyroFullScale (GyroFullScale a) { writeRegister (CTRL2_G, GYRO_FS_MASK, a); }
 
         /*---------------------------------------------------------------------------*/
 
@@ -109,153 +118,182 @@ public:
                 GYRO_ODR_MASK = 0xF0
         };
 
-        GyroOdr getGyroOdr () const { return static_cast<GyroOdr> (bsp->readRegister (LSM6DS3_ACC_GYRO_CTRL2_G) & GYRO_ODR_MASK); }
-        void setGyroOdr (GyroOdr b) { writeRegister (LSM6DS3_ACC_GYRO_CTRL2_G, GYRO_ODR_MASK, b); }
+        GyroOdr getGyroOdr () const { return static_cast<GyroOdr> (bsp->readRegister (CTRL2_G) & GYRO_ODR_MASK); }
+        void setGyroOdr (GyroOdr b) { writeRegister (CTRL2_G, GYRO_ODR_MASK, b); }
 
         /*---------------------------------------------------------------------------*/
 
         /// Gyroscope full-scale at 125 dps. Default value: 0
         enum FS_125_DPS { FS_125_DISABLED = 0x00, FS_125_ENABLED = 0x02, FS_125_MASK = 0x02 };
-        bool getFs125Dps () const { return static_cast<GyroOdr> (bsp->readRegister (LSM6DS3_ACC_GYRO_CTRL2_G) & FS_125_MASK); }
-        void setFs125Dps (bool b) { writeRegister (LSM6DS3_ACC_GYRO_CTRL2_G, FS_125_MASK, (b) ? (FS_125_ENABLED) : (FS_125_DISABLED)); }
+        bool getFs125Dps () const { return static_cast<GyroOdr> (bsp->readRegister (CTRL2_G) & FS_125_MASK); }
+        void setFs125Dps (bool b) { writeRegister (CTRL2_G, FS_125_MASK, (b) ? (FS_125_ENABLED) : (FS_125_DISABLED)); }
 
         /*****************************************************************************/
 
         enum I2cOperation { I2C_AND_SPI = 0x00, SPI_ONLY = 0x04, I2C_DISABLE_MASK = 0x04 };
-        bool getI2cEnable () const { return bsp->readRegister (LSM6DS3_ACC_GYRO_CTRL4_C) & I2C_DISABLE_MASK; }
-        void setI2cEnable (bool b) { writeRegister (LSM6DS3_ACC_GYRO_CTRL4_C, I2C_DISABLE_MASK, (b) ? (I2C_AND_SPI) : (SPI_ONLY)); };
+        bool getI2cEnable () const { return bsp->readRegister (CTRL4_C) & I2C_DISABLE_MASK; }
+        void setI2cEnable (bool b) { writeRegister (CTRL4_C, I2C_DISABLE_MASK, (b) ? (I2C_AND_SPI) : (SPI_ONLY)); };
 
         /*****************************************************************************/
+        /* FIFO_CTRL5                                                                */
+        /*****************************************************************************/
 
-        /// Checks for interrupt status DRDY
-        //        bool isDataReady () const;
+        enum FifoMode {
+                FIFO_MODE_BYPASS = 0x00,
+                FIFO_MODE_FIFO = 0x01,
+                FIFO_MODE_STREAM = 0x02,
+                FIFO_MODE_STF = 0x03,
+                FIFO_MODE_BTS = 0x04,
+                FIFO_MODE_DYN_STREAM = 0x05,
+                FIFO_MODE_DYN_STREAM_2 = 0x06,
+                FIFO_MODE_BTF = 0x07,
+                FIFO_MODE_MASK = 0x07
+        };
 
-        // Config
-        //        void interruptConfig (Lsm6ds3InterruptConfig const &LIS3DSH_IntConfigStruct);
-        //        void clickITConfig ();
+        FifoMode getFifoMode () const { return static_cast<FifoMode> (bsp->readRegister (FIFO_CTRL5) & FIFO_MODE_MASK); }
+        void setFifoMode (FifoMode b) { writeRegister (FIFO_CTRL5, FIFO_MODE_MASK, b); }
 
-private:
+        enum FifoOdr {
+                FIFO_ODR_DISABLED = 0x00,
+                FIFO_ODR_10Hz = 0x08,
+                FIFO_ODR_25Hz = 0x10,
+                FIFO_ODR_50Hz = 0x18,
+                FIFO_ODR_100Hz = 0x20,
+                FIFO_ODR_200Hz = 0x28,
+                FIFO_ODR_400Hz = 0x30,
+                FIFO_ODR_800Hz = 0x38,
+                FIFO_ODR_1600Hz = 0x40,
+                FIFO_ODR_3300Hz = 0x48,
+                FIFO_ODR_6600Hz = 0x50,
+                FIFO_ODR_MASK = 0x78
+        };
+
+        FifoOdr getFifoOdr () const { return static_cast<FifoOdr> (bsp->readRegister (FIFO_CTRL5) & FIFO_ODR_MASK); }
+        void setFifoOdr (FifoOdr b) { writeRegister (FIFO_CTRL5, FIFO_ODR_MASK, b); }
+
+public: // private:
         enum Register {
-                LSM6DS3_ACC_GYRO_FUNC_CFG_ACCESS = 0x01,
-                LSM6DS3_ACC_GYRO_SENSOR_SYNC_TIME = 0x04,
-                LSM6DS3_ACC_GYRO_FIFO_CTRL1 = 0x06,
-                LSM6DS3_ACC_GYRO_FIFO_CTRL2 = 0x07,
-                LSM6DS3_ACC_GYRO_FIFO_CTRL3 = 0x08,
-                LSM6DS3_ACC_GYRO_FIFO_CTRL4 = 0x09,
-                LSM6DS3_ACC_GYRO_FIFO_CTRL5 = 0x0A,
-                LSM6DS3_ACC_GYRO_ORIENT_CFG_G = 0x0B,
-                LSM6DS3_ACC_GYRO_INT1_CTRL = 0x0D,
-                LSM6DS3_ACC_GYRO_INT2_CTRL = 0x0E,
-                LSM6DS3_ACC_GYRO_WHO_AM_I_REG = 0x0F,
-                LSM6DS3_ACC_GYRO_CTRL1_XL = 0x10,
-                LSM6DS3_ACC_GYRO_CTRL2_G = 0x11,
-                LSM6DS3_ACC_GYRO_CTRL3_C = 0x12,
-                LSM6DS3_ACC_GYRO_CTRL4_C = 0x13,
-                LSM6DS3_ACC_GYRO_CTRL5_C = 0x14,
-                LSM6DS3_ACC_GYRO_CTRL6_G = 0x15,
-                LSM6DS3_ACC_GYRO_CTRL7_G = 0x16,
-                LSM6DS3_ACC_GYRO_CTRL8_XL = 0x17,
-                LSM6DS3_ACC_GYRO_CTRL9_XL = 0x18,
-                LSM6DS3_ACC_GYRO_CTRL10_C = 0x19,
-                LSM6DS3_ACC_GYRO_MASTER_CONFIG = 0x1A,
-                LSM6DS3_ACC_GYRO_WAKE_UP_SRC = 0x1B,
-                LSM6DS3_ACC_GYRO_TAP_SRC = 0x1C,
-                LSM6DS3_ACC_GYRO_D6D_SRC = 0x1D,
-                LSM6DS3_ACC_GYRO_STATUS_REG = 0x1E,
-                LSM6DS3_ACC_GYRO_OUT_TEMP_L = 0x20,
-                LSM6DS3_ACC_GYRO_OUT_TEMP_H = 0x21,
-                LSM6DS3_ACC_GYRO_OUTX_L_G = 0x22,
-                LSM6DS3_ACC_GYRO_OUTX_H_G = 0x23,
-                LSM6DS3_ACC_GYRO_OUTY_L_G = 0x24,
-                LSM6DS3_ACC_GYRO_OUTY_H_G = 0x25,
-                LSM6DS3_ACC_GYRO_OUTZ_L_G = 0x26,
-                LSM6DS3_ACC_GYRO_OUTZ_H_G = 0x27,
-                LSM6DS3_ACC_GYRO_OUTX_L_XL = 0x28,
-                LSM6DS3_ACC_GYRO_OUTX_H_XL = 0x29,
-                LSM6DS3_ACC_GYRO_OUTY_L_XL = 0x2A,
-                LSM6DS3_ACC_GYRO_OUTY_H_XL = 0x2B,
-                LSM6DS3_ACC_GYRO_OUTZ_L_XL = 0x2C,
-                LSM6DS3_ACC_GYRO_OUTZ_H_XL = 0x2D,
-                LSM6DS3_ACC_GYRO_SENSORHUB1_REG = 0x2E,
-                LSM6DS3_ACC_GYRO_SENSORHUB2_REG = 0x2F,
-                LSM6DS3_ACC_GYRO_SENSORHUB3_REG = 0x30,
-                LSM6DS3_ACC_GYRO_SENSORHUB4_REG = 0x31,
-                LSM6DS3_ACC_GYRO_SENSORHUB5_REG = 0x32,
-                LSM6DS3_ACC_GYRO_SENSORHUB6_REG = 0x33,
-                LSM6DS3_ACC_GYRO_SENSORHUB7_REG = 0x34,
-                LSM6DS3_ACC_GYRO_SENSORHUB8_REG = 0x35,
-                LSM6DS3_ACC_GYRO_SENSORHUB9_REG = 0x36,
-                LSM6DS3_ACC_GYRO_SENSORHUB10_REG = 0x37,
-                LSM6DS3_ACC_GYRO_SENSORHUB11_REG = 0x38,
-                LSM6DS3_ACC_GYRO_SENSORHUB12_REG = 0x39,
-                LSM6DS3_ACC_GYRO_FIFO_STATUS1 = 0x3A,
-                LSM6DS3_ACC_GYRO_FIFO_STATUS2 = 0x3B,
-                LSM6DS3_ACC_GYRO_FIFO_STATUS3 = 0x3C,
-                LSM6DS3_ACC_GYRO_FIFO_STATUS4 = 0x3D,
-                LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_L = 0x3E,
-                LSM6DS3_ACC_GYRO_FIFO_DATA_OUT_H = 0x3F,
-                LSM6DS3_ACC_GYRO_TIMESTAMP0_REG = 0x40,
-                LSM6DS3_ACC_GYRO_TIMESTAMP1_REG = 0x41,
-                LSM6DS3_ACC_GYRO_TIMESTAMP2_REG = 0x42,
-                LSM6DS3_ACC_GYRO_TIMESTAMP_L = 0x49,
-                LSM6DS3_ACC_GYRO_TIMESTAMP_H = 0x4A,
-                LSM6DS3_ACC_GYRO_STEP_COUNTER_L = 0x4B,
-                LSM6DS3_ACC_GYRO_STEP_COUNTER_H = 0x4C,
-                LSM6DS3_ACC_GYRO_SENSORHUB13_REG = 0x4D,
-                LSM6DS3_ACC_GYRO_SENSORHUB14_REG = 0x4E,
-                LSM6DS3_ACC_GYRO_SENSORHUB15_REG = 0x4F,
-                LSM6DS3_ACC_GYRO_SENSORHUB16_REG = 0x50,
-                LSM6DS3_ACC_GYRO_SENSORHUB17_REG = 0x51,
-                LSM6DS3_ACC_GYRO_SENSORHUB18_REG = 0x52,
-                LSM6DS3_ACC_GYRO_FUNC_SRC = 0x53,
-                LSM6DS3_ACC_GYRO_TAP_CFG1 = 0x58,
-                LSM6DS3_ACC_GYRO_TAP_THS_6D = 0x59,
-                LSM6DS3_ACC_GYRO_INT_DUR2 = 0x5A,
-                LSM6DS3_ACC_GYRO_WAKE_UP_THS = 0x5B,
-                LSM6DS3_ACC_GYRO_WAKE_UP_DUR = 0x5C,
-                LSM6DS3_ACC_GYRO_FREE_FALL = 0x5D,
-                LSM6DS3_ACC_GYRO_MD1_CFG = 0x5E,
-                LSM6DS3_ACC_GYRO_MD2_CFG = 0x5F
+                FUNC_CFG_ACCESS = 0x01,
+                SENSOR_SYNC_TIME = 0x04,
+                FIFO_CTRL1 = 0x06,
+                FIFO_CTRL2 = 0x07,
+                FIFO_CTRL3 = 0x08,
+                FIFO_CTRL4 = 0x09,
+                FIFO_CTRL5 = 0x0A,
+                ORIENT_CFG_G = 0x0B,
+                INT1_CTRL = 0x0D,
+                INT2_CTRL = 0x0E,
+                WHO_AM_I_REG = 0x0F,
+                CTRL1_XL = 0x10,
+                CTRL2_G = 0x11,
+                CTRL3_C = 0x12,
+                CTRL4_C = 0x13,
+                CTRL5_C = 0x14,
+                CTRL6_G = 0x15,
+                CTRL7_G = 0x16,
+                CTRL8_XL = 0x17,
+                CTRL9_XL = 0x18,
+                CTRL10_C = 0x19,
+                MASTER_CONFIG = 0x1A,
+                WAKE_UP_SRC = 0x1B,
+                TAP_SRC = 0x1C,
+                D6D_SRC = 0x1D,
+                STATUS_REG = 0x1E,
+                OUT_TEMP_L = 0x20,
+                OUT_TEMP_H = 0x21,
+                OUTX_L_G = 0x22,
+                OUTX_H_G = 0x23,
+                OUTY_L_G = 0x24,
+                OUTY_H_G = 0x25,
+                OUTZ_L_G = 0x26,
+                OUTZ_H_G = 0x27,
+                OUTX_L_XL = 0x28,
+                OUTX_H_XL = 0x29,
+                OUTY_L_XL = 0x2A,
+                OUTY_H_XL = 0x2B,
+                OUTZ_L_XL = 0x2C,
+                OUTZ_H_XL = 0x2D,
+                SENSORHUB1_REG = 0x2E,
+                SENSORHUB2_REG = 0x2F,
+                SENSORHUB3_REG = 0x30,
+                SENSORHUB4_REG = 0x31,
+                SENSORHUB5_REG = 0x32,
+                SENSORHUB6_REG = 0x33,
+                SENSORHUB7_REG = 0x34,
+                SENSORHUB8_REG = 0x35,
+                SENSORHUB9_REG = 0x36,
+                SENSORHUB10_REG = 0x37,
+                SENSORHUB11_REG = 0x38,
+                SENSORHUB12_REG = 0x39,
+                FIFO_STATUS1 = 0x3A,
+                FIFO_STATUS2 = 0x3B,
+                FIFO_STATUS3 = 0x3C,
+                FIFO_STATUS4 = 0x3D,
+                FIFO_DATA_OUT_L = 0x3E,
+                FIFO_DATA_OUT_H = 0x3F,
+                TIMESTAMP0_REG = 0x40,
+                TIMESTAMP1_REG = 0x41,
+                TIMESTAMP2_REG = 0x42,
+                TIMESTAMP_L = 0x49,
+                TIMESTAMP_H = 0x4A,
+                STEP_COUNTER_L = 0x4B,
+                STEP_COUNTER_H = 0x4C,
+                SENSORHUB13_REG = 0x4D,
+                SENSORHUB14_REG = 0x4E,
+                SENSORHUB15_REG = 0x4F,
+                SENSORHUB16_REG = 0x50,
+                SENSORHUB17_REG = 0x51,
+                SENSORHUB18_REG = 0x52,
+                FUNC_SRC = 0x53,
+                TAP_CFG1 = 0x58,
+                TAP_THS_6D = 0x59,
+                INT_DUR2 = 0x5A,
+                WAKE_UP_THS = 0x5B,
+                WAKE_UP_DUR = 0x5C,
+                FREE_FALL = 0x5D,
+                MD1_CFG = 0x5E,
+                MD2_CFG = 0x5F
         };
 
         /**
          * Clears the mask, writes value.
          */
         void writeRegister (Register reg, uint8_t mask, uint8_t value);
+        void writeRegister (Register reg, uint8_t value) { bsp->writeRegister (reg, value); }
 
         enum FunctionRegister {
-                LSM6DS3_ACC_GYRO_SLV0_ADD = 0x02,
-                LSM6DS3_ACC_GYRO_SLV0_SUBADD = 0x03,
-                LSM6DS3_ACC_GYRO_SLAVE0_CONFIG = 0x04,
-                LSM6DS3_ACC_GYRO_SLV1_ADD = 0x05,
-                LSM6DS3_ACC_GYRO_SLV1_SUBADD = 0x06,
-                LSM6DS3_ACC_GYRO_SLAVE1_CONFIG = 0x07,
-                LSM6DS3_ACC_GYRO_SLV2_ADD = 0x08,
-                LSM6DS3_ACC_GYRO_SLV2_SUBADD = 0x09,
-                LSM6DS3_ACC_GYRO_SLAVE2_CONFIG = 0x0A,
-                LSM6DS3_ACC_GYRO_SLV3_ADD = 0x0B,
-                LSM6DS3_ACC_GYRO_SLV3_SUBADD = 0x0C,
-                LSM6DS3_ACC_GYRO_SLAVE3_CONFIG = 0x0D,
-                LSM6DS3_ACC_GYRO_DATAWRITE_SRC_MODE_SUB_SLV0 = 0x0E,
-                LSM6DS3_ACC_GYRO_CONFIG_PEDO_THS_MIN = 0x0F,
-                LSM6DS3_ACC_GYRO_SM_STEP_THS = 0x13,
-                LSM6DS3_ACC_GYRO_PEDO_DEB_REG = 0x14,
-                LSM6DS3_ACC_GYRO_STEP_COUNT_DELTA = 0x15,
-                LSM6DS3_ACC_GYRO_MAG_SI_XX = 0x24,
-                LSM6DS3_ACC_GYRO_MAG_SI_XY = 0x25,
-                LSM6DS3_ACC_GYRO_MAG_SI_XZ = 0x26,
-                LSM6DS3_ACC_GYRO_MAG_SI_YX = 0x27,
-                LSM6DS3_ACC_GYRO_MAG_SI_YY = 0x28,
-                LSM6DS3_ACC_GYRO_MAG_SI_YZ = 0x29,
-                LSM6DS3_ACC_GYRO_MAG_SI_ZX = 0x2A,
-                LSM6DS3_ACC_GYRO_MAG_SI_ZY = 0x2B,
-                LSM6DS3_ACC_GYRO_MAG_SI_ZZ = 0x2C,
-                LSM6DS3_ACC_GYRO_MAG_OFFX_L = 0x2D,
-                LSM6DS3_ACC_GYRO_MAG_OFFX_H = 0x2E,
-                LSM6DS3_ACC_GYRO_MAG_OFFY_L = 0x2F,
-                LSM6DS3_ACC_GYRO_MAG_OFFY_H = 0x30,
-                LSM6DS3_ACC_GYRO_MAG_OFFZ_L = 0x31,
-                LSM6DS3_ACC_GYRO_MAG_OFFZ_H = 0x32
+                SLV0_ADD = 0x02,
+                SLV0_SUBADD = 0x03,
+                SLAVE0_CONFIG = 0x04,
+                SLV1_ADD = 0x05,
+                SLV1_SUBADD = 0x06,
+                SLAVE1_CONFIG = 0x07,
+                SLV2_ADD = 0x08,
+                SLV2_SUBADD = 0x09,
+                SLAVE2_CONFIG = 0x0A,
+                SLV3_ADD = 0x0B,
+                SLV3_SUBADD = 0x0C,
+                SLAVE3_CONFIG = 0x0D,
+                DATAWRITE_SRC_MODE_SUB_SLV0 = 0x0E,
+                CONFIG_PEDO_THS_MIN = 0x0F,
+                SM_STEP_THS = 0x13,
+                PEDO_DEB_REG = 0x14,
+                STEP_COUNT_DELTA = 0x15,
+                MAG_SI_XX = 0x24,
+                MAG_SI_XY = 0x25,
+                MAG_SI_XZ = 0x26,
+                MAG_SI_YX = 0x27,
+                MAG_SI_YY = 0x28,
+                MAG_SI_YZ = 0x29,
+                MAG_SI_ZX = 0x2A,
+                MAG_SI_ZY = 0x2B,
+                MAG_SI_ZZ = 0x2C,
+                MAG_OFFX_L = 0x2D,
+                MAG_OFFX_H = 0x2E,
+                MAG_OFFY_L = 0x2F,
+                MAG_OFFY_H = 0x30,
+                MAG_OFFZ_L = 0x31,
+                MAG_OFFZ_H = 0x32
         };
 
 private:
