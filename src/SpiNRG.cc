@@ -224,27 +224,10 @@ uint8_t Spi::transmit8 (uint8_t word)
 
         uint8_t ret = SPI->DR;
 
-        while (!(SPI->SR & SPI_FLAG_BSY))
+        while (SPI->SR & SPI_FLAG_BSY)
                 ;
 
         return ret;
-
-
-//        // Wait for tx buffer to be empty
-//        while (!(spiHandle.Instance->SR & SPI_FLAG_TXE))
-//                ;
-
-//        *(__IO uint8_t *)&spiHandle.Instance->DR = word;
-
-//#ifndef LIB_MICRO_STM32F4
-//        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
-//        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
-//#endif
-
-//        while (!(spiHandle.Instance->SR & SPI_FLAG_RXNE))
-//                ;
-
-//        return *(__IO uint8_t *)&spiHandle.Instance->DR;
 }
 
 /*****************************************************************************/
