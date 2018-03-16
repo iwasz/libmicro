@@ -9,7 +9,7 @@
 #ifndef MICROLIB_HAL_H
 #define MICROLIB_HAL_H
 
-#if defined(STM32F072xB)
+#if defined(STM32F072xB) | defined (STM32F091xC)
 
 #define LIB_MICRO_STM32F0
 #define LIB_MICRO_STM32F
