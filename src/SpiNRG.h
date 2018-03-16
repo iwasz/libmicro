@@ -21,6 +21,9 @@ public:
         Spi (uint8_t mode = SPI_Mode_Master, uint32_t baudRate = 1000000, uint8_t dataSize = SPI_DataSize_8b, uint8_t phase = SPI_CPHA_1Edge,
              uint8_t polarityClockSteadyState = SPI_CPOL_Low);
 
+        /// Makes a copy which lets you to use the same SPI instance with another nss pin. Dies not initialize of course.
+        Spi (Spi const &s);
+
         ~Spi ();
 
         /**

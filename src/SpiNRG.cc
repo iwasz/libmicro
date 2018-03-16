@@ -38,6 +38,10 @@ Spi::Spi (uint8_t mode, uint32_t baudRate, uint8_t dataSize, uint8_t phase, uint
 
 /*****************************************************************************/
 
+Spi::Spi (Spi const &s) { this->nssPin = s.nssPin; }
+
+/*****************************************************************************/
+
 Spi::~Spi ()
 {
         SPI_Cmd (DISABLE);

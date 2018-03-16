@@ -37,6 +37,13 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
 /*****************************************************************************/
 
+Spi::Spi (Spi const &s)
+{
+
+}
+
+/*****************************************************************************/
+
 void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
 {
         setNss (false);
