@@ -18,7 +18,7 @@
 class Spi {
 public:
         Spi (SPI_TypeDef *spi, uint32_t mode = SPI_MODE_MASTER, uint32_t dataSize = SPI_DATASIZE_8BIT, uint32_t phase = SPI_PHASE_1EDGE,
-             uint32_t polarityClockSteadyState = SPI_POLARITY_LOW);
+             uint32_t polarityClockSteadyState = SPI_POLARITY_LOW, uint32_t nssMode = SPI_NSS_SOFT);
 
         ~Spi () { clkDisable (); }
 
@@ -43,6 +43,7 @@ public:
          * Warning! Remember to use satNss (false) before transfer, and setNss (true) after.
          */
         uint8_t transmit8 (uint8_t word);
+        uint8_t receiveSlave8 ();
 
         /**
          * @brief clkEnable Runs __HAL_RCC_SPIx_CLK_ENABLE for a SPIx.

@@ -6,21 +6,19 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef LIB_MICRO_TIMER_H
-#define LIB_MICRO_TIMER_H
+#ifndef ICANCALLBACK_H
+#define ICANCALLBACK_H
 
-#include <cstdint>
+#include "CanFrame.h"
 
-class Timer {
-public:
-        Timer ();
-        void start (uint32_t intervalMs);
-        bool isExpired () const;
-        uint32_t elapsed () const;
-
-protected:
-        uint32_t startTime;
-        uint32_t intervalMs;
+/**
+ * Callback class. Observer pattern.
+ */
+struct ICanCallback {
+        enum Error { NO_ERROR, SEND_TIMEOUT, READ_ERROR };
+        virtual ~ICanCallback () {}
+        virtual void onCanNewFrame (CanFrame const &) = 0;
+        virtual void onCanError (Error e) = 0;
 };
 
-#endif //__TIMER_H__
+#endif // ICANCALLBACK_H

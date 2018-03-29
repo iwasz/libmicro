@@ -26,9 +26,11 @@
  *
  */
 
-#include "Timer.h"
 #include "Hal.h"
+#include "Timer.h"
+#include <chrono>
 #include <cstdint>
+#include <iostream>
 
 /*****************************************************************************/
 
@@ -38,11 +40,25 @@ Timer::Timer () : startTime (0), intervalMs (0) {}
 
 void Timer::start (uint32_t interval)
 {
-        startTime = HAL_GetTick ();
+        std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now ();
+        auto duration = now.time_since_epoch ();
+        startTime = std::chrono::duration_cast<std::chrono::milliseconds> (duration).count ();
+        // std::cerr << "Start Time : " << startTime << std::endl;
         this->intervalMs = interval;
 }
 
 /*****************************************************************************/
 
-bool Timer::isExpired () const { return HAL_GetTick () - startTime >= intervalMs; }
+bool Timer::isExpired () const { return elapsed () >= intervalMs; }
 
+/*****************************************************************************/
+
+uint32_t Timer::elapsed () const
+{
+
+        std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now ();
+        auto duration = now.time_since_epoch ();
+        int actualTime = std::chrono::duration_cast<std::chrono::milliseconds> (duration).count ();
+        // std::cerr << "Actual : " << actualTime << ", diff : " << actualTime - startTime << ", intervalMs: " << intervalMs << std::endl;
+        return actualTime - startTime;
+}

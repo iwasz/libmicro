@@ -6,17 +6,18 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#include "Spi.h"
 #include "ErrorHandler.h"
+#include "Spi.h"
 #include <cstring>
 
 /*****************************************************************************/
 
-Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarityClockSteadyState) : nssPin (nullptr)
+Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarityClockSteadyState, uint32_t nssMode)
+    : nssPin (nullptr)
 {
         memset (&spiHandle, 0, sizeof (spiHandle));
         spiHandle.Instance = spi;
-        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
         spiHandle.Init.Direction = SPI_DIRECTION_2LINES;
         spiHandle.Init.CLKPhase = phase;
         spiHandle.Init.CLKPolarity = polarityClockSteadyState;
@@ -24,7 +25,7 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
         spiHandle.Init.CRCPolynomial = 7;
         spiHandle.Init.DataSize = dataSize;
         spiHandle.Init.FirstBit = SPI_FIRSTBIT_MSB;
-        spiHandle.Init.NSS = SPI_NSS_SOFT;
+        spiHandle.Init.NSS = nssMode;
 #ifdef LIB_MICRO_STM32F0
         spiHandle.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
 #endif
@@ -37,22 +38,15 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
 /*****************************************************************************/
 
-Spi::Spi (Spi const &s)
-{
-
-}
-
-/*****************************************************************************/
-
 void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
 {
-        setNss (false);
+        //        setNss (false);
 
         if (HAL_SPI_TransmitReceive (&spiHandle, const_cast<uint8_t *> (txData), rxData, size, 500) != HAL_OK) {
                 Error_Handler ();
         }
         // HAL_SPI_Transmit()
-        setNss (true);
+        //        setNss (true);
 }
 
 /*****************************************************************************/
@@ -231,6 +225,26 @@ uint8_t Spi::transmit8 (uint8_t word)
                 ;
 
         *(__IO uint8_t *)&spiHandle.Instance->DR = word;
+
+#ifndef LIB_MICRO_STM32F4
+        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
+        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+#endif
+
+        while (!(spiHandle.Instance->SR & SPI_FLAG_RXNE))
+                ;
+
+        return *(__IO uint8_t *)&spiHandle.Instance->DR;
+}
+
+/*****************************************************************************/
+
+uint8_t Spi::receiveSlave8 ()
+{
+        // Doesn't work without it
+        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+                __HAL_SPI_ENABLE (&spiHandle);
+        }
 
 #ifndef LIB_MICRO_STM32F4
         // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits

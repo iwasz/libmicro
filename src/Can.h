@@ -6,21 +6,17 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef LIB_MICRO_TIMER_H
-#define LIB_MICRO_TIMER_H
+#ifndef LIB_MICRO_CAN_MAINFILE_H
+#define LIB_MICRO_CAN_MAINFILE_H
 
-#include <cstdint>
+#include "Hal.h"
 
-class Timer {
-public:
-        Timer ();
-        void start (uint32_t intervalMs);
-        bool isExpired () const;
-        uint32_t elapsed () const;
+#if defined (LIB_MICRO_STM32F)
+#include "CanF.h"
+#elif defined (LIB_MICRO_NRG)
+#include "CanNRG.h"
+#elif defined (UNIT_TEST)
+#include "CanUnit.h"
+#endif
 
-protected:
-        uint32_t startTime;
-        uint32_t intervalMs;
-};
-
-#endif //__TIMER_H__
+#endif // SPI_H
