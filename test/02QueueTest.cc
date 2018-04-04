@@ -334,3 +334,24 @@ TEST_CASE ("Rolling integral")
         q.back () = 9;
         REQUIRE (sum (q) == 30);
 }
+
+TEST_CASE ("Non trivial constructor")
+{
+        Queue <std::vector <std::string>> q (4);
+
+        REQUIRE (q.size () == 0);
+
+        REQUIRE (q.push_back ());
+        q.back () = {"ala", "ma", "kota"};
+
+        REQUIRE (q.push_back ());
+        q.back () = {"ola", "ma", "psa"};
+
+        REQUIRE (q.push_back ());
+        q.back () = {"krysia", "ma", "kurę"};
+
+        REQUIRE (q.push_back ());
+        q.back () = {"maciek", "ma", "krowę"};
+
+        REQUIRE (!q.push_back ());
+}

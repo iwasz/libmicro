@@ -6,19 +6,16 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef ICANCALLBACK_H
-#define ICANCALLBACK_H
+#ifndef ISPICALLBACK_H
+#define ISPICALLBACK_H
 
-#include "CanFrame.h"
+#include <cstdint>
 
-/**
- * Callback class. Observer pattern.
- */
-struct ICanCallback {
-        enum Error { NO_ERROR, SEND_TIMEOUT = 0x80000000 };
-        virtual ~ICanCallback () {}
-        virtual void onCanNewFrame (CanFrame const &) = 0;
-        virtual void onCanError (uint32_t e) = 0;
+struct ISpiCallback {
+        virtual ~ISpiCallback () {}
+        virtual void onRxNotEmpty (uint8_t b) = 0;
+        virtual void onTxEmpty () = 0;
+        virtual void onSpiError (uint32_t) = 0;
 };
 
-#endif // ICANCALLBACK_H
+#endif // ISPICALLBACK_H

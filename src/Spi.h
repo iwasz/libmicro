@@ -11,9 +11,9 @@
 
 #include "Hal.h"
 
-#if defined (LIB_MICRO_STM32F)
+#if defined(LIB_MICRO_STM32F)
 #include "SpiF.h"
-#elif defined (LIB_MICRO_NRG)
+#elif defined(LIB_MICRO_NRG)
 #include "SpiNRG.h"
 #endif
 

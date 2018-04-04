@@ -13,28 +13,162 @@
 #include <cstdlib>
 #include <cstring>
 
-// C-CAN callbacks
-// extern "C" {
-// void CEC_CAN_IRQHandler (void) { HAL_CAN_IRQHandler (&CanDriver::canHandle); }
+/*****************************************************************************/
 
-// void HAL_CAN_RxCpltCallback (CAN_HandleTypeDef *hcan)
-//{
-//        Debug::singleton ()->print ("s:");
-//        Debug::singleton ()->print (to_ascii ((uint8_t *)&hcan->pRxMsg->StdId, 4).c_str ());
-//        Debug::singleton ()->print (", e:");
-//        Debug::singleton ()->print (to_ascii ((uint8_t *)&hcan->pRxMsg->ExtId, 4).c_str ());
-//        Debug::singleton ()->print (", data:");
-//        Debug::singleton ()->print (to_ascii (hcan->pRxMsg->Data, hcan->pRxMsg->DLC).c_str ());
-//        Debug::singleton ()->print ("\n");
-//        CanDriver::instance ()->read (NULL);
-//}
-//} // extern "C"
+Can *Can::can;
 
-Can::Can (ICanCallback *callback, uint32_t timeout, uint32_t prescaler, uint32_t sjw, uint32_t bs1, uint32_t bs2)
-    : callback (callback), sendTimeoutMs (timeout)
+extern "C" void CEC_CAN_IRQHandler ()
 {
-        clkEnable ();
+        CAN_HandleTypeDef *hcan = &Can::can->canHandle;
+        CanFrame frame;
+
+        /* Check End of reception flag for FIFO0 */
+        if ((__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_FMP0)) && (__HAL_CAN_MSG_PENDING (hcan, CAN_FIFO0) != 0)) {
+                CAN_FIFOMailBox_TypeDef &mailbox = hcan->Instance->sFIFOMailBox[CAN_FIFO0];
+
+                if (((uint8_t)0x04U & mailbox.RIR) == CAN_ID_STD) {
+                        frame.id = 0x000007FFU & (mailbox.RIR >> 21U);
+                        frame.extended = false;
+                }
+                else {
+                        frame.id = 0x1FFFFFFFU & (mailbox.RIR >> 3U);
+                        frame.extended = true;
+                }
+
+                frame.dlc = (uint8_t)0x0FU & mailbox.RDTR;
+
+                frame.data[0] = (uint8_t)0xFFU & mailbox.RDLR;
+                frame.data[1] = (uint8_t)0xFFU & (mailbox.RDLR >> 8U);
+                frame.data[2] = (uint8_t)0xFFU & (mailbox.RDLR >> 16U);
+                frame.data[3] = (uint8_t)0xFFU & (mailbox.RDLR >> 24U);
+                frame.data[4] = (uint8_t)0xFFU & mailbox.RDHR;
+                frame.data[5] = (uint8_t)0xFFU & (mailbox.RDHR >> 8U);
+                frame.data[6] = (uint8_t)0xFFU & (mailbox.RDHR >> 16U);
+                frame.data[7] = (uint8_t)0xFFU & (mailbox.RDHR >> 24U);
+
+                __HAL_CAN_FIFO_RELEASE (hcan, CAN_FIFO0);
+
+                if (Can::can->callback) {
+                        Can::can->callback->onCanNewFrame (frame);
+                }
+        }
+
+        uint32_t errorCode = HAL_CAN_ERROR_NONE;
+
+        /* Check Error Warning Flag */
+        if ((__HAL_CAN_GET_FLAG (hcan, CAN_FLAG_EWG)) && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_EWG))
+            && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_ERR))) {
+                errorCode |= HAL_CAN_ERROR_EWG;
+        }
+
+        /* Check Error Passive Flag */
+        if ((__HAL_CAN_GET_FLAG (hcan, CAN_FLAG_EPV)) && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_EPV))
+            && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_ERR))) {
+                errorCode |= HAL_CAN_ERROR_EPV;
+        }
+
+        /* Check Bus-Off Flag */
+        if ((__HAL_CAN_GET_FLAG (hcan, CAN_FLAG_BOF)) && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_BOF))
+            && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_ERR))) {
+                errorCode |= HAL_CAN_ERROR_BOF;
+        }
+
+        /* Check Last error code Flag */
+        if ((!HAL_IS_BIT_CLR (hcan->Instance->ESR, CAN_ESR_LEC)) && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_LEC))
+            && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_ERR))) {
+                switch (hcan->Instance->ESR & CAN_ESR_LEC) {
+                case (CAN_ESR_LEC_0):
+                        /* Set CAN error code to STF error */
+                        errorCode |= HAL_CAN_ERROR_STF;
+                        break;
+                case (CAN_ESR_LEC_1):
+                        /* Set CAN error code to FOR error */
+                        errorCode |= HAL_CAN_ERROR_FOR;
+                        break;
+                case (CAN_ESR_LEC_1 | CAN_ESR_LEC_0):
+                        /* Set CAN error code to ACK error */
+                        errorCode |= HAL_CAN_ERROR_ACK;
+                        break;
+                case (CAN_ESR_LEC_2):
+                        /* Set CAN error code to BR error */
+                        errorCode |= HAL_CAN_ERROR_BR;
+                        break;
+                case (CAN_ESR_LEC_2 | CAN_ESR_LEC_0):
+                        /* Set CAN error code to BD error */
+                        errorCode |= HAL_CAN_ERROR_BD;
+                        break;
+                case (CAN_ESR_LEC_2 | CAN_ESR_LEC_1):
+                        /* Set CAN error code to CRC error */
+                        errorCode |= HAL_CAN_ERROR_CRC;
+                        break;
+                default:
+                        break;
+                }
+
+                /* Clear Last error code Flag */
+                hcan->Instance->ESR &= ~(CAN_ESR_LEC);
+        }
+
+        /* Call the Error call Back in case of Errors */
+        if (errorCode != HAL_CAN_ERROR_NONE) {
+                /* Clear ERRI Flag */
+                hcan->Instance->MSR |= CAN_MSR_ERRI;
+
+#if 1
+                Debug *d = Debug::singleton ();
+                d->print ("Error : ");
+                d->print (errorCode);
+                d->print (" : ");
+
+                if (errorCode & HAL_CAN_ERROR_EWG) {
+                        d->print ("HAL_CAN_ERROR_EWG (Error warning) ");
+                }
+                if (errorCode & HAL_CAN_ERROR_EPV) {
+                        d->print ("HAL_CAN_ERROR_EPV (Error passive) ");
+                }
+                if (errorCode & HAL_CAN_ERROR_BOF) {
+                        d->print ("HAL_CAN_ERROR_BOF (Bus off)");
+                }
+                if (errorCode & HAL_CAN_ERROR_STF) {
+                        d->print ("HAL_CAN_ERROR_STF (Stuff) ");
+                }
+                if (errorCode & HAL_CAN_ERROR_FOR) {
+                        d->print ("HAL_CAN_ERROR_FOR (Form) ");
+                }
+                if (errorCode & HAL_CAN_ERROR_ACK) {
+                        d->print ("HAL_CAN_ERROR_ACK ");
+                }
+                if (errorCode & HAL_CAN_ERROR_BR) {
+                        d->print ("HAL_CAN_ERROR_BR (Bit recessive) ");
+                }
+                if (errorCode & HAL_CAN_ERROR_BD) {
+                        d->print ("HAL_CAN_ERROR_BD (LEC Dominant) ");
+                }
+                if (errorCode & HAL_CAN_ERROR_CRC) {
+                        d->print ("HAL_CAN_ERROR_CRC (LEC Transfer) ");
+                }
+
+                d->print ("\n");
+#endif
+                /* Call Error callback function */
+                if (Can::can->callback) {
+                        Can::can->callback->onCanError (errorCode);
+                }
+        }
+}
+
+/*****************************************************************************/
+
+Can::Can (ICanCallback *callback, uint32_t prescaler, uint32_t sjw, uint32_t bs1, uint32_t bs2) : callback (callback)
+{
+        can = this;
+        memset (&canHandle.Init, 0, sizeof (canHandle.Init));
+        canHandle.Lock = HAL_UNLOCKED;
+        canHandle.State = HAL_CAN_STATE_RESET;
+        canHandle.ErrorCode = 0;
         canHandle.Instance = CAN;
+        clkEnable ();
+        reset ();
 
         static CanTxMsgTypeDef txMessage;
         static CanRxMsgTypeDef rxMessage;
@@ -49,7 +183,6 @@ Can::Can (ICanCallback *callback, uint32_t timeout, uint32_t prescaler, uint32_t
         canHandle.Init.TXFP = DISABLE;
         canHandle.Init.Mode = CAN_MODE_NORMAL;
         canHandle.Init.Prescaler = prescaler;
-        //        canHandle.Init.Prescaler = 12; // 250kbps
         canHandle.Init.SJW = sjw;
         canHandle.Init.BS1 = bs1;
         canHandle.Init.BS2 = bs2;
@@ -58,8 +191,8 @@ Can::Can (ICanCallback *callback, uint32_t timeout, uint32_t prescaler, uint32_t
                 Error_Handler ();
         }
 
-                // To pomagało przy monitorAll
 #if 0
+        // To pomagało przy monitorAll
         CAN_FilterConfTypeDef sFilterConfig;
         sFilterConfig.FilterNumber = 0;
         sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -86,16 +219,12 @@ Can::Can (ICanCallback *callback, uint32_t timeout, uint32_t prescaler, uint32_t
  * @parameter   buff   CanMsgBuffer instance
  * @return the send operation completion status
  */
-bool Can::send (const CanFrame &buff)
+bool Can::send (const CanFrame &buff, uint32_t timeoutMs)
 {
         *canHandle.pTxMsg = buff.toNative ();
 
         // Sprawdzenie czy można wysłać jest w środku
-        if (HAL_CAN_Transmit (&canHandle, sendTimeoutMs) != HAL_OK) {
-                if (callback) {
-                        callback->onCanError (ICanCallback::SEND_TIMEOUT);
-                }
-
+        if (HAL_CAN_Transmit (&canHandle, timeoutMs) != HAL_OK) {
                 return false;
         }
 
@@ -150,22 +279,11 @@ void Can::setFilterAndMask (uint32_t filter, uint32_t mask, bool extended)
  * Read the CAN frame from FIFO buffer
  * @return  true if read the frame / false if no frame
  */
-CanFrame Can::read ()
+CanFrame Can::read (uint32_t timeoutMs)
 {
-        // Z tym działa monotoring.
-        if (HAL_CAN_Receive_IT (&canHandle, CAN_FIFO0) != HAL_OK) {
-                if (callback) {
-                        callback->onCanError (ICanCallback::READ_ERROR);
-                }
-
+        if (HAL_CAN_Receive (&canHandle, CAN_FIFO0, timeoutMs) != HAL_OK) {
                 return CanFrame ();
         }
-
-        //        if (HAL_CAN_Receive (&canHandle, CAN_FIFO0, CAN_READ_TIMEOUT) != HAL_OK) {
-        //                // TODO inaczej obsługa błedów, opcja ErrorHandler, który nie blokuje
-        //                // Error_Handler ();
-        //                return CanFrame ();
-        //        }
 
         return CanFrame (*canHandle.pRxMsg);
 }
@@ -186,4 +304,91 @@ void Can::clkDisable (CAN_HandleTypeDef *canX)
         if (canX->Instance == CAN) {
                 __HAL_RCC_CAN1_CLK_DISABLE ();
         }
+}
+
+/*****************************************************************************/
+
+void Can::interrupts (bool on)
+{
+        if (on) {
+                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_EWG);  // Enable Error warning Interrupt
+                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_EPV);  // Enable Error passive Interrupt
+                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_BOF);  // Enable Bus-off Interrupt
+                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_LEC);  // Enable Last error code Interrupt
+                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_ERR);  // Enable Error Interrupt
+                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_FMP0); // Enable FIFO0 interrupt. CAN_IT_FMP1 os also valid value.
+        }
+        else {
+                __HAL_CAN_DISABLE_IT (&canHandle, CAN_IT_EWG);
+                __HAL_CAN_DISABLE_IT (&canHandle, CAN_IT_EPV);
+                __HAL_CAN_DISABLE_IT (&canHandle, CAN_IT_BOF);
+                __HAL_CAN_DISABLE_IT (&canHandle, CAN_IT_LEC);
+                __HAL_CAN_DISABLE_IT (&canHandle, CAN_IT_ERR);
+                __HAL_CAN_DISABLE_IT (&canHandle, CAN_IT_FMP0);
+        }
+}
+
+/*****************************************************************************/
+
+void Can::reset ()
+{
+        // Reset - puts bxCAN controller into sleep mode during which pullup resistors are turned on
+        canHandle.Instance->MCR |= CAN_MCR_RESET;
+}
+
+/*****************************************************************************/
+
+void Can::disable ()
+{
+        reset ();
+        setMode (INITIALIZATION);
+        // Loopback.
+        canHandle.Instance->BTR |= CAN_BTR_LBKM;
+        interrupts (false);
+}
+
+/*****************************************************************************/
+
+void Can::setMode (Mode mode)
+{
+        switch (mode) {
+        case SLEEP:
+                canHandle.Instance->MCR &= ~CAN_MCR_INRQ;
+                canHandle.Instance->MCR |= CAN_MCR_SLEEP;
+
+                while (!(canHandle.Instance->MSR & CAN_MSR_SLAK))
+                        ;
+
+                break;
+
+        case INITIALIZATION:
+                canHandle.Instance->MCR &= ~CAN_MCR_SLEEP;
+                canHandle.Instance->MCR |= CAN_MCR_INRQ;
+
+                while (!(canHandle.Instance->MSR & CAN_MSR_INAK))
+                        ;
+
+                break;
+
+        case NORMAL:
+                canHandle.Instance->MCR &= ~(CAN_MCR_SLEEP | CAN_MCR_INRQ);
+
+                while (canHandle.Instance->MSR & CAN_MSR_INAK)
+                        ;
+
+                break;
+        }
+}
+
+/*****************************************************************************/
+
+void Can::setBaudratePrescaler (uint32_t prescaler)
+{
+        setMode (INITIALIZATION);
+        // TODO Działa tylko poniższy sposób, a dwa pod nim nie działają. I nie rozumiem czemu.
+        canHandle.Instance->BTR = CAN_MODE_NORMAL | CAN_SJW_1TQ | CAN_BS1_13TQ | CAN_BS2_2TQ | (prescaler - 1);
+        // canHandle.Instance->BTR |= ((prescaler - 1) & CAN_BTR_BRP_Msk);
+        // volatile uint32_t btr = canHandle.Instance->BTR;
+        // canHandle.Instance->BTR = btr | (prescaler - 1);
+        setMode (NORMAL);
 }

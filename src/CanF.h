@@ -14,17 +14,39 @@
 #include "ICanCallback.h"
 #include <cstdint>
 
-// extern "C" void CEC_CAN_IRQHandler ();
+extern "C" void CEC_CAN_IRQHandler ();
 
 class Can {
 public:
-        Can (ICanCallback *callback = nullptr, uint32_t timeout = 1000, uint32_t prescaler = 6, uint32_t sjw = CAN_SJW_1TQ,
-             uint32_t bs1 = CAN_BS1_13TQ, uint32_t bs2 = CAN_BS2_2TQ);
+        Can (ICanCallback *callback = nullptr, uint32_t prescaler = 6, uint32_t sjw = CAN_SJW_3TQ, uint32_t bs1 = CAN_BS1_12TQ,
+             uint32_t bs2 = CAN_BS2_3TQ);
 
-        bool send (CanFrame const &buff);
-        CanFrame read ();
+        /// Synchronous and blocking
+        bool send (CanFrame const &buff, uint32_t timeoutMs = 1000);
+
+        /// Synchronous and blocking
+        CanFrame read (uint32_t timeoutMs = 1000);
         void setFilterAndMask (uint32_t filter, uint32_t mask, bool extended);
+
+        /// Asyncronous, callback called from ISR.
         void setCanCallback (ICanCallback *c) { callback = c; }
+
+        /// Turns interrupts on or off. TODO Check if synchronous read works when turned on.
+        void interrupts (bool on);
+
+        /// Reset and put in loopback mode.
+        void disable ();
+
+        /// Resets (put in sleep mode).
+        void reset ();
+
+        /// Modes of operation as described in reference manual chapter 29.4
+        enum Mode { SLEEP, INITIALIZATION, NORMAL };
+
+        /// Sets the mode. Blocks.
+        void setMode (Mode mode);
+
+        void setBaudratePrescaler (uint32_t prescaler);
 
 private:
         static void clkEnable (CAN_HandleTypeDef *canX);
@@ -33,10 +55,11 @@ private:
         void clkDisable () { clkDisable (&canHandle); }
 
 private:
-        //        friend void CEC_CAN_IRQHandler ();
+        friend void CEC_CAN_IRQHandler ();
+
         CAN_HandleTypeDef canHandle;
         ICanCallback *callback;
-        uint32_t sendTimeoutMs;
+        static Can *can;
 };
 
 #endif

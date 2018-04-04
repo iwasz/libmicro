@@ -11,6 +11,7 @@
 
 #include "Gpio.h"
 #include "Hal.h"
+#include "ISpiCallback.h"
 
 /**
  * @brief SPI master mode.
@@ -43,7 +44,15 @@ public:
          * Warning! Remember to use satNss (false) before transfer, and setNss (true) after.
          */
         uint8_t transmit8 (uint8_t word);
-        uint8_t receiveSlave8 ();
+        uint8_t receive8 ();            /// Blocking method
+        uint8_t receive8NonBlocking (); /// Non blocking method
+        void transmit8nr (uint8_t word);
+
+        /// Inetrrupts masking parameter
+        enum Interrupts { NONE = 0x00, RXNE_INTERRUPT = 0x01, TXE_INTERRUPT = 0x02 };
+
+        /// Turns interrupts on and off.
+        void interrupts (uint8_t imask);
 
         /**
          * @brief clkEnable Runs __HAL_RCC_SPIx_CLK_ENABLE for a SPIx.
@@ -76,9 +85,15 @@ public:
          */
         void clearOvr ();
 
+        void setCallback (ISpiCallback *c) { callback = c; }
+
 private:
+        FRIEND_ALL_SPI_IRQS
         SPI_HandleTypeDef spiHandle;
         Gpio *nssPin;
+        static Spi *spi1;
+        static Spi *spi2;
+        ISpiCallback *callback;
 };
 
 #endif // SPI_H

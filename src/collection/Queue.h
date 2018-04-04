@@ -24,10 +24,18 @@ public:
 
         // malloc zapobiega uruchamianiu się konstruktorów. Konstruktor jest uruchamiany przy push_back.
         Queue (size_t maxSiz)
-            : frontp (0), backp (maxSiz - 1), sizep (0), maxSizep (maxSiz), queue ((Element *)malloc (sizeof (Element) * maxSizep))
+            : frontp (0),
+              backp (maxSiz - 1),
+              sizep (0),
+              maxSizep (maxSiz) /*, queue ((Element *)malloc (sizeof (Element) * maxSizep))*/
+              ,
+              queue (new Element[maxSiz])
         {
         }
-        ~Queue () { free (queue); }
+
+        // TODO Why did I use malloc/free instead of new/delete[]. I can't recall.
+        // ~Queue () { free (queue); }
+        ~Queue () { delete[] queue; }
 
         /**
          * Rozmiar kolejki.
@@ -41,7 +49,7 @@ public:
          */
         bool push_back ();
 
-        void push_back_roll();
+        void push_back_roll ();
 
         /**
          * @brief Zwraca ostatnio dodany element kolejki lub nullptr.
