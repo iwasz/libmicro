@@ -31,7 +31,7 @@ void spiIRQHandler (Spi *spi)
         }
 
         if ((itflag & SPI_FLAG_TXE) && (itsource & SPI_IT_TXE)) {
-                spi->callback->onTxEmpty ();
+                spi->onTxEmpty ();
                 return;
         }
 

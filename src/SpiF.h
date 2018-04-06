@@ -36,20 +36,27 @@ public:
          * @param rxData Leave nullptr if not interested.
          */
         void transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData = nullptr, size_t bogoDelay = 0, bool dataPacking = true);
-
         void receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay = 0);
 
         /**
          * @brief Transmit one byte, and return what has been sent back.
-         * Warning! Remember to use satNss (false) before transfer, and setNss (true) after.
+         * Warning! Remember to use setNss (false) before transfer, and setNss (true) after.
          */
         uint8_t transmit8 (uint8_t word);
-        uint8_t receive8 ();            /// Blocking method
+        uint8_t receive8 (); /// Blocking method
+
+        // TODO Make (interafce) and SpiSlave class!
+        // Slave methods
         uint8_t receive8NonBlocking (); /// Non blocking method
         void transmit8nr (uint8_t word);
+        void transmit8nr (uint8_t const *txData, uint16_t size /*, bool dataPacking = true*/);
+        void onTxEmpty ();
+        size_t txRemainig;
+        uint8_t const *txData;
+        // Slave methods
 
         /// Inetrrupts masking parameter
-        enum Interrupts { NONE = 0x00, RXNE_INTERRUPT = 0x01, TXE_INTERRUPT = 0x02 };
+        enum Interrupts { NO_INTERRUPTS = 0x00, RXNE_INTERRUPT = 0x01, TXE_INTERRUPT = 0x02, ERR_INTERRUPT = 0x04, ALL_INTERRUPTS = 0x07 };
 
         /// Turns interrupts on and off.
         void interrupts (uint8_t imask);

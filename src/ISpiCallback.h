@@ -14,7 +14,7 @@
 struct ISpiCallback {
         virtual ~ISpiCallback () {}
         virtual void onRxNotEmpty (uint8_t b) = 0;
-        virtual void onTxEmpty () = 0;
+        // virtual void onTxEmpty () = 0;
         virtual void onSpiError (uint32_t) = 0;
 };
 

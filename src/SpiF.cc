@@ -18,7 +18,13 @@ Spi *Spi::spi2;
 /*****************************************************************************/
 
 Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarityClockSteadyState, uint32_t nssMode)
-    : nssPin (nullptr), callback (nullptr)
+    :
+
+      txRemainig (0),
+      txData (nullptr),
+
+      nssPin (nullptr),
+      callback (nullptr)
 {
         if (spi == SPI1) {
                 spi1 = this;
@@ -46,6 +52,13 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
         clkEnable ();
         HAL_SPI_Init (&spiHandle);
+
+        // Check if the SPI is already enabled
+        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+                __HAL_SPI_ENABLE (&spiHandle);
+        }
+
+        transmit8nr (0x55);
 }
 
 /*****************************************************************************/
@@ -286,6 +299,49 @@ void Spi::transmit8nr (uint8_t word)
 
 /*****************************************************************************/
 
+void Spi::transmit8nr (uint8_t const *txData, uint16_t size /*, bool dataPacking*/)
+{
+        txRemainig = size;
+        this->txData = txData;
+
+        __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_TXE));
+
+        if (spiHandle.Instance->SR & SPI_FLAG_TXE) {
+                onTxEmpty ();
+        }
+}
+
+/*---------------------------------------------------------------------------*/
+
+void Spi::onTxEmpty ()
+{
+        if (!txRemainig) {
+                return;
+        }
+
+        SPI_TypeDef *spi = spiHandle.Instance;
+
+#ifndef LIB_MICRO_STM32F4
+//        if (txRemainig > 1) {
+//                spi->DR = *((uint16_t *)txData);
+//                txData += sizeof (uint16_t);
+//                txRemainig -= 2;
+//        }
+//        else {
+#endif
+        *(__IO uint8_t *)&spi->DR = (*txData++);
+        --txRemainig;
+#ifndef LIB_MICRO_STM32F4
+//        }
+#endif
+
+        if (!txRemainig) {
+                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_TXE));
+        }
+}
+
+/*****************************************************************************/
+
 void Spi::clkEnable (SPI_HandleTypeDef *spiX)
 {
         if (spiX->Instance == SPI1) {
@@ -339,16 +395,23 @@ void Spi::interrupts (uint8_t imask)
                 SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
 #endif
 
-                __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_RXNE | SPI_IT_ERR));
-
-                // Check if the SPI is already enabled
-                if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
-                        __HAL_SPI_ENABLE (&spiHandle);
-                }
+                __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_RXNE));
         }
         else {
-                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_RXNE | SPI_IT_ERR));
+                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_RXNE));
         }
 
-        // TODO TXE_INTERRUPT
+        if (imask & TXE_INTERRUPT) {
+                __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_TXE));
+        }
+        else {
+                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_TXE));
+        }
+
+        if (imask & ERR_INTERRUPT) {
+                __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_ERR));
+        }
+        else {
+                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_ERR));
+        }
 }
