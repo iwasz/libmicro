@@ -58,7 +58,10 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
                 __HAL_SPI_ENABLE (&spiHandle);
         }
 
-        transmit8nr (0x55);
+        // TODO remove
+        // transmit8nr (0x55);
+        // RX fifo treshold : at lesta 8 bit.
+        SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
 }
 
 /*****************************************************************************/
@@ -286,7 +289,7 @@ uint8_t Spi::receive8 ()
 
 uint8_t Spi::receive8NonBlocking () { return *(__IO uint8_t *)&spiHandle.Instance->DR; }
 
-/*****************************************************************************/
+/*---------------------------------------------------------------------------*/
 
 void Spi::transmit8nr (uint8_t word)
 {
@@ -297,7 +300,11 @@ void Spi::transmit8nr (uint8_t word)
         *(__IO uint8_t *)&spiHandle.Instance->DR = word;
 }
 
-/*****************************************************************************/
+/*---------------------------------------------------------------------------*/
+
+void Spi::transmit8nrNb (uint8_t word) { *(__IO uint8_t *)&spiHandle.Instance->DR = word; }
+
+/*---------------------------------------------------------------------------*/
 
 void Spi::transmit8nr (uint8_t const *txData, uint16_t size /*, bool dataPacking*/)
 {

@@ -49,6 +49,7 @@ public:
         // Slave methods
         uint8_t receive8NonBlocking (); /// Non blocking method
         void transmit8nr (uint8_t word);
+        void transmit8nrNb (uint8_t word);
         void transmit8nr (uint8_t const *txData, uint16_t size /*, bool dataPacking = true*/);
         void onTxEmpty ();
         size_t txRemainig;
