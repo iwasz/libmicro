@@ -13,6 +13,8 @@
 #include <cstdint>
 #include <functional>
 
+extern "C" void GPIO_Handler ();
+
 /**
  * @brief GPIO port adapter class. RAII.
  */
@@ -44,7 +46,7 @@ public:
         GPIO_Type *getPort () { return GPIO; }
 
 private:
-        //        FRIEND_ALL_GPIO_IRQS
+        friend void GPIO_Handler ();
 
         uint32_t pin;
         std::function<void(void)> onToggle;

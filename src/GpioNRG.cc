@@ -86,3 +86,78 @@ int Gpio::pinNumber (uint32_t pinDef)
 
         return res;
 }
+
+/*****************************************************************************/
+
+extern "C" void GPIO_Handler ()
+{
+        uint8_t pinNo;
+
+        if (GPIO->MIS & GPIO_Pin_0) {
+                GPIO->IC |= GPIO_Pin_0;
+                pinNo = 0;
+        }
+        else if (GPIO->MIS & GPIO_Pin_1) {
+                GPIO->IC |= GPIO_Pin_1;
+                pinNo = 1;
+        }
+        else if (GPIO->MIS & GPIO_Pin_2) {
+                GPIO->IC |= GPIO_Pin_2;
+                pinNo = 2;
+        }
+        else if (GPIO->MIS & GPIO_Pin_3) {
+                GPIO->IC |= GPIO_Pin_3;
+                pinNo = 3;
+        }
+        else if (GPIO->MIS & GPIO_Pin_4) {
+                GPIO->IC |= GPIO_Pin_4;
+                pinNo = 4;
+        }
+        else if (GPIO->MIS & GPIO_Pin_5) {
+                GPIO->IC |= GPIO_Pin_5;
+                pinNo = 5;
+        }
+        else if (GPIO->MIS & GPIO_Pin_6) {
+                GPIO->IC |= GPIO_Pin_6;
+                pinNo = 6;
+        }
+        else if (GPIO->MIS & GPIO_Pin_7) {
+                GPIO->IC |= GPIO_Pin_7;
+                pinNo = 7;
+        }
+        else if (GPIO->MIS & GPIO_Pin_8) {
+                GPIO->IC |= GPIO_Pin_8;
+                pinNo = 8;
+        }
+        else if (GPIO->MIS & GPIO_Pin_9) {
+                GPIO->IC |= GPIO_Pin_9;
+                pinNo = 9;
+        }
+        else if (GPIO->MIS & GPIO_Pin_10) {
+                GPIO->IC |= GPIO_Pin_10;
+                pinNo = 10;
+        }
+        else if (GPIO->MIS & GPIO_Pin_11) {
+                GPIO->IC |= GPIO_Pin_11;
+                pinNo = 11;
+        }
+        else if (GPIO->MIS & GPIO_Pin_12) {
+                GPIO->IC |= GPIO_Pin_12;
+                pinNo = 12;
+        }
+        else if (GPIO->MIS & GPIO_Pin_13) {
+                GPIO->IC |= GPIO_Pin_13;
+                pinNo = 13;
+        }
+        else if (GPIO->MIS & GPIO_Pin_14) {
+                GPIO->IC |= GPIO_Pin_14;
+                pinNo = 14;
+        }
+        else if (GPIO->MIS & GPIO_Pin_15) {
+                GPIO->IC |= GPIO_Pin_15;
+                pinNo = 15;
+        }
+
+        // TODO new versions of BlueNRG-2 have more pins (26 i think).
+        Gpio::connectedExtis[pinNo]->onToggle ();
+}
