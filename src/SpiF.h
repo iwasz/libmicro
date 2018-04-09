@@ -23,9 +23,9 @@ public:
 
         ~Spi () { clkDisable (); }
 
-        // Obsolete if transmit8 prove to be ok.
-        void transmit (uint8_t const *pTxData, uint8_t *pRxData, uint16_t Size);
-        // void transmit1 (uint8_t const *pTxData, uint16_t Size);
+        /*****************************************************************************/
+        /* Polling                                                                   */
+        /*****************************************************************************/
 
         /**
          * @brief Transmit and receive at the same time in 8 bits mode.
@@ -43,24 +43,32 @@ public:
          * Warning! Remember to use setNss (false) before transfer, and setNss (true) after.
          */
         uint8_t transmit8 (uint8_t word);
-        uint8_t receive8 (); /// Blocking method
+
+        /// Receive-only counterpart of single-byte transmit8.
+        uint8_t receive8 ();
+
+        /*****************************************************************************/
+        /* Interrupts                                                                */
+        /*****************************************************************************/
 
         // TODO Make (interafce) and SpiSlave class!
         // Slave methods
         uint8_t receive8NonBlocking (); /// Non blocking method
         void transmit8nr (uint8_t word);
         void transmit8nrNb (uint8_t word);
-        void transmit8nr (uint8_t const *txData, uint16_t size /*, bool dataPacking = true*/);
-        void onTxEmpty ();
-        size_t txRemainig;
-        uint8_t const *txData;
-        // Slave methods
+
+        void transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData = nullptr);
+        void receive8nb (uint8_t *rxData, uint16_t size);
 
         /// Inetrrupts masking parameter
         enum Interrupts { NO_INTERRUPTS = 0x00, RXNE_INTERRUPT = 0x01, TXE_INTERRUPT = 0x02, ERR_INTERRUPT = 0x04, ALL_INTERRUPTS = 0x07 };
 
         /// Turns interrupts on and off.
         void interrupts (uint8_t imask);
+
+        void setCallback (ISpiCallback *c) { callback = c; }
+
+        /*****************************************************************************/
 
         /**
          * @brief clkEnable Runs __HAL_RCC_SPIx_CLK_ENABLE for a SPIx.
@@ -93,7 +101,14 @@ public:
          */
         void clearOvr ();
 
-        void setCallback (ISpiCallback *c) { callback = c; }
+private:
+        void onTxEmpty ();
+        void onRxNotEmpty ();
+        size_t txRemainig;
+        size_t rxRemainig, rxRemaining0;
+        uint8_t const *txData;
+        uint8_t *rxData;
+        uint8_t *rxData0;
 
 private:
         FRIEND_ALL_SPI_IRQS

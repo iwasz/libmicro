@@ -10,6 +10,8 @@
 #include "Spi.h"
 #include <cstring>
 
+#include "Debug.h"
+
 /*****************************************************************************/
 
 Spi *Spi::spi1;
@@ -18,11 +20,12 @@ Spi *Spi::spi2;
 /*****************************************************************************/
 
 Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarityClockSteadyState, uint32_t nssMode)
-    :
-
-      txRemainig (0),
+    : txRemainig (0),
+      rxRemainig (0),
+      rxRemaining0 (0),
       txData (nullptr),
-
+      rxData (nullptr),
+      rxData0 (nullptr),
       nssPin (nullptr),
       callback (nullptr)
 {
@@ -62,19 +65,6 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
         // transmit8nr (0x55);
         // RX fifo treshold : at lesta 8 bit.
         SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
-}
-
-/*****************************************************************************/
-
-void Spi::transmit (uint8_t const *txData, uint8_t *rxData, uint16_t size)
-{
-        //        setNss (false);
-
-        if (HAL_SPI_TransmitReceive (&spiHandle, const_cast<uint8_t *> (txData), rxData, size, 500) != HAL_OK) {
-                Error_Handler ();
-        }
-        // HAL_SPI_Transmit()
-        //        setNss (true);
 }
 
 /*****************************************************************************/
@@ -306,16 +296,24 @@ void Spi::transmit8nrNb (uint8_t word) { *(__IO uint8_t *)&spiHandle.Instance->D
 
 /*---------------------------------------------------------------------------*/
 
-void Spi::transmit8nr (uint8_t const *txData, uint16_t size /*, bool dataPacking*/)
+void Spi::transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 {
         txRemainig = size;
         this->txData = txData;
 
-        __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_TXE));
-
-        if (spiHandle.Instance->SR & SPI_FLAG_TXE) {
-                onTxEmpty ();
+        if (rxData) {
+                rxData0 = this->rxData = rxData;
+                rxRemaining0 = size;
+                rxRemainig = size;
+                //                SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+                //                __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_RXNE));
         }
+
+        __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_TXE));
+        // Czy to jest potrzebne?
+        //        if (spiHandle.Instance->SR & SPI_FLAG_TXE) {
+        //                onTxEmpty ();
+        //        }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -344,6 +342,40 @@ void Spi::onTxEmpty ()
 
         if (!txRemainig) {
                 __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_TXE));
+                callback->onTxComplete ();
+        }
+}
+
+/*---------------------------------------------------------------------------*/
+
+void Spi::receive8nb (uint8_t *rxData, uint16_t size)
+{
+        rxData0 = this->rxData = rxData;
+        rxRemaining0 = size;
+        rxRemainig = size;
+        //        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+        //        __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_RXNE));
+}
+
+/*---------------------------------------------------------------------------*/
+
+void Spi::onRxNotEmpty ()
+{
+        SPI_TypeDef *spi = spiHandle.Instance;
+
+        if (!rxRemainig) {
+                uint8_t b = *(__IO uint8_t *)&spi->DR;
+                (void)b;
+                // Debug::singleton()->print("!");
+                return;
+        }
+
+        *rxData++ = *(__IO uint8_t *)&spi->DR;
+        --rxRemainig;
+
+        if (!rxRemainig) {
+                //                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_RXNE));
+                callback->onRxComplete (rxData0, rxRemaining0);
         }
 }
 

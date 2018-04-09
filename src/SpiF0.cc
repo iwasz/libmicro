@@ -25,8 +25,10 @@ void spiIRQHandler (Spi *spi)
         uint32_t itflag = hspi->Instance->SR;
 
         if ((itflag & SPI_FLAG_RXNE) && (itsource & SPI_IT_RXNE) && !(itflag & SPI_FLAG_OVR)) {
-                // Use receive8NonBlocking
-                spi->callback->onRxNotEmpty (*(__IO uint8_t *)&hspi->Instance->DR);
+                //uint8_t b = *(__IO uint8_t *)&hspi->Instance->DR;
+                                // Use receive8NonBlocking
+                spi->onRxNotEmpty (/*b*/);
+//                spi->callback->onRxNotEmpty (b);
                 return;
         }
 
