@@ -26,6 +26,7 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
       txData (nullptr),
       rxData (nullptr),
       rxData0 (nullptr),
+      spi (spi),
       nssPin (nullptr),
       callback (nullptr)
 {
@@ -277,22 +278,22 @@ uint8_t Spi::receive8 ()
 
 /*****************************************************************************/
 
-uint8_t Spi::receive8NonBlocking () { return *(__IO uint8_t *)&spiHandle.Instance->DR; }
+// uint8_t Spi::receive8NonBlocking () { return *(__IO uint8_t *)&spiHandle.Instance->DR; }
 
 /*---------------------------------------------------------------------------*/
 
-void Spi::transmit8nr (uint8_t word)
-{
-        // Wait for tx buffer to be empty
-        while (!(spiHandle.Instance->SR & SPI_FLAG_TXE))
-                ;
+// void Spi::transmit8nr (uint8_t word)
+//{
+//        // Wait for tx buffer to be empty
+//        while (!(spiHandle.Instance->SR & SPI_FLAG_TXE))
+//                ;
 
-        *(__IO uint8_t *)&spiHandle.Instance->DR = word;
-}
+//        *(__IO uint8_t *)&spiHandle.Instance->DR = word;
+//}
 
-/*---------------------------------------------------------------------------*/
+///*---------------------------------------------------------------------------*/
 
-void Spi::transmit8nrNb (uint8_t word) { *(__IO uint8_t *)&spiHandle.Instance->DR = word; }
+// void Spi::transmit8nrNb (uint8_t word) { *(__IO uint8_t *)&spiHandle.Instance->DR = word; }
 
 /*---------------------------------------------------------------------------*/
 
@@ -300,20 +301,24 @@ void Spi::transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 {
         txRemainig = size;
         this->txData = txData;
+        uint32_t interrupts = 0;
+
+        if (spi->SR & SPI_FLAG_TXE) {
+                onTxEmpty ();
+        }
+
+        if (txRemainig) {
+                interrupts |= SPI_IT_TXE;
+        }
 
         if (rxData) {
                 rxData0 = this->rxData = rxData;
                 rxRemaining0 = size;
                 rxRemainig = size;
-                //                SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
-                //                __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_RXNE));
+                interrupts |= SPI_IT_RXNE;
         }
 
-        __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_TXE));
-        // Czy to jest potrzebne?
-        //        if (spiHandle.Instance->SR & SPI_FLAG_TXE) {
-        //                onTxEmpty ();
-        //        }
+        __HAL_SPI_ENABLE_IT (&spiHandle, interrupts);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -323,8 +328,6 @@ void Spi::onTxEmpty ()
         if (!txRemainig) {
                 return;
         }
-
-        SPI_TypeDef *spi = spiHandle.Instance;
 
 #ifndef LIB_MICRO_STM32F4
 //        if (txRemainig > 1) {
@@ -353,20 +356,16 @@ void Spi::receive8nb (uint8_t *rxData, uint16_t size)
         rxData0 = this->rxData = rxData;
         rxRemaining0 = size;
         rxRemainig = size;
-        //        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
-        //        __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_RXNE));
+        __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_RXNE));
 }
 
 /*---------------------------------------------------------------------------*/
 
 void Spi::onRxNotEmpty ()
 {
-        SPI_TypeDef *spi = spiHandle.Instance;
-
         if (!rxRemainig) {
                 uint8_t b = *(__IO uint8_t *)&spi->DR;
                 (void)b;
-                // Debug::singleton()->print("!");
                 return;
         }
 
@@ -374,7 +373,7 @@ void Spi::onRxNotEmpty ()
         --rxRemainig;
 
         if (!rxRemainig) {
-                //                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_RXNE));
+                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_RXNE));
                 callback->onRxComplete (rxData0, rxRemaining0);
         }
 }

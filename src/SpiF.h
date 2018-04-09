@@ -53,9 +53,9 @@ public:
 
         // TODO Make (interafce) and SpiSlave class!
         // Slave methods
-        uint8_t receive8NonBlocking (); /// Non blocking method
-        void transmit8nr (uint8_t word);
-        void transmit8nrNb (uint8_t word);
+//        uint8_t receive8NonBlocking (); /// Non blocking method
+//        void transmit8nr (uint8_t word);
+//        void transmit8nrNb (uint8_t word);
 
         void transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData = nullptr);
         void receive8nb (uint8_t *rxData, uint16_t size);
@@ -113,6 +113,7 @@ private:
 private:
         FRIEND_ALL_SPI_IRQS
         SPI_HandleTypeDef spiHandle;
+        SPI_TypeDef *spi;
         Gpio *nssPin;
         static Spi *spi1;
         static Spi *spi2;
