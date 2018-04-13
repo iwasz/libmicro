@@ -62,10 +62,9 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
                 __HAL_SPI_ENABLE (&spiHandle);
         }
 
-        // TODO remove
-        // transmit8nr (0x55);
-        // RX fifo treshold : at lesta 8 bit.
+#ifdef LIB_MICRO_STM32F0
         SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
+#endif
 }
 
 /*****************************************************************************/

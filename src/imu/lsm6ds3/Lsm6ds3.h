@@ -125,28 +125,74 @@ public:
 
         /// Gyroscope full-scale at 125 dps. Default value: 0
         enum FS_125_DPS { FS_125_DISABLED = 0x00, FS_125_ENABLED = 0x02, FS_125_MASK = 0x02 };
-        bool getFs125Dps () const { return static_cast<GyroOdr> (bsp->readRegister (CTRL2_G) & FS_125_MASK); }
+        bool isFs125Dps () const { return static_cast<GyroOdr> (bsp->readRegister (CTRL2_G) & FS_125_MASK); }
         void setFs125Dps (bool b) { writeRegister (CTRL2_G, FS_125_MASK, (b) ? (FS_125_ENABLED) : (FS_125_DISABLED)); }
 
         /*****************************************************************************/
 
         enum I2cOperation { I2C_AND_SPI = 0x00, SPI_ONLY = 0x04, I2C_DISABLE_MASK = 0x04 };
-        bool getI2cEnable () const { return bsp->readRegister (CTRL4_C) & I2C_DISABLE_MASK; }
+        bool isI2cEnable () const { return bsp->readRegister (CTRL4_C) & I2C_DISABLE_MASK; }
         void setI2cEnable (bool b) { writeRegister (CTRL4_C, I2C_DISABLE_MASK, (b) ? (I2C_AND_SPI) : (SPI_ONLY)); };
 
         /*****************************************************************************/
-        /* FIFO_CTRL5                                                                */
+        /* FIFO                                                                      */
         /*****************************************************************************/
+
+        uint16_t getFifoTreshold () const { return bsp->readRegister (FIFO_CTRL1) | uint16_t (bsp->readRegister (FIFO_CTRL2) & 0x0f) << 8; }
+        void setFifoTreshold (uint16_t t);
+
+        bool isFifoTimerPedoEnabled () const { return bsp->readRegister (FIFO_CTRL2) & 0x80; }
+        /// Enables step counter and timestamp data to be stored as the 4 th FIFO data set.
+        void setFifoTimerPedoEnabled (bool b) { writeRegister (FIFO_CTRL2, 0x80, (b) ? (0x80) : (0)); }
+
+        bool isFifoTimerPedoDrdy () const { return bsp->readRegister (FIFO_CTRL2) & 0x80; }
+        void setFifoTimerPedoDrdy (bool b) { writeRegister (FIFO_CTRL2, 0x80, (b) ? (0x80) : (0)); }
+
+        enum FifoAccelDecimation {
+                ACCEL_DATA_NOT_IN_FIFO = 0x00,
+                ACCEL_NO_DECIMATION = 0x01,
+                ACCEL_DECIMATION_BY_2 = 0x02,
+                ACCEL_DECIMATION_BY_3 = 0x03,
+                ACCEL_DECIMATION_BY_4 = 0x04,
+                ACCEL_DECIMATION_BY_8 = 0x05,
+                ACCEL_DECIMATION_BY_16 = 0x06,
+                ACCEL_DECIMATION_BY_32 = 0x07,
+                ACCEL_FIFO_DECIMATION_MASK = 0x07
+        };
+
+        FifoAccelDecimation getFifoAccelDecimation () const
+        {
+                return static_cast<FifoAccelDecimation> (bsp->readRegister (FIFO_CTRL3) & ACCEL_FIFO_DECIMATION_MASK);
+        }
+        void setFifoAccelDecimation (FifoAccelDecimation b) { writeRegister (FIFO_CTRL3, ACCEL_FIFO_DECIMATION_MASK, b); }
+
+        enum FifoGyroDecimation {
+                GYRO_DATA_NOT_IN_FIFO = 0x00,
+                GYRO_NO_DECIMATION = 0x08,
+                GYRO_DECIMATION_BY_2 = 0x10,
+                GYRO_DECIMATION_BY_3 = 0x18,
+                GYRO_DECIMATION_BY_4 = 0x20,
+                GYRO_DECIMATION_BY_8 = 0x28,
+                GYRO_DECIMATION_BY_16 = 0x30,
+                GYRO_DECIMATION_BY_32 = 0x38,
+                GYRO_FIFO_DECIMATION_MASK = 0x38
+        };
+
+        FifoGyroDecimation getFifoGyroDecimation () const
+        {
+                return static_cast<FifoGyroDecimation> (bsp->readRegister (FIFO_CTRL3) & GYRO_FIFO_DECIMATION_MASK);
+        }
+        void setFifoGyroDecimation (FifoGyroDecimation b) { writeRegister (FIFO_CTRL3, GYRO_FIFO_DECIMATION_MASK, b); }
+
+        bool isFifoOnlyHighData () const { return bsp->readRegister (FIFO_CTRL4) & 0x40; }
+        void setFifoOnlyHighData (bool b) { writeRegister (CTRL4_C, 0x40, (b) ? (0x40) : (0)); };
 
         enum FifoMode {
                 FIFO_MODE_BYPASS = 0x00,
                 FIFO_MODE_FIFO = 0x01,
-                FIFO_MODE_STREAM = 0x02,
-                FIFO_MODE_STF = 0x03,
-                FIFO_MODE_BTS = 0x04,
-                FIFO_MODE_DYN_STREAM = 0x05,
-                FIFO_MODE_DYN_STREAM_2 = 0x06,
-                FIFO_MODE_BTF = 0x07,
+                FIFO_MODE_CONTINUOUS_TO_FIFO = 0x03,
+                FIFO_MODE_BYPASS_TO_CONTINUOUS = 0x04,
+                FIFO_MODE_CONTINUOUS = 0x06,
                 FIFO_MODE_MASK = 0x07
         };
 
@@ -155,23 +201,40 @@ public:
 
         enum FifoOdr {
                 FIFO_ODR_DISABLED = 0x00,
-                FIFO_ODR_10Hz = 0x08,
-                FIFO_ODR_25Hz = 0x10,
-                FIFO_ODR_50Hz = 0x18,
-                FIFO_ODR_100Hz = 0x20,
-                FIFO_ODR_200Hz = 0x28,
-                FIFO_ODR_400Hz = 0x30,
-                FIFO_ODR_800Hz = 0x38,
-                FIFO_ODR_1600Hz = 0x40,
-                FIFO_ODR_3300Hz = 0x48,
-                FIFO_ODR_6600Hz = 0x50,
+                FIFO_ODR_13Hz = 0x08,
+                FIFO_ODR_26Hz = 0x10,
+                FIFO_ODR_52Hz = 0x18,
+                FIFO_ODR_104Hz = 0x20,
+                FIFO_ODR_208Hz = 0x28,
+                FIFO_ODR_416Hz = 0x30,
+                FIFO_ODR_833Hz = 0x38,
+                FIFO_ODR_1660Hz = 0x40,
+                FIFO_ODR_3330Hz = 0x48,
+                FIFO_ODR_6660Hz = 0x50,
                 FIFO_ODR_MASK = 0x78
         };
 
         FifoOdr getFifoOdr () const { return static_cast<FifoOdr> (bsp->readRegister (FIFO_CTRL5) & FIFO_ODR_MASK); }
         void setFifoOdr (FifoOdr b) { writeRegister (FIFO_CTRL5, FIFO_ODR_MASK, b); }
 
-public: // private:
+        /// Number of samples already stored in FIFO.
+        uint16_t getFifoSamplesNum () const
+        {
+                return bsp->readRegister (FIFO_STATUS1) | uint16_t (bsp->readRegister (FIFO_STATUS2) & 0x0f) << 8;
+        }
+
+        /// This bit is set high when the number of bytes already stored in the FIFO is equal to or higher than the watermark level
+        bool isFifoWatermarkReached () const { return bsp->readRegister (FIFO_STATUS2) & 0x80; }
+
+        /// High when the FIFO is completely filled and at least one sample has already been overwritten to store the new data.
+        bool isFifoOverrun () const { return bsp->readRegister (FIFO_STATUS2) & 0x40; }
+        bool isFifoFull () const { return bsp->readRegister (FIFO_STATUS2) & 0x20; }
+        bool isFifoEmpty () const { return bsp->readRegister (FIFO_STATUS2) & 0x10; }
+
+        /// Which axis of which sensor data will be read at the next reading.
+        uint16_t getFifoPattern () const { return bsp->readRegister (FIFO_STATUS3) | uint16_t (bsp->readRegister (FIFO_STATUS4) & 0x03) << 8; }
+
+private:
         enum Register {
                 FUNC_CFG_ACCESS = 0x01,
                 SENSOR_SYNC_TIME = 0x04,

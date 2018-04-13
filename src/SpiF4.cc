@@ -6,16 +6,20 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef LIB_COMMON_MICRO_UART_H
-#define LIB_COMMON_MICRO_UART_H
+#include "ErrorHandler.h"
+#include "Spi.h"
+#include <cstring>
 
-#include <Hal.h>
-#include <functional>
+/*****************************************************************************/
 
-#if defined (LIB_MICRO_STM32F)
-#include "UsartF.h"
-#elif defined (LIB_MICRO_NRG)
-#include "UsartNRG.h"
-#endif
+void spiIRQHandler (Spi *spi);
+extern "C" void SPI1_IRQHandler () { spiIRQHandler (Spi::spi1); }
+extern "C" void SPI2_IRQHandler () { spiIRQHandler (Spi::spi2); }
+//extern "C" void SPI3_IRQHandler () { spiIRQHandler (Spi::spi3); }
 
-#endif // UART_H
+/*****************************************************************************/
+
+void spiIRQHandler (Spi *spi)
+{
+        // TODO
+}
