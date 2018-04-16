@@ -139,6 +139,7 @@ public:
         /*****************************************************************************/
 
         uint16_t getFifoTreshold () const { return bsp->readRegister (FIFO_CTRL1) | uint16_t (bsp->readRegister (FIFO_CTRL2) & 0x0f) << 8; }
+        /// I think, that units are 2B.
         void setFifoTreshold (uint16_t t);
 
         bool isFifoTimerPedoEnabled () const { return bsp->readRegister (FIFO_CTRL2) & 0x80; }
@@ -233,6 +234,40 @@ public:
 
         /// Which axis of which sensor data will be read at the next reading.
         uint16_t getFifoPattern () const { return bsp->readRegister (FIFO_STATUS3) | uint16_t (bsp->readRegister (FIFO_STATUS4) & 0x03) << 8; }
+
+        int16_t getFifoNextSample () const
+        {
+                return (uint16_t)bsp->readRegister (FIFO_DATA_OUT_H) << 8 | (uint16_t)bsp->readRegister (FIFO_DATA_OUT_L);
+        }
+
+        /*****************************************************************************/
+        /* Interrupt configuration                                                   */
+        /*****************************************************************************/
+
+        enum Interrupt1Source {
+                INT1_STEP_DETECTOR = 1 << 7, /// Pedometer step recognition interrupt enable on INT1 pad.
+                INT1_SIGN_MOT = 1 << 6,      /// Significant motion interrupt enable on INT1 pad.
+                INT1_FULL_FLAG = 1 << 5,     /// FIFO full flag interrupt enable on INT1 pad.
+                INT1_FIFO_OVR = 1 << 4,      /// FIFO overrun interrupt on INT1 pad.
+                INT1_FTH = 1 << 3,           /// FIFO threshold interrupt on INT1 pad.
+                INT1_BOOT = 1 << 2,          /// Boot status available on INT1 pad.
+                INT1_DRDY_G = 1 << 1,        /// Gyroscope Data Ready on INT1 pad.
+                INT1_DRDY_XL = 1 << 0        /// Accelerometer Data Ready on INT1 pad.
+        };
+
+        void setInt1Source (uint8_t s) { bsp->writeRegister (INT1_CTRL, s); }
+        void addInt1Source (Interrupt1Source s) { writeRegister (INT1_CTRL, s, s); }
+        void removeInt1Source (Interrupt1Source s) { writeRegister (INT1_CTRL, s, 0); }
+        uint8_t getInt1Source () const;
+
+        /*****************************************************************************/
+        /* Miscellaneous                                                             */
+        /*****************************************************************************/
+
+        int16_t getTemperature () const
+        {
+                return (int16_t) ((uint16_t)bsp->readRegister (OUT_TEMP_H) << 8 | (uint16_t)bsp->readRegister (OUT_TEMP_L)) / 16 + 25;
+        }
 
 private:
         enum Register {

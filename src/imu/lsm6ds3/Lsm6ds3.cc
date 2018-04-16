@@ -141,6 +141,6 @@ void Lsm6ds3::clickITConfig ()
 
 void Lsm6ds3::setFifoTreshold (uint16_t t)
 {
-        bsp->writeRegister (FIFO_CTRL1, t & 0x0f);
+        bsp->writeRegister (FIFO_CTRL1, t & 0xff);
         writeRegister (FIFO_CTRL2, 0x0f, t >> 8);
 }
