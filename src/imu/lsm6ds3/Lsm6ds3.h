@@ -129,10 +129,16 @@ public:
         void setFs125Dps (bool b) { writeRegister (CTRL2_G, FS_125_MASK, (b) ? (FS_125_ENABLED) : (FS_125_DISABLED)); }
 
         /*****************************************************************************/
+        /* CTRL4_C                                                                   */
+        /*****************************************************************************/
 
         enum I2cOperation { I2C_AND_SPI = 0x00, SPI_ONLY = 0x04, I2C_DISABLE_MASK = 0x04 };
         bool isI2cEnable () const { return bsp->readRegister (CTRL4_C) & I2C_DISABLE_MASK; }
         void setI2cEnable (bool b) { writeRegister (CTRL4_C, I2C_DISABLE_MASK, (b) ? (I2C_AND_SPI) : (SPI_ONLY)); };
+
+        /// Enable FIFO threshold level use. Limit FIFO size to the treshold.
+        bool isFifoStopOnFth () const { return bsp->readRegister (CTRL4_C) & 0x01; }
+        void setFifoStopOnFth (bool b) { writeRegister (CTRL4_C, 0x01, (b) ? (0x01) : (0x00)); };
 
         /*****************************************************************************/
         /* FIFO                                                                      */
