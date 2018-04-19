@@ -25,10 +25,7 @@ void spiIRQHandler (Spi *spi)
         uint32_t itflag = hspi->Instance->SR;
 
         if ((itflag & SPI_FLAG_RXNE) && (itsource & SPI_IT_RXNE) && !(itflag & SPI_FLAG_OVR)) {
-                //uint8_t b = *(__IO uint8_t *)&hspi->Instance->DR;
-                                // Use receive8NonBlocking
-                spi->onRxNotEmpty (/*b*/);
-//                spi->callback->onRxNotEmpty (b);
+                spi->onRxNotEmpty ();
                 return;
         }
 
@@ -37,15 +34,19 @@ void spiIRQHandler (Spi *spi)
                 return;
         }
 
-        // SPI in Error Treatment
-        if ((itflag & (SPI_FLAG_MODF | SPI_FLAG_OVR | SPI_FLAG_FRE | SPI_FLAG_CRCERR)) && (itsource & SPI_IT_ERR)) {
-                uint32_t errorCode = 0;
+        uint32_t errorCode = 0;
 
-                // SPI Overrun error
-                if ((itflag & SPI_FLAG_OVR) != RESET) {
+        // SPI Overrun error
+        if (itflag & SPI_FLAG_OVR) {
+                __HAL_SPI_CLEAR_OVRFLAG (hspi);
+
+                if (spi->rxRemainig) {
                         errorCode |= HAL_SPI_ERROR_OVR;
-                        __HAL_SPI_CLEAR_OVRFLAG (hspi);
                 }
+        }
+
+        // SPI in Error Treatment
+        if (itsource & SPI_IT_ERR) {
 
                 // SPI Mode Fault error
                 if ((itflag & SPI_FLAG_MODF) != RESET) {

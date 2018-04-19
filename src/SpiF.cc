@@ -298,17 +298,13 @@ uint8_t Spi::receive8 ()
 
 void Spi::transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 {
+        if (!size) {
+                return;
+        }
+
         txRemainig = size;
         this->txData = txData;
-        uint32_t interrupts = 0;
-
-        if (spi->SR & SPI_FLAG_TXE) {
-                onTxEmpty ();
-        }
-
-        if (txRemainig) {
-                interrupts |= SPI_IT_TXE;
-        }
+        uint32_t interrupts = SPI_IT_TXE;
 
         if (rxData) {
                 rxData0 = this->rxData = rxData;
@@ -317,6 +313,7 @@ void Spi::transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData)
                 interrupts |= SPI_IT_RXNE;
         }
 
+//        Debug::singleton ()->print ("T+");
         __HAL_SPI_ENABLE_IT (&spiHandle, interrupts);
 }
 
@@ -325,6 +322,9 @@ void Spi::transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 void Spi::onTxEmpty ()
 {
         if (!txRemainig) {
+//                Debug::singleton ()->print ("T-");
+                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_TXE));
+                callback->onTxComplete ();
                 return;
         }
 
@@ -341,11 +341,6 @@ void Spi::onTxEmpty ()
 #ifndef LIB_MICRO_STM32F4
 //        }
 #endif
-
-        if (!txRemainig) {
-                __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_TXE));
-                callback->onTxComplete ();
-        }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -355,6 +350,7 @@ void Spi::receive8nb (uint8_t *rxData, uint16_t size)
         rxData0 = this->rxData = rxData;
         rxRemaining0 = size;
         rxRemainig = size;
+        // Debug::singleton ()->print ("R+");
         __HAL_SPI_ENABLE_IT (&spiHandle, (SPI_IT_RXNE));
 }
 
@@ -372,6 +368,7 @@ void Spi::onRxNotEmpty ()
         --rxRemainig;
 
         if (!rxRemainig) {
+                // Debug::singleton ()->print ("R-");
                 __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_RXNE));
                 callback->onRxComplete (rxData0, rxRemaining0);
         }
