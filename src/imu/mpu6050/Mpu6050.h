@@ -428,7 +428,7 @@ THE SOFTWARE.
  */
 class Mpu6050 : public IAccelerometer, public IGyroscope {
 public:
-        Mpu6050 (I2c *i2c, uint8_t address = (MPU6050_DEFAULT_ADDRESS << 1));
+        Mpu6050 (I2c *i2c, uint8_t address = (MPU6050_DEFAULT_ADDRESS /*<< 1*/));
         virtual ~Mpu6050 () {}
 
         virtual AData getAData () const { return AData (); }

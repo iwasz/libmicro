@@ -21,6 +21,9 @@ public:
         void read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
         void write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
 
+        void slaveRead (uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
+        void slaveWrite (uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
+
 private:
         I2C_HandleTypeDef i2cHandle;
 };
