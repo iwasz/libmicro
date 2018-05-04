@@ -6,12 +6,13 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#include "HalStm32F0.h"
+#include "ErrorHandler.h"
 #include "Gpio.h"
+#include "HalStm32F0.h"
 
 extern "C" void EXTI0_1_IRQHandler ()
 {
-        uint8_t pinNo;
+        uint8_t pinNo = 0;
 
         if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_0) != RESET) {
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_0);
@@ -21,6 +22,9 @@ extern "C" void EXTI0_1_IRQHandler ()
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_1);
                 pinNo = 1;
         }
+        else {
+                Error_Handler ();
+        }
 
         Gpio::connectedExtis[pinNo]->onToggle ();
 }
@@ -29,7 +33,7 @@ extern "C" void EXTI0_1_IRQHandler ()
 
 extern "C" void EXTI2_3_IRQHandler ()
 {
-        uint8_t pinNo;
+        uint8_t pinNo = 0;
 
         if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_2) != RESET) {
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_2);
@@ -39,6 +43,9 @@ extern "C" void EXTI2_3_IRQHandler ()
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_3);
                 pinNo = 3;
         }
+        else {
+                Error_Handler ();
+        }
 
         Gpio::connectedExtis[pinNo]->onToggle ();
 }
@@ -47,7 +54,7 @@ extern "C" void EXTI2_3_IRQHandler ()
 
 extern "C" void EXTI4_15_IRQHandler ()
 {
-        uint8_t pinNo;
+        uint8_t pinNo = 0;
 
         if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_4) != RESET) {
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_4);
@@ -97,7 +104,9 @@ extern "C" void EXTI4_15_IRQHandler ()
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_15);
                 pinNo = 15;
         }
+        else {
+                Error_Handler ();
+        }
 
         Gpio::connectedExtis[pinNo]->onToggle ();
 }
-

@@ -9,7 +9,7 @@
 #ifndef HAL_BULE_NRG1
 #define HAL_BULE_NRG1
 
-#include <BlueNRG1.h>
+#include <BlueNRG2.h>
 #include <BlueNRG1_adc.h>
 #include <BlueNRG1_dma.h>
 #include <BlueNRG1_flash.h>

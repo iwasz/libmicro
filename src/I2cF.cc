@@ -15,11 +15,26 @@
 /* Multiple byte read/write command */
 #define MULTIPLEBYTE_CMD ((uint8_t)0x40)
 
+#include "Debug.h"
+
+/*****************************************************************************/
+
+I2c *I2c::i2c1;
+I2c *I2c::i2c2;
+
 /*****************************************************************************/
 
 I2c::I2c ()
 {
+        i2c1 = this;
         memset (&i2cHandle, 0, sizeof (i2cHandle));
+
+        // TODO move to some method.
+        // TODO Potrzebne? Necessary?
+        // RCC_PeriphCLKInitTypeDef rccInit;
+        // rccInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
+        // rccInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_SYSCLK;
+        // HAL_RCCEx_PeriphCLKConfig (&rccInit);
 
         // TODO move to some method
         __HAL_RCC_I2C1_CLK_ENABLE ();
@@ -30,14 +45,18 @@ I2c::I2c ()
         i2cHandle.Init.DutyCycle = I2C_DUTYCYCLE_2;
 #else
         i2cHandle.Init.Timing = 0x2000090E; // 100kHz
+                                            // i2cHandle.Init.Timing = 0;
 #endif
         i2cHandle.Init.OwnAddress1 = 0x3f << 1;
         i2cHandle.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
         i2cHandle.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-        i2cHandle.Init.OwnAddress2 = 0;
+        i2cHandle.Init.OwnAddress2 = 0x0;
         i2cHandle.Init.OwnAddress2Masks = 0;
         i2cHandle.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
         i2cHandle.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+
+        HAL_NVIC_SetPriority (I2C1_IRQn, 0, 1);
+        HAL_NVIC_EnableIRQ (I2C1_IRQn);
 
         if (HAL_I2C_Init (&i2cHandle) != HAL_OK) {
                 Error_Handler ();
@@ -111,4 +130,19 @@ void I2c::slaveWrite (uint8_t *data, size_t length, uint16_t timeout)
         if (HAL_I2C_Slave_Transmit (&i2cHandle, data, length, timeout) != HAL_OK) {
                 Error_Handler ();
         }
+}
+
+void I2c::slaveReadIt (uint8_t *data, size_t length)
+{
+        if (HAL_I2C_Slave_Receive_IT (&i2cHandle, data, length) != HAL_OK) {
+                Error_Handler ();
+        }
+}
+
+/*****************************************************************************/
+
+extern "C" void I2C1_IRQHandler ()
+{
+        HAL_I2C_EV_IRQHandler (&I2c::i2c1->i2cHandle);
+        HAL_I2C_ER_IRQHandler (&I2c::i2c1->i2cHandle);
 }
