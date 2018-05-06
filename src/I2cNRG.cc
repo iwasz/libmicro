@@ -57,8 +57,8 @@ void I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
         /* Check read */
         do {
                 if (I2C_OP_ABORTED == I2C_GetStatus (i2c)) {
-                        // Error_Handler ();
-                        return;
+                        Error_Handler ();
+                        //                        return;
                 }
 
         } while (RESET == I2C_GetITStatus (i2c, I2C_IT_MTD));
@@ -80,7 +80,7 @@ void I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout
         t.Address = devAddr;
         t.StartByte = I2C_StartByte_Disable;
         t.AddressType = I2C_AddressType_7Bit;
-        t.StopCondition = I2C_StopCondition_Enable;
+        t.StopCondition = I2C_StopCondition_Disable;
         t.Length = length;
 
         I2C_FlushTx (i2c);
@@ -96,9 +96,9 @@ void I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout
         /* Check write */
         do {
                 if (I2C_OP_ABORTED == I2C_GetStatus (i2c)) {
-                        volatile uint32_t cause = i2c->SR_b.CAUSE;
-//                        Error_Handler ();
-                        return;
+                        volatile uint32_t cause = I2C1->SR_b.CAUSE;
+                        Error_Handler ();
+                        //                        return;
                 }
 
         } while (I2C_GetITStatus (i2c, I2C_IT_MTDWS) == RESET);

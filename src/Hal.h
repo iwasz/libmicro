@@ -34,12 +34,12 @@
 #elif defined(NRG1)
 
 #define LIB_MICRO_NRG
-#include "HalBlueNRG1.h"
+#include "HalBlueNRG.h"
 
 #elif defined(NRG2)
 
 #define LIB_MICRO_NRG
-#include "HalBlueNRG2.h"
+#include "HalBlueNRG.h"
 
 #endif
 
