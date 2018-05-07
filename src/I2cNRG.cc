@@ -65,8 +65,10 @@ void I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
 
         I2C_ClearITPendingBit (i2c, I2C_IT_MTD | I2C_IT_MTDWS);
 
-        /* Get data */
-        *data = I2C_ReceiveData (i2c);
+        while (length--) {
+                *data = I2C_ReceiveData ((I2C_Type *)i2c);
+                ++data;
+        }
 }
 
 /*****************************************************************************/
