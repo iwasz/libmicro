@@ -24,7 +24,7 @@ I2c *I2c::i2c2;
 
 /*****************************************************************************/
 
-I2c::I2c () : callback (nullptr)
+I2c::I2c () : callback (nullptr), addressDetected (false)
 {
         i2c1 = this;
         memset (&i2cHandle, 0, sizeof (i2cHandle));
@@ -74,7 +74,7 @@ extern "C" void I2C1_IRQHandler ()
         HAL_I2C_ER_IRQHandler (&I2c::i2c1->i2cHandle);
 }
 
-        // extern "C" void HAL_I2C_SlaveRxCpltCallback (I2C_HandleTypeDef *I2cHandle) { I2c::i2c1->callback->onRxComplete (nullptr, 0); }
+extern "C" void HAL_I2C_SlaveRxCpltCallback (I2C_HandleTypeDef *I2cHandle) { I2c::i2c1->callback->onRxComplete (nullptr, 0); }
 
 #if 0
 /// Only for slave operation.
@@ -257,6 +257,15 @@ void I2c::waitStatusReady ()
         }
 }
 
-void I2c::listen () {
+void I2c::listen ()
+{
         HAL_I2C_EnableListen_IT (&i2cHandle);
+        while (!addressDetected) {
+        }
+        addressDetected = false;
+}
+
+extern "C" void HAL_I2C_AddrCallback (I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
+{
+        I2c::i2c1->addressDetected = true;
 }

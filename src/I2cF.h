@@ -16,6 +16,7 @@
 
 extern "C" void I2C1_IRQHandler ();
 extern "C" void HAL_I2C_SlaveRxCpltCallback (I2C_HandleTypeDef *I2cHandle);
+extern "C" void HAL_I2C_AddrCallback (I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode);
 
 /**
  * @brief The I2c class
@@ -41,10 +42,14 @@ public:
 private:
         friend void I2C1_IRQHandler ();
         friend void HAL_I2C_SlaveRxCpltCallback (I2C_HandleTypeDef *I2cHandle);
+        friend void HAL_I2C_AddrCallback (I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode);
+
         I2C_HandleTypeDef i2cHandle;
         II2cCallback *callback;
         static I2c *i2c1;
         static I2c *i2c2;
+
+        bool addressDetected;
 };
 
 #endif // I2C_H
