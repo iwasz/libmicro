@@ -257,13 +257,16 @@ void I2c::waitStatusReady ()
         }
 }
 
+bool I2c::isStatusReady ()  { return HAL_I2C_GetState (&i2cHandle) == HAL_I2C_STATE_READY; }
+
 void I2c::listen ()
 {
         HAL_I2C_EnableListen_IT (&i2cHandle);
-        while (!addressDetected) {
-        }
-        addressDetected = false;
+//        while (!addressDetected) {
+//        }
+//        addressDetected = false;
 }
+
 
 extern "C" void HAL_I2C_AddrCallback (I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
 {

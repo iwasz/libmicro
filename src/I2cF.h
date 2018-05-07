@@ -37,7 +37,9 @@ public:
         void setCallback (II2cCallback *c) { callback = c; }
         void waitStatus ();
         void waitStatusReady ();
+        bool isStatusReady ();
         void listen ();
+        bool isAddressDetected () const { return addressDetected; }
 
 private:
         friend void I2C1_IRQHandler ();
@@ -49,6 +51,7 @@ private:
         static I2c *i2c1;
         static I2c *i2c2;
 
+public:
         bool addressDetected;
 };
 
