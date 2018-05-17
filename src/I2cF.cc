@@ -95,20 +95,53 @@ void I2c::slaveIrq ()
         I2C_TypeDef *i2ci = hi2c->Instance;
         uint32_t itFlags = i2ci->ISR;
         uint32_t itSources = i2ci->CR1;
+        uint32_t errorCode = 0;
 
+        // NACK detected
+        if ((itFlags & I2C_ISR_NACKF) && (itSources & I2C_IT_NACKI)) {
+                d->print ("NACKF\n");
+                // Clear IRQ.
+                i2ci->ICR |= I2C_ISR_NACKF;
+
+                // Master does not want us to send any more data.
+                if (state == SLAVE_BYTE_TX && txRemaining) {
+                        size_t tmpLen = txToSend;
+                        txToSend = txRemaining = 0;
+                        callback->onTxComplete (currentAddress, txBuffer, tmpLen);
+                }
+
+                state = SLAVE_ADDR_LISTEN;
+        }
+        // RX not empty, new data (1 byte) available.
+        else if ((itFlags & I2C_ISR_RXNE) && (itSources & I2C_IT_RXI)) {
+                if (state != SLAVE_BYTE_RX) {
+                        return;
+                }
+
+                if (rxReceived < RX_BUFFER_SIZE) {
+                        *rxPointer++ = static_cast<uint8_t> (i2ci->RXDR);
+                        ++rxReceived;
+                }
+                else {
+                        // send NACK when rxBuffer is full.
+                        i2ci->CR2 |= I2C_CR2_NACK;
+                }
+
+                d->print ("RXNE\n");
+        }
         // Address matched (slave mode)
-        if ((itFlags & I2C_ISR_ADDR) && (itSources & I2C_IT_ADDRI)) {
-                if (state == SLAVE_BYTE_RX) {
+        else if ((itFlags & I2C_ISR_ADDR) && (itSources & I2C_IT_ADDRI)) {
+                if (state == SLAVE_BYTE_RX && rxReceived) {
                         callback->onRxComplete (currentAddress, rxBuffer, rxReceived);
                         state = SLAVE_ADDR_LISTEN;
                         rxReceived = 0;
                         rxPointer = rxBuffer;
                 }
                 else if (state == SLAVE_BYTE_TX && txRemaining) {
-                        callback->onTxComplete (currentAddress, txBuffer, txToSend);
-                        state = SLAVE_ADDR_LISTEN;
+                        size_t tmpLen = txToSend;
                         txToSend = txRemaining = 0;
-                        state = SLAVE_BYTE_TX;
+                        callback->onTxComplete (currentAddress, txBuffer, tmpLen);
+                        state = SLAVE_ADDR_LISTEN;
                 }
 
                 if (state == SLAVE_ADDR_LISTEN) {
@@ -118,11 +151,11 @@ void I2c::slaveIrq ()
 
                         if (slaveTransmit) {
                                 // flushTx ();
-                                if (i2cHandle.Instance->ISR & I2C_FLAG_TXE) {
-                                        i2cHandle.Instance->ISR |= I2C_FLAG_TXE;
+                                if (i2ci->ISR & I2C_FLAG_TXE) {
+                                        i2ci->ISR |= I2C_FLAG_TXE;
                                 }
 
-                                txToSend = txRemaining = 0;
+                                // txToSend = txRemaining = 0;
                                 state = SLAVE_BYTE_TX;
                         }
                         else {
@@ -159,7 +192,7 @@ void I2c::slaveIrq ()
                 }
 
                 // This stretch is released when the ADDR flag is cleared by software setting the ADDRCF bit.
-                hi2c->Instance->ICR = I2C_ISR_ADDR;
+                hi2c->Instance->ICR |= I2C_ISR_ADDR;
         }
         // TX empty
         else if ((itFlags & I2C_ISR_TXIS) && (itSources & I2C_IT_TXI)) {
@@ -180,61 +213,41 @@ void I2c::slaveIrq ()
                         flushTx ();
                         state = SLAVE_ADDR_LISTEN;
                         d->print ("SENT\n");
-                        callback->onTxComplete (currentAddress, txBuffer, txToSend);
+                        size_t tmpLen = txToSend;
                         txToSend = txRemaining = 0;
+                        callback->onTxComplete (currentAddress, txBuffer, tmpLen);
                 }
         }
-        // RX not empty, new data (1 byte) available.
-        else if ((itFlags & I2C_ISR_RXNE) && (itSources & I2C_IT_RXI)) {
-                if (state != SLAVE_BYTE_RX) {
-                        return;
-                }
 
-                if (rxReceived < RX_BUFFER_SIZE) {
-                        *rxPointer++ = static_cast<uint8_t> (i2ci->RXDR);
-                        ++rxReceived;
-                }
-                else {
-                        // send NACK when rxBuffer is full.
-                        i2ci->CR2 |= I2C_CR2_NACK;
-                }
-
-                d->print ("RXNE\n");
-        }
-        else if ((itFlags & I2C_ISR_NACKF) && (itSources & I2C_IT_NACKI)) {
-                d->print ("NACKF\n");
-                // Clear IRQ.
-                i2ci->ICR |= I2C_ISR_NACKF;
-
-                // Master does not want us to send any more data.
-                if (state == SLAVE_BYTE_TX && txRemaining) {
-                        callback->onTxComplete (currentAddress, txBuffer, txToSend);
-                        txToSend = txRemaining = 0;
-                }
-
-                state = SLAVE_ADDR_LISTEN;
-        }
-        else if ((itFlags & I2C_ISR_STOPF) && (itSources & I2C_IT_STOPI)) {
+        // STOP detected.
+        if ((itFlags & I2C_ISR_STOPF) && (itSources & I2C_IT_STOPI)) {
                 d->print ("STOPF\n");
 
-                // Clear IRQ.
+                // Clear STOPF and ADDR IRQs.
+                // i2ci->ICR |= (I2C_ISR_STOPF | I2C_ISR_ADDR);
                 i2ci->ICR |= I2C_ISR_STOPF;
 
-                if (state == SLAVE_BYTE_RX) {
+                //flushTx ();
+
+                if (txRemaining != 0) {
+                        errorCode |= HAL_I2C_ERROR_AF;
+                }
+
+                if (state == SLAVE_BYTE_RX && rxReceived) {
                         callback->onRxComplete (currentAddress, rxBuffer, rxReceived);
+                        rxReceived = 0;
                         rxPointer = rxBuffer;
                 }
-                else if (state == SLAVE_BYTE_TX && txRemaining) {
-                        callback->onTxComplete (currentAddress, txBuffer, txToSend);
-                        txToSend = txRemaining = 0;
-                }
+                //                else if (state == SLAVE_BYTE_TX && txRemaining) {
+                //                        size_t tmpLen = txToSend;
+                //                        txToSend = txRemaining = 0;
+                //                        callback->onTxComplete (currentAddress, txBuffer, tmpLen);
+                //                }
 
                 state = SLAVE_ADDR_LISTEN;
         }
 
         if (itSources & I2C_IT_ERRI) {
-
-                uint32_t errorCode = 0;
 
                 // I2C Bus error interrupt occurred
                 if (itFlags & I2C_FLAG_BERR) {
