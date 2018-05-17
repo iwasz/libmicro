@@ -24,7 +24,15 @@ I2c *I2c::i2c2;
 
 /*****************************************************************************/
 
-I2c::I2c () : callback (nullptr), addressDetected (false)
+I2c::I2c ()
+    : callback (nullptr),
+      state (SLAVE_ADDR_LISTEN),
+      currentAddress (0),
+      txBuffer (nullptr),
+      txPointer (nullptr),
+      txToSend (0),
+      txRemaining (0),
+      rxPointer (rxBuffer)
 {
         i2c1 = this;
         memset (&i2cHandle, 0, sizeof (i2cHandle));
@@ -63,19 +71,202 @@ I2c::I2c () : callback (nullptr), addressDetected (false)
         }
 
         HAL_I2CEx_ConfigAnalogFilter (&i2cHandle, I2C_ANALOGFILTER_ENABLE);
+
+        __HAL_I2C_ENABLE_IT (&i2cHandle, I2C_IT_ERRI | I2C_IT_TCI | I2C_IT_STOPI | I2C_IT_NACKI | I2C_IT_ADDRI | I2C_IT_RXI | I2C_IT_TXI);
 }
 
 /*****************************************************************************/
 
 extern "C" void I2C1_IRQHandler ()
 {
-        Debug::singleton ()->print (".");
-        HAL_I2C_EV_IRQHandler (&I2c::i2c1->i2cHandle);
-        HAL_I2C_ER_IRQHandler (&I2c::i2c1->i2cHandle);
+        //        Debug::singleton ()->print (".");
+        //        HAL_I2C_EV_IRQHandler (&I2c::i2c1->i2cHandle);
+        //        HAL_I2C_ER_IRQHandler (&I2c::i2c1->i2cHandle);
+        I2c::i2c1->slaveIrq ();
 }
 
-extern "C" void HAL_I2C_SlaveRxCpltCallback (I2C_HandleTypeDef *I2cHandle) { I2c::i2c1->callback->onRxComplete (nullptr, 0); }
-extern "C" void HAL_I2C_SlaveTxCpltCallback (I2C_HandleTypeDef *hi2c) { I2c::i2c1->callback->onTxComplete (); }
+/*****************************************************************************/
+
+void I2c::slaveIrq ()
+{
+        Debug *d = Debug::singleton ();
+        I2c *i2c = I2c::i2c1;
+        I2C_HandleTypeDef *hi2c = &i2c->i2cHandle;
+        I2C_TypeDef *i2ci = hi2c->Instance;
+        uint32_t itFlags = i2ci->ISR;
+        uint32_t itSources = i2ci->CR1;
+
+        // Address matched (slave mode)
+        if ((itFlags & I2C_ISR_ADDR) && (itSources & I2C_IT_ADDRI)) {
+                if (state == SLAVE_BYTE_RX) {
+                        callback->onRxComplete (currentAddress, rxBuffer, rxReceived);
+                        state = SLAVE_ADDR_LISTEN;
+                        rxReceived = 0;
+                        rxPointer = rxBuffer;
+                }
+                else if (state == SLAVE_BYTE_TX && txRemaining) {
+                        callback->onTxComplete (currentAddress, txBuffer, txToSend);
+                        state = SLAVE_ADDR_LISTEN;
+                        txToSend = txRemaining = 0;
+                        state = SLAVE_BYTE_TX;
+                }
+
+                if (state == SLAVE_ADDR_LISTEN) {
+
+                        // If true, means that some master wants to read from us.
+                        bool slaveTransmit = (i2ci->ISR & I2C_ISR_DIR) >> 16;
+
+                        if (slaveTransmit) {
+                                // flushTx ();
+                                if (i2cHandle.Instance->ISR & I2C_FLAG_TXE) {
+                                        i2cHandle.Instance->ISR |= I2C_FLAG_TXE;
+                                }
+
+                                txToSend = txRemaining = 0;
+                                state = SLAVE_BYTE_TX;
+                        }
+                        else {
+                                rxReceived = 0;
+                                rxPointer = rxBuffer;
+                                state = SLAVE_BYTE_RX;
+                        }
+
+                        // Address which came from a master and was detected as this slave address.
+                        uint16_t slaveAddr = (i2ci->ISR & I2C_ISR_ADDCODE) >> 17;
+
+                        // I2C_OAR1 (Own address 1 register) is enabled.
+                        if (i2ci->OAR1 & I2C_OAR1_OA1EN) {
+                                // 7bit address in I2C_OAR1
+                                if (!(i2ci->OAR1 & I2C_OAR1_OA1MODE)) {
+                                        currentAddress = slaveAddr;
+                                }
+                                // 10bit address in I2C_OAR1
+                                else {
+                                        // TODO
+                                }
+                        }
+
+                        // I2C_OAR2 (Own address 2 register) is enabled. It is always 7 bit
+                        if (i2ci->OAR2 & I2C_OAR2_OA2EN) {
+                                currentAddress = slaveAddr;
+                        }
+
+                        // uint16_t ownadd1code = I2C_GET_OWN_ADDRESS1 (hi2c);
+                        // uint16_t ownadd2code = I2C_GET_OWN_ADDRESS2 (hi2c);
+                        d->print ("ADDR\n");
+                        d->print (currentAddress);
+                        d->print ("\n");
+                }
+
+                // This stretch is released when the ADDR flag is cleared by software setting the ADDRCF bit.
+                hi2c->Instance->ICR = I2C_ISR_ADDR;
+        }
+        // TX empty
+        else if ((itFlags & I2C_ISR_TXIS) && (itSources & I2C_IT_TXI)) {
+                if (!txToSend || state != SLAVE_BYTE_TX) {
+                        flushTx ();
+                        return;
+                }
+
+                if (txRemaining) {
+                        /* Write data to TXDR */
+                        i2ci->TXDR = (*txPointer++);
+                        --txRemaining;
+                }
+
+                d->print ("TXIS\n");
+
+                if (txToSend && !txRemaining) {
+                        flushTx ();
+                        state = SLAVE_ADDR_LISTEN;
+                        d->print ("SENT\n");
+                        callback->onTxComplete (currentAddress, txBuffer, txToSend);
+                        txToSend = txRemaining = 0;
+                }
+        }
+        // RX not empty, new data (1 byte) available.
+        else if ((itFlags & I2C_ISR_RXNE) && (itSources & I2C_IT_RXI)) {
+                if (state != SLAVE_BYTE_RX) {
+                        return;
+                }
+
+                if (rxReceived < RX_BUFFER_SIZE) {
+                        *rxPointer++ = static_cast<uint8_t> (i2ci->RXDR);
+                        ++rxReceived;
+                }
+                else {
+                        // send NACK when rxBuffer is full.
+                        i2ci->CR2 |= I2C_CR2_NACK;
+                }
+
+                d->print ("RXNE\n");
+        }
+        else if ((itFlags & I2C_ISR_NACKF) && (itSources & I2C_IT_NACKI)) {
+                d->print ("NACKF\n");
+                // Clear IRQ.
+                i2ci->ICR |= I2C_ISR_NACKF;
+
+                // Master does not want us to send any more data.
+                if (state == SLAVE_BYTE_TX && txRemaining) {
+                        callback->onTxComplete (currentAddress, txBuffer, txToSend);
+                        txToSend = txRemaining = 0;
+                }
+
+                state = SLAVE_ADDR_LISTEN;
+        }
+        else if ((itFlags & I2C_ISR_STOPF) && (itSources & I2C_IT_STOPI)) {
+                d->print ("STOPF\n");
+
+                // Clear IRQ.
+                i2ci->ICR |= I2C_ISR_STOPF;
+
+                if (state == SLAVE_BYTE_RX) {
+                        callback->onRxComplete (currentAddress, rxBuffer, rxReceived);
+                        rxPointer = rxBuffer;
+                }
+                else if (state == SLAVE_BYTE_TX && txRemaining) {
+                        callback->onTxComplete (currentAddress, txBuffer, txToSend);
+                        txToSend = txRemaining = 0;
+                }
+
+                state = SLAVE_ADDR_LISTEN;
+        }
+
+        if (itSources & I2C_IT_ERRI) {
+
+                uint32_t errorCode = 0;
+
+                // I2C Bus error interrupt occurred
+                if (itFlags & I2C_FLAG_BERR) {
+                        errorCode |= HAL_I2C_ERROR_BERR;
+                        __HAL_I2C_CLEAR_FLAG (hi2c, I2C_FLAG_BERR);
+                }
+
+                // I2C Over-Run/Under-Run interrupt occurred
+                if (itFlags & I2C_FLAG_OVR) {
+                        errorCode |= HAL_I2C_ERROR_OVR;
+                        __HAL_I2C_CLEAR_FLAG (hi2c, I2C_FLAG_OVR);
+                }
+
+                // I2C Arbitration Loss error interrupt occurred
+                if (itFlags & I2C_FLAG_ARLO) {
+                        errorCode |= HAL_I2C_ERROR_ARLO;
+                        __HAL_I2C_CLEAR_FLAG (hi2c, I2C_FLAG_ARLO);
+                }
+
+                if (itFlags & I2C_FLAG_TIMEOUT) {
+                        errorCode |= HAL_I2C_ERROR_TIMEOUT;
+                        __HAL_I2C_CLEAR_FLAG (hi2c, I2C_FLAG_TIMEOUT);
+                }
+
+                if (errorCode) {
+                        callback->onI2cError (errorCode);
+                }
+        }
+}
+
+// extern "C" void HAL_I2C_SlaveRxCpltCallback (I2C_HandleTypeDef *I2cHandle) { I2c::i2c1->callback->onRxComplete (nullptr, 0); }
+// extern "C" void HAL_I2C_SlaveTxCpltCallback (I2C_HandleTypeDef *hi2c) { I2c::i2c1->callback->onTxComplete (); }
 
 #if 0
 /// Only for slave operation.
@@ -222,53 +413,84 @@ void I2c::write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length,
         }
 }
 
-void I2c::slaveRead (uint8_t *data, size_t length, uint16_t timeout)
+// void I2c::slaveRead (uint8_t *data, size_t length, uint16_t timeout)
+//{
+//        if (HAL_I2C_Slave_Receive (&i2cHandle, data, length, timeout) != HAL_OK) {
+//                Error_Handler ();
+//        }
+//}
+
+// void I2c::slaveWrite (uint8_t *data, size_t length, uint16_t timeout)
+//{
+//        //        if (HAL_I2C_Slave_Transmit (&i2cHandle, data, length, timeout) != HAL_OK) {
+//        //                Error_Handler ();
+//        //        }
+//        if (HAL_I2C_Slave_Sequential_Transmit_IT (&i2cHandle, data, length, I2C_LAST_FRAME) != HAL_OK) {
+//                Error_Handler ();
+//        }
+//}
+
+bool I2c::slaveWrite (uint8_t *data, size_t length)
 {
-        if (HAL_I2C_Slave_Receive (&i2cHandle, data, length, timeout) != HAL_OK) {
-                Error_Handler ();
+        if (state == SLAVE_BYTE_TX) {
+                return false;
+        }
+
+        txBuffer = txPointer = data;
+        txToSend = txRemaining = length;
+        return true;
+}
+
+// void I2c::slaveReadIt (uint8_t *data, size_t length)
+//{
+//        if (HAL_I2C_Slave_Sequential_Receive_IT (&i2cHandle, data, length, I2C_FIRST_FRAME) != HAL_OK) {
+//                Error_Handler ();
+//        }
+//}
+
+// void I2c::waitStatus ()
+//{
+//        while (HAL_I2C_GetState (&i2cHandle) != HAL_I2C_STATE_LISTEN) {
+//        }
+//}
+
+// void I2c::waitStatusReady ()
+//{
+//        while (HAL_I2C_GetState (&i2cHandle) != HAL_I2C_STATE_READY) {
+//        }
+//}
+
+// bool I2c::isStatusReady () { return HAL_I2C_GetState (&i2cHandle) == HAL_I2C_STATE_READY; }
+
+// void I2c::listen ()
+//{
+//        HAL_I2C_EnableListen_IT (&i2cHandle);
+//        //        while (!addressDetected) {
+//        //        }
+//        //        addressDetected = false;
+//}
+
+// extern "C" void HAL_I2C_AddrCallback (I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
+//{
+//        I2c::i2c1->addressDetected = true;
+//}
+
+void I2c::reset ()
+{
+        i2cHandle.Instance->CR1 &= ~I2C_CR1_PE;
+        if (!(i2cHandle.Instance->CR1 | I2C_CR1_PE)) {
+                i2cHandle.Instance->CR1 |= I2C_CR1_PE;
         }
 }
 
-void I2c::slaveWrite (uint8_t *data, size_t length, uint16_t timeout)
+void I2c::flushTx ()
 {
-        //        if (HAL_I2C_Slave_Transmit (&i2cHandle, data, length, timeout) != HAL_OK) {
-        //                Error_Handler ();
-        //        }
-        if (HAL_I2C_Slave_Sequential_Transmit_IT (&i2cHandle, data, length, I2C_LAST_FRAME) != HAL_OK) {
-                Error_Handler ();
+        if (i2cHandle.Instance->ISR & I2C_FLAG_TXIS) {
+                i2cHandle.Instance->TXDR = 0x00U;
         }
-}
 
-void I2c::slaveReadIt (uint8_t *data, size_t length)
-{
-        if (HAL_I2C_Slave_Sequential_Receive_IT (&i2cHandle, data, length, I2C_FIRST_FRAME) != HAL_OK) {
-                Error_Handler ();
+        // Flush TX register if not empty
+        if (i2cHandle.Instance->ISR & I2C_FLAG_TXE) {
+                i2cHandle.Instance->ISR |= I2C_FLAG_TXE;
         }
-}
-
-void I2c::waitStatus ()
-{
-        while (HAL_I2C_GetState (&i2cHandle) != HAL_I2C_STATE_LISTEN) {
-        }
-}
-
-void I2c::waitStatusReady ()
-{
-        while (HAL_I2C_GetState (&i2cHandle) != HAL_I2C_STATE_READY) {
-        }
-}
-
-bool I2c::isStatusReady () { return HAL_I2C_GetState (&i2cHandle) == HAL_I2C_STATE_READY; }
-
-void I2c::listen ()
-{
-        HAL_I2C_EnableListen_IT (&i2cHandle);
-        //        while (!addressDetected) {
-        //        }
-        //        addressDetected = false;
-}
-
-extern "C" void HAL_I2C_AddrCallback (I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, uint16_t AddrMatchCode)
-{
-        I2c::i2c1->addressDetected = true;
 }

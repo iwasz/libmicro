@@ -7,7 +7,7 @@ SET(CMAKE_C_FLAGS "-std=gnu99 -Wall" CACHE INTERNAL "c compiler flags")
 SET(CMAKE_CXX_FLAGS "-std=c++14 -Wall" CACHE INTERNAL "cxx compiler flags")
 ADD_DEFINITIONS ("-DUNIT_TEST")
 
-PROJECT (unittest)
+PROJECT (libmicrotest)
 ENABLE_TESTING ()
 INCLUDE_DIRECTORIES("../src/")
 
@@ -27,5 +27,5 @@ LIST (APPEND SOURCES "01CcqTest.cc")
 LIST (APPEND SOURCES "02QueueTest.cc")
 LIST (APPEND SOURCES "03TimerTest.cc")
 
-ADD_EXECUTABLE (unittest ${SOURCES})
-ADD_TEST (unittest unittest)
+ADD_EXECUTABLE (libmicrotest ${SOURCES})
+ADD_TEST (libmicrotest libmicrotest)
