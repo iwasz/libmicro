@@ -102,7 +102,7 @@ void I2c::slaveIrq ()
         // NACK detected
         if ((itFlags & I2C_ISR_NACKF) && (itSources & I2C_IT_NACKI)) {
 #ifdef ISR_PRINT
-                d->print ("N1\n");
+//                d->print ("N1\n");
 #endif
                 // Clear IRQ.
                 i2ci->ICR = I2C_ISR_NACKF;
@@ -117,17 +117,17 @@ void I2c::slaveIrq ()
 
                 state = SLAVE_ADDR_LISTEN;
 #ifdef ISR_PRINT
-                d->print ("N2\n");
+//                d->print ("N2\n");
 #endif
         }
         // RX not empty, new data (1 byte) available.
         else if ((itFlags & I2C_ISR_RXNE) && (itSources & I2C_IT_RXI)) {
 #ifdef ISR_PRINT
-                d->print ("R1\n");
+//                d->print ("R1\n");
 #endif
                 if (state != SLAVE_BYTE_RX) {
 #ifdef ISR_PRINT
-                        d->print ("R3\n");
+//                        d->print ("R3\n");
 #endif
                         return;
                 }
@@ -141,13 +141,13 @@ void I2c::slaveIrq ()
                         i2ci->CR2 |= I2C_CR2_NACK;
                 }
 #ifdef ISR_PRINT
-                d->print ("R2\n");
+//                d->print ("R2\n");
 #endif
         }
         // Address matched (slave mode)
         else if ((itFlags & I2C_ISR_ADDR) && (itSources & I2C_IT_ADDRI)) {
 #ifdef ISR_PRINT
-                d->print ("A1\n");
+//                d->print ("A1\n");
 #endif
                 if (state == SLAVE_BYTE_RX && rxReceived) {
                         __HAL_I2C_DISABLE_IT (&i2cHandle, I2C_IT_RXI);
@@ -209,28 +209,28 @@ void I2c::slaveIrq ()
                         // uint16_t ownadd1code = I2C_GET_OWN_ADDRESS1 (hi2c);
                         // uint16_t ownadd2code = I2C_GET_OWN_ADDRESS2 (hi2c);
 #ifdef ISR_PRINT
-                        d->print ("A2\n");
-                        d->print (currentAddress);
-                        d->print (",");
-                        d->print (slaveTransmit);
-                        d->print ("\n");
+//                        d->print ("A2\n");
+//                        d->print (currentAddress);
+//                        d->print (",");
+//                        d->print (slaveTransmit);
+//                        d->print ("\n");
 #endif
                 }
 
                 // This stretch is released when the ADDR flag is cleared by software setting the ADDRCF bit.
                 hi2c->Instance->ICR = I2C_ISR_ADDR;
 #ifdef ISR_PRINT
-                d->print ("A3\n");
+//                d->print ("A3\n");
 #endif
         }
         // TX empty
         else if ((itFlags & I2C_ISR_TXIS) && (itSources & I2C_IT_TXI)) {
 #ifdef ISR_PRINT
-                d->print ("T1\n");
+//                d->print ("T1\n");
 #endif
                 if (!txRemaining || state != SLAVE_BYTE_TX) {
 #ifdef ISR_PRINT
-                        d->print ("T3\n");
+//                        d->print ("T3\n");
 #endif
                         flushTx ();
                         return;
@@ -238,7 +238,7 @@ void I2c::slaveIrq ()
 
                 if (txRemaining) {
 #ifdef ISR_PRINT
-                        d->print (".\n");
+//                        d->print (".\n");
 #endif
                         /* Write data to TXDR */
                         i2ci->TXDR = (*txPointer++);
@@ -262,7 +262,7 @@ void I2c::slaveIrq ()
         // STOP detected.
         if ((itFlags & I2C_ISR_STOPF) && (itSources & I2C_IT_STOPI)) {
 #ifdef ISR_PRINT
-                d->print ("S1\n");
+//                d->print ("S1\n");
 #endif
 
                 // Clear STOPF and ADDR IRQs.
@@ -293,7 +293,7 @@ void I2c::slaveIrq ()
 
                 state = SLAVE_ADDR_LISTEN;
 #ifdef ISR_PRINT
-                d->print ("S2\n");
+//                d->print ("S2\n");
 #endif
         }
 
