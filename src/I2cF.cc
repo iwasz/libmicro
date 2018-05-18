@@ -18,7 +18,7 @@
 #include "Debug.h"
 
 /*****************************************************************************/
-#define ISR_PRINT
+//#define ISR_PRINT
 
 I2c *I2c::i2c1;
 I2c *I2c::i2c2;
@@ -73,7 +73,7 @@ I2c::I2c ()
 
         HAL_I2CEx_ConfigAnalogFilter (&i2cHandle, I2C_ANALOGFILTER_ENABLE);
 
-        i2cHandle.Instance->TXDR = 0x00;
+//        i2cHandle.Instance->TXDR = 0x00;
 
         __HAL_I2C_ENABLE_IT (&i2cHandle,
                              I2C_IT_ERRI | /*I2C_IT_TCI |*/ I2C_IT_STOPI | I2C_IT_NACKI | I2C_IT_ADDRI /*| I2C_IT_RXI | I2C_IT_TXI*/);
@@ -93,7 +93,9 @@ extern "C" void I2C1_IRQHandler ()
 
 void I2c::slaveIrq ()
 {
+#ifdef ISR_PRINT
         Debug *d = Debug::singleton ();
+#endif
         I2c *i2c = I2c::i2c1;
         I2C_HandleTypeDef *hi2c = &i2c->i2cHandle;
         I2C_TypeDef *i2ci = hi2c->Instance;
