@@ -73,7 +73,7 @@ I2c::I2c ()
 
         HAL_I2CEx_ConfigAnalogFilter (&i2cHandle, I2C_ANALOGFILTER_ENABLE);
 
-//        i2cHandle.Instance->TXDR = 0x00;
+        //        i2cHandle.Instance->TXDR = 0x00;
 
         __HAL_I2C_ENABLE_IT (&i2cHandle,
                              I2C_IT_ERRI | /*I2C_IT_TCI |*/ I2C_IT_STOPI | I2C_IT_NACKI | I2C_IT_ADDRI /*| I2C_IT_RXI | I2C_IT_TXI*/);
@@ -177,7 +177,7 @@ void I2c::slaveIrq ()
                                 __HAL_I2C_ENABLE_IT (&i2cHandle, I2C_IT_TXI);
                                 // flushTx ();
                                 //                                if (i2ci->ISR & I2C_FLAG_TXE) {
-//                                i2ci->ISR |= I2C_FLAG_TXE;
+                                //                                i2ci->ISR |= I2C_FLAG_TXE;
                                 //                                }
 
                                 // txToSend = txRemaining = 0;
@@ -233,11 +233,12 @@ void I2c::slaveIrq ()
                 d->print ("T1\n");
 #endif
                 if (!txRemaining || state != SLAVE_BYTE_TX) {
+                        __HAL_I2C_DISABLE_IT (&i2cHandle, I2C_IT_TXI);
 #ifdef ISR_PRINT
                         d->print ("T3\n");
 #endif
                         //                         flushTx ();
-//                        i2ci->TXDR = 0x00;
+                        //                        i2ci->TXDR = 0x00;
                 }
                 else if (txRemaining) {
 #ifdef ISR_PRINT
@@ -272,8 +273,8 @@ void I2c::slaveIrq ()
                 i2ci->ICR = I2C_ISR_STOPF;
                 //                i2ci->ICR = I2C_ISR_ADDR;
 
-//                hi2c->Instance->CR2 |= I2C_CR2_NACK;
-//                I2C_RESET_CR2 (hi2c);
+                //                hi2c->Instance->CR2 |= I2C_CR2_NACK;
+                //                I2C_RESET_CR2 (hi2c);
 
                 __HAL_I2C_DISABLE_IT (&i2cHandle, I2C_IT_TXI | I2C_IT_RXI);
 
