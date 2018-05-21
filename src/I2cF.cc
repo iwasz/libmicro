@@ -166,12 +166,6 @@ void I2c::slaveIrq ()
 
                         if (slaveTransmit) {
                                 __HAL_I2C_ENABLE_IT (&i2cHandle, I2C_IT_TXI);
-                                // flushTx ();
-                                //                                if (i2ci->ISR & I2C_FLAG_TXE) {
-                                //                                i2ci->ISR |= I2C_FLAG_TXE;
-                                //                                }
-
-                                // txToSend = txRemaining = 0;
                                 state = SLAVE_BYTE_TX;
                         }
                         else {
@@ -228,8 +222,6 @@ void I2c::slaveIrq ()
 #ifdef ISR_PRINT
                         d->print ("T3\n");
 #endif
-                        //                         flushTx ();
-                        //                        i2ci->TXDR = 0x00;
                 }
                 else if (txRemaining) {
 #ifdef ISR_PRINT
@@ -260,11 +252,6 @@ void I2c::slaveIrq ()
 
                 // Clear STOPF and ADDR IRQs.
                 i2ci->ICR = I2C_ISR_STOPF;
-                //                i2ci->ICR = I2C_ISR_ADDR;
-
-                //                hi2c->Instance->CR2 |= I2C_CR2_NACK;
-                //                I2C_RESET_CR2 (hi2c);
-
                 __HAL_I2C_DISABLE_IT (&i2cHandle, I2C_IT_TXI | I2C_IT_RXI);
 
                 //                 flushTx ();
@@ -278,11 +265,11 @@ void I2c::slaveIrq ()
                         rxReceived = 0;
                         rxPointer = rxBuffer;
                 }
-                //                else if (state == SLAVE_BYTE_TX && txRemaining) {
-                //                        size_t tmpLen = txToSend;
-                //                        txToSend = txRemaining = 0;
-                //                        callback->onTxComplete (currentAddress, txBuffer, tmpLen);
-                //                }
+                // else if (state == SLAVE_BYTE_TX && txRemaining) {
+                //         size_t tmpLen = txToSend;
+                //         txToSend = txRemaining = 0;
+                //         callback->onTxComplete (currentAddress, txBuffer, tmpLen);
+                // }
 
                 state = SLAVE_ADDR_LISTEN;
 #ifdef ISR_PRINT
