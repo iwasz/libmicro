@@ -63,9 +63,6 @@ I2c::I2c ()
         i2cHandle.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
         i2cHandle.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
 
-        HAL_NVIC_SetPriority (I2C1_IRQn, 0, 1);
-        HAL_NVIC_EnableIRQ (I2C1_IRQn);
-
         if (HAL_I2C_Init (&i2cHandle) != HAL_OK) {
                 Error_Handler ();
         }

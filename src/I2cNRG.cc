@@ -40,7 +40,7 @@ I2c::I2c (I2C_Type *instance, uint32_t clockSpeed) : i2c (instance)
 
 /*****************************************************************************/
 
-void I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
+bool I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
 {
         I2C_TransactionType t;
 
@@ -57,8 +57,7 @@ void I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
         /* Check read */
         do {
                 if (I2C_OP_ABORTED == I2C_GetStatus (i2c)) {
-                        Error_Handler ();
-                        //                        return;
+                        return false;
                 }
 
         } while (RESET == I2C_GetITStatus (i2c, I2C_IT_MTD));
@@ -69,11 +68,13 @@ void I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
                 *data = I2C_ReceiveData ((I2C_Type *)i2c);
                 ++data;
         }
+
+        return true;
 }
 
 /*****************************************************************************/
 
-void I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
+bool I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
 {
         I2C_TransactionType t;
 
@@ -98,21 +99,25 @@ void I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout
         /* Check write */
         do {
                 if (I2C_OP_ABORTED == I2C_GetStatus (i2c)) {
-                        volatile uint32_t cause = I2C1->SR_b.CAUSE;
-                        Error_Handler ();
-                        //                        return;
+                        // volatile uint32_t cause = I2C1->SR_b.CAUSE;
+                        return false;
                 }
 
         } while (I2C_GetITStatus (i2c, I2C_IT_MTDWS) == RESET);
 
         I2C_ClearITPendingBit (i2c, I2C_IT_MTDWS);
+        return true;
 }
+
+/*****************************************************************************/
 
 void I2c::read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout)
 {
         write (devAddr, &regAddr, 1);
         read (devAddr, data, length);
 }
+
+/*****************************************************************************/
 
 void I2c::write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout)
 {

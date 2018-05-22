@@ -17,6 +17,8 @@ public:
         void start (uint32_t intervalMs);
         bool isExpired () const;
         uint32_t elapsed () const;
+        static void delay (uint32_t delayMs);
+
 
 protected:
         uint32_t startTime;

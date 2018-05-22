@@ -18,8 +18,8 @@ public:
         I2c (I2C_Type *instance, uint32_t clockSpeed = 10000);
 
         enum { DEFAULT_TIMEOUT = 1000 };
-        void read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
-        void write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
+        bool read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
+        bool write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
 
         void read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
         void write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);

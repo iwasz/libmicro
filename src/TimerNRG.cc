@@ -43,3 +43,13 @@ void Timer::start (uint32_t interval)
 /*****************************************************************************/
 
 bool Timer::isExpired () const { return HAL_GetTick () - startTime >= intervalMs; }
+
+/*****************************************************************************/
+
+void Timer::delay (uint32_t delayMs)
+{
+        uint32_t tickStart = HAL_GetTick ();
+
+        while ((HAL_GetTick () - tickStart) < delayMs) {
+        }
+}
