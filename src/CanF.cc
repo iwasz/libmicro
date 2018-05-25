@@ -188,11 +188,11 @@ extern "C" void CEC_CAN_IRQHandler ()
                 d->print ("FULL\n");
         }
 
-        if (ican->MSR & CAN_MSR_SLAKI) {
+        if (ican->MSR & CAN_MSR_SLAKI && ican->IER & CAN_IER_SLKIE) {
                 d->print ("SLAK\n");
         }
 
-        if (ican->MSR & CAN_MSR_WKUI) {
+        if (ican->MSR & CAN_MSR_WKUI && ican->IER & CAN_IER_WKUIE) {
                 d->print ("WKUI\n");
         }
 }
@@ -216,7 +216,7 @@ Can::Can (ICanCallback *callback, uint32_t prescaler, uint32_t sjw, uint32_t bs1
         canHandle.pRxMsg = &rxMessage;
 
         canHandle.Init.TTCM = DISABLE;
-        canHandle.Init.ABOM = DISABLE;
+        canHandle.Init.ABOM = ENABLE;
         canHandle.Init.AWUM = DISABLE;
         canHandle.Init.NART = DISABLE;
         canHandle.Init.RFLM = DISABLE;
