@@ -20,7 +20,9 @@ Can *Can::can;
 extern "C" void CEC_CAN_IRQHandler ()
 {
         CAN_HandleTypeDef *hcan = &Can::can->canHandle;
+        CAN_TypeDef *ican = hcan->Instance;
         CanFrame frame;
+        Debug *d = Debug::singleton ();
 
         /* Check End of reception flag for FIFO0 */
         if ((__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_FMP0)) && (__HAL_CAN_MSG_PENDING (hcan, CAN_FIFO0) != 0)) {
@@ -53,30 +55,42 @@ extern "C" void CEC_CAN_IRQHandler ()
                 }
         }
 
+        if (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_TME)) {
+                if ((__HAL_CAN_TRANSMIT_STATUS (hcan, CAN_TXMAILBOX_0)) || (__HAL_CAN_TRANSMIT_STATUS (hcan, CAN_TXMAILBOX_1))
+                    || (__HAL_CAN_TRANSMIT_STATUS (hcan, CAN_TXMAILBOX_2))) {
+                        d->print ("TME\n");
+                }
+        }
+
+        if ((__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_FMP1)) && (__HAL_CAN_MSG_PENDING (hcan, CAN_FIFO1) != 0)) {
+                d->print ("FMP1\n");
+        }
+
         uint32_t errorCode = HAL_CAN_ERROR_NONE;
 
-        /* Check Error Warning Flag */
-        if ((__HAL_CAN_GET_FLAG (hcan, CAN_FLAG_EWG)) && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_EWG))
-            && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_ERR))) {
-                errorCode |= HAL_CAN_ERROR_EWG;
-        }
+        /*
+         * ERRI : Error interrupt. This bit is set by hardware when a bit of the CAN_ESR has been set on error detection and
+         * the corresponding interrupt in the CAN_IER is enabled. Setting this bit generates a status
+         * change interrupt if the ERRIE bit in the CAN_IER register is set.
+         * This bit is cleared by software.
+         */
+        if (ican->MSR & CAN_MSR_ERRI) {
+                d->print ("ERRI\n");
 
-        /* Check Error Passive Flag */
-        if ((__HAL_CAN_GET_FLAG (hcan, CAN_FLAG_EPV)) && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_EPV))
-            && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_ERR))) {
-                errorCode |= HAL_CAN_ERROR_EPV;
-        }
+                if (ican->ESR & CAN_ESR_EWGF) {
+                        errorCode |= HAL_CAN_ERROR_EWG;
+                }
 
-        /* Check Bus-Off Flag */
-        if ((__HAL_CAN_GET_FLAG (hcan, CAN_FLAG_BOF)) && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_BOF))
-            && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_ERR))) {
-                errorCode |= HAL_CAN_ERROR_BOF;
-        }
+                if (ican->ESR & CAN_ESR_EPVF) {
+                        errorCode |= HAL_CAN_ERROR_EPV;
+                }
 
-        /* Check Last error code Flag */
-        if ((!HAL_IS_BIT_CLR (hcan->Instance->ESR, CAN_ESR_LEC)) && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_LEC))
-            && (__HAL_CAN_GET_IT_SOURCE (hcan, CAN_IT_ERR))) {
-                switch (hcan->Instance->ESR & CAN_ESR_LEC) {
+                if (ican->ESR & CAN_ESR_BOFF) {
+                        errorCode |= HAL_CAN_ERROR_BOF;
+                }
+
+                uint8_t lec = ican->ESR & CAN_ESR_LEC;
+                switch (lec) {
                 case (CAN_ESR_LEC_0):
                         /* Set CAN error code to STF error */
                         errorCode |= HAL_CAN_ERROR_STF;
@@ -105,17 +119,17 @@ extern "C" void CEC_CAN_IRQHandler ()
                         break;
                 }
 
-                /* Clear Last error code Flag */
-                hcan->Instance->ESR &= ~(CAN_ESR_LEC);
+                if (lec) {
+                        ican->ESR &= ~(CAN_ESR_LEC);
+                }
+
+                /* Clear ERRI Flag */
+                ican->MSR |= CAN_MSR_ERRI;
         }
 
         /* Call the Error call Back in case of Errors */
         if (errorCode != HAL_CAN_ERROR_NONE) {
-                /* Clear ERRI Flag */
-                hcan->Instance->MSR |= CAN_MSR_ERRI;
-
 #if 1
-                Debug *d = Debug::singleton ();
                 d->print ("Error : ");
                 d->print (errorCode);
                 d->print (" : ");
@@ -148,12 +162,38 @@ extern "C" void CEC_CAN_IRQHandler ()
                         d->print ("HAL_CAN_ERROR_CRC (LEC Transfer) ");
                 }
 
+                d->print (". REC=");
+                d->print ((hcan->Instance->ESR & 0xFF000000) >> 24);
+                d->print (". TEC=");
+                d->print (hcan->Instance->ESR & 0x00FF0000 >> 16);
+                d->print (". BOF=");
+                d->print (hcan->Instance->ESR & 0b100);
+                d->print (". EPVF=");
+                d->print (hcan->Instance->ESR & 0b010);
+                d->print (". EWGF=");
+                d->print (hcan->Instance->ESR & 0b001);
                 d->print ("\n");
 #endif
                 /* Call Error callback function */
                 if (Can::can->callback) {
                         Can::can->callback->onCanError (errorCode);
                 }
+        }
+
+        if (hcan->Instance->RF0R & 0b10000) {
+                d->print ("OVR\n");
+        }
+
+        if (hcan->Instance->RF0R & 0b1000) {
+                d->print ("FULL\n");
+        }
+
+        if (ican->MSR & CAN_MSR_SLAKI) {
+                d->print ("SLAK\n");
+        }
+
+        if (ican->MSR & CAN_MSR_WKUI) {
+                d->print ("WKUI\n");
         }
 }
 
