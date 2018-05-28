@@ -11,8 +11,10 @@
 
 #include "Hal.h"
 
-#if defined(LIB_MICRO_STM32F)
-#include "I2cF.h"
+#if defined(LIB_MICRO_STM32F0)
+#include "I2cF0.h"
+#elif defined(LIB_MICRO_STM32F4)
+#include "I2cF4.h"
 #elif defined(LIB_MICRO_NRG)
 #include "I2cNRG.h"
 #endif
