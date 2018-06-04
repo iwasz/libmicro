@@ -18,7 +18,7 @@
  */
 class I2c {
 public:
-        I2c ();
+        I2c (I2C_TypeDef *hi2c);
 
         enum { DEFAULT_TIMEOUT = 1000, RX_BUFFER_SIZE = 16 };
         void read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
@@ -29,8 +29,10 @@ public:
          */
         void reset ();
 
-private:
+        void clkEnable ();
+        void clkDisable ();
 
+private:
         I2C_HandleTypeDef i2cHandle;
         static I2c *i2c1;
         static I2c *i2c2;

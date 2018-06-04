@@ -18,22 +18,20 @@ I2c *I2c::i2c2;
 
 /*****************************************************************************/
 
-I2c::I2c ()
+I2c::I2c (I2C_TypeDef *hi2c)
 {
-        i2c1 = this;
+        if (hi2c == I2C1) {
+                i2c1 = this;
+        }
+        else if (hi2c == I2C2) {
+                i2c2 = this;
+        }
+
         memset (&i2cHandle, 0, sizeof (i2cHandle));
 
-        // TODO move to some method.
-        // TODO Potrzebne? Necessary?
-        // RCC_PeriphCLKInitTypeDef rccInit;
-        // rccInit.PeriphClockSelection = RCC_PERIPHCLK_I2C1;
-        // rccInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_SYSCLK;
-        // HAL_RCCEx_PeriphCLKConfig (&rccInit);
+        i2cHandle.Instance = hi2c;
+        clkEnable ();
 
-        // TODO move to some method
-        __HAL_RCC_I2C1_CLK_ENABLE ();
-
-        i2cHandle.Instance = I2C1;
         i2cHandle.Init.ClockSpeed = 400000;
         i2cHandle.Init.DutyCycle = I2C_DUTYCYCLE_2;
         i2cHandle.Init.OwnAddress1 = 0x3f << 1;
@@ -101,5 +99,29 @@ void I2c::reset ()
         i2cHandle.Instance->CR1 &= ~I2C_CR1_PE;
         if (!(i2cHandle.Instance->CR1 | I2C_CR1_PE)) {
                 i2cHandle.Instance->CR1 |= I2C_CR1_PE;
+        }
+}
+
+/*****************************************************************************/
+
+void I2c::clkEnable ()
+{
+        if (i2cHandle.Instance == I2C1) {
+                __HAL_RCC_I2C1_CLK_ENABLE ();
+        }
+        else if (i2cHandle.Instance == I2C2) {
+                __HAL_RCC_I2C2_CLK_ENABLE ();
+        }
+}
+
+/*****************************************************************************/
+
+void I2c::clkDisable ()
+{
+        if (i2cHandle.Instance == I2C1) {
+                __HAL_RCC_I2C1_CLK_DISABLE ();
+        }
+        else if (i2cHandle.Instance == I2C2) {
+                __HAL_RCC_I2C2_CLK_DISABLE ();
         }
 }

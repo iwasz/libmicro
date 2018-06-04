@@ -24,7 +24,7 @@ I2c *I2c::i2c2;
 
 /*****************************************************************************/
 
-I2c::I2c ()
+I2c::I2c (I2C_TypeDef *hi2c)
     : callback (nullptr),
       state (SLAVE_ADDR_LISTEN),
       currentAddress (0),
@@ -34,7 +34,13 @@ I2c::I2c ()
       txRemaining (0),
       rxPointer (rxBuffer)
 {
-        i2c1 = this;
+        if (hi2c == I2C1) {
+                i2c1 = this;
+        }
+        else if (hi2c == I2C2) {
+                i2c2 = this;
+        }
+
         memset (&i2cHandle, 0, sizeof (i2cHandle));
 
         // TODO move to some method.
@@ -44,10 +50,10 @@ I2c::I2c ()
         // rccInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_SYSCLK;
         // HAL_RCCEx_PeriphCLKConfig (&rccInit);
 
-        // TODO move to some method
-        __HAL_RCC_I2C1_CLK_ENABLE ();
 
-        i2cHandle.Instance = I2C1;
+        i2cHandle.Instance = hi2c;
+        clkEnable ();
+
 #ifdef LIB_MICRO_STM32F4
         i2cHandle.Init.ClockSpeed = 400000;
         i2cHandle.Init.DutyCycle = I2C_DUTYCYCLE_2;
@@ -75,16 +81,16 @@ I2c::I2c ()
 
 /*****************************************************************************/
 
-extern "C" void I2C1_IRQHandler () { I2c::i2c1->slaveIrq (); }
+extern "C" void I2C1_IRQHandler () { I2c::i2c1->slaveIrq (I2c::i2c1); }
+extern "C" void I2C2_IRQHandler () { I2c::i2c2->slaveIrq (I2c::i2c2); }
 
 /*****************************************************************************/
 
-void I2c::slaveIrq ()
+void I2c::slaveIrq (I2c *i2c)
 {
 #ifdef ISR_PRINT
         Debug *d = Debug::singleton ();
 #endif
-        I2c *i2c = I2c::i2c1;
         I2C_HandleTypeDef *hi2c = &i2c->i2cHandle;
         I2C_TypeDef *i2ci = hi2c->Instance;
         uint32_t itFlags = i2ci->ISR;
@@ -386,5 +392,29 @@ void I2c::flushTx ()
         // Flush TX register if not empty
         if (i2cHandle.Instance->ISR & I2C_FLAG_TXE) {
                 i2cHandle.Instance->ISR |= I2C_FLAG_TXE;
+        }
+}
+
+/*****************************************************************************/
+
+void I2c::clkEnable ()
+{
+        if (i2cHandle.Instance == I2C1) {
+                __HAL_RCC_I2C1_CLK_ENABLE ();
+        }
+        else if (i2cHandle.Instance == I2C2) {
+                __HAL_RCC_I2C2_CLK_ENABLE ();
+        }
+}
+
+/*****************************************************************************/
+
+void I2c::clkDisable ()
+{
+        if (i2cHandle.Instance == I2C1) {
+                __HAL_RCC_I2C1_CLK_DISABLE ();
+        }
+        else if (i2cHandle.Instance == I2C2) {
+                __HAL_RCC_I2C2_CLK_DISABLE ();
         }
 }

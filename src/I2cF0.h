@@ -15,13 +15,14 @@
 #include <cstdlib>
 
 extern "C" void I2C1_IRQHandler ();
+extern "C" void I2C2_IRQHandler ();
 
 /**
  * @brief The I2c class
  */
 class I2c {
 public:
-        I2c ();
+        I2c (I2C_TypeDef *hi2c);
 
         enum { DEFAULT_TIMEOUT = 1000, RX_BUFFER_SIZE = 16 };
         void read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
@@ -36,9 +37,13 @@ public:
         void reset ();
         void flushTx ();
 
+        void clkEnable ();
+        void clkDisable ();
+
 private:
         friend void I2C1_IRQHandler ();
-        void slaveIrq ();
+        friend void I2C2_IRQHandler ();
+        void slaveIrq (I2c *i2c);
 
         enum State { SLAVE_ADDR_LISTEN, SLAVE_BYTE_RX, SLAVE_BYTE_TX };
 
