@@ -52,6 +52,9 @@ Spi::~Spi ()
 
 void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay)
 {
+        SPI_ClearTXFIFO ();
+        SPI_ClearRXFIFO ();
+
         size_t txRemaining = size;
         size_t rxRemainig = (!rxData) ? (0) : (size);
 
@@ -90,6 +93,9 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
 
 void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
 {
+        SPI_ClearTXFIFO ();
+        SPI_ClearRXFIFO ();
+
         size_t rxRemainig = (!rxData) ? (0) : (size);
 
         bool txAllowed = true;
@@ -124,6 +130,9 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
 
 uint8_t Spi::transmit8 (uint8_t word)
 {
+        SPI_ClearTXFIFO ();
+        SPI_ClearRXFIFO ();
+
         while (!(SPI->SR & SPI_FLAG_TFE))
                 ;
 
@@ -132,7 +141,7 @@ uint8_t Spi::transmit8 (uint8_t word)
         while (!(SPI->SR & SPI_FLAG_RNE))
                 ;
 
-        uint8_t ret = static_cast<uint8_t> (SPI->DR);
+        uint8_t ret = *reinterpret_cast<__IO uint8_t *> (&SPI->DR);
 
         while (SPI->SR & SPI_FLAG_BSY)
                 ;

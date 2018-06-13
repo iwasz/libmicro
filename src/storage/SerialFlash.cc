@@ -14,14 +14,23 @@
 
 void SerialFlash::read (uint32_t address, uint8_t *buf, size_t len)
 {
-        while (statusRegisterRead () & RDY)
-                ;
+        uint16_t b = 0, c = 0;
+        while ((b = statusRegisterRead ()) & RDY) {
+                Debug::singleton ()->print (b);
+                Debug::singleton ()->print ("\n");
+                c += b;
+                Timer::delay (1);
+        }
+
+        Debug::singleton ()->print ("sum : ");
+        Debug::singleton ()->print (c);
+        Debug::singleton ()->print ("\n");
 
         spi->setNss (false);
         address <<= 8;
         address |= READ;
-        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 5);
-        spi->receive8 (buf, len, 5);
+        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 50);
+        spi->receive8 (buf, len, 50);
         spi->setNss (true);
 }
 
@@ -29,15 +38,16 @@ void SerialFlash::read (uint32_t address, uint8_t *buf, size_t len)
 
 void SerialFlash::write (uint32_t address, uint8_t const *buf, size_t len)
 {
-        while (statusRegisterRead () & RDY)
-                ;
+        while (statusRegisterRead () & RDY) {
+                Timer::delay (1);
+        }
 
         spi->setNss (false);
         spi->transmit8 (WRITE_ENABLE);
         address <<= 8;
         address |= PAGE_PROGRAM;
-        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 5);
-        spi->transmit8 (buf, len, nullptr, 5);
+        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 50);
+        spi->transmit8 (buf, len, nullptr, 50);
         Timer::delay (2);
         spi->setNss (true);
 }
