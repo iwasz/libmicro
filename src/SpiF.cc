@@ -39,7 +39,7 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
         memset (&spiHandle, 0, sizeof (spiHandle));
         spiHandle.Instance = spi;
-        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
         spiHandle.Init.Direction = SPI_DIRECTION_2LINES;
         spiHandle.Init.CLKPhase = phase;
         spiHandle.Init.CLKPolarity = polarityClockSteadyState;
@@ -155,14 +155,14 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
 }
 /*****************************************************************************/
 
-void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
+void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay, bool dataPacking)
 {
         SPI_TypeDef *spi = spiHandle.Instance;
 
         size_t rxRemainig = (!rxData) ? (0) : (size);
 
 #ifndef LIB_MICRO_STM32F4
-        if (rxRemainig > 1) {
+        if (dataPacking && rxRemainig > 1) {
                 // set fiforxthreshold according the reception data length: 16bit
                 CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
         }
@@ -184,7 +184,7 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
                 // Sending part. TXE true means, old data has been sent, and we can push more bytes.
                 if (txAllowed && (spi->SR & SPI_FLAG_TXE)) {
 #ifndef LIB_MICRO_STM32F4
-                        if (rxRemainig > 1) {
+                        if (dataPacking && rxRemainig > 1) {
                                 spi->DR = 0xffff;
                         }
                         else {
@@ -201,7 +201,7 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
                 if (spi->SR & SPI_FLAG_RXNE) {
 
 #ifndef LIB_MICRO_STM32F4
-                        if (rxRemainig > 1) {
+                        if (dataPacking && rxRemainig > 1) {
                                 *((uint16_t *)rxData) = spi->DR;
                                 rxData += sizeof (uint16_t);
                                 rxRemainig -= 2;
@@ -313,7 +313,7 @@ void Spi::transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData)
                 interrupts |= SPI_IT_RXNE;
         }
 
-//        Debug::singleton ()->print ("T+");
+        //        Debug::singleton ()->print ("T+");
         __HAL_SPI_ENABLE_IT (&spiHandle, interrupts);
 }
 
@@ -322,7 +322,7 @@ void Spi::transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData)
 void Spi::onTxEmpty ()
 {
         if (!txRemainig) {
-//                Debug::singleton ()->print ("T-");
+                //                Debug::singleton ()->print ("T-");
                 __HAL_SPI_DISABLE_IT (&spiHandle, (SPI_IT_TXE));
                 callback->onTxComplete ();
                 return;

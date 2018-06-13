@@ -50,77 +50,32 @@ Spi::~Spi ()
 
 /*****************************************************************************/
 
-void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay, bool dataPacking)
+void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay)
 {
-#if 0
-        SPI_TypeDef *spi = spiHandle.Instance;
-
-        size_t txRemainig = size;
+        size_t txRemaining = size;
         size_t rxRemainig = (!rxData) ? (0) : (size);
-
-#ifndef LIB_MICRO_STM32F4
-        if (dataPacking && rxRemainig > 1) {
-                // set fiforxthreshold according the reception data length: 16bit
-                CLEAR_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
-        }
-        else {
-                // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
-                SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
-        }
-#endif
 
         bool txAllowed = true;
 
-        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
-                __HAL_SPI_ENABLE (&spiHandle);
-        }
-
-        // Based on HAL code.
-        while (txRemainig || rxRemainig) {
+        while (txRemaining || rxRemainig) {
 
                 // Sending part. TXE true means, old data has been sent, and we can push more bytes.
-                if (txAllowed && txRemainig && (spi->SR & SPI_FLAG_TXE)) {
+                if (txAllowed && txRemaining && (SPI->SR & SPI_FLAG_TFE)) {
+                        *reinterpret_cast<__IO uint8_t *> (&SPI->DR) = *txData++;
+                        --txRemaining;
 
-#ifndef LIB_MICRO_STM32F4
-                        if (dataPacking && txRemainig > 1) {
-                                spi->DR = *((uint16_t *)txData);
-                                txData += sizeof (uint16_t);
-                                txRemainig -= 2;
-                        }
-                        else {
-#endif
-                                *(__IO uint8_t *)&spi->DR = (*txData++);
-                                --txRemainig;
-#ifndef LIB_MICRO_STM32F4
-                        }
-#endif
+                        // Next Data is a reception (Rx). Tx not allowed
                         if (rxRemainig) {
-                                // Next Data is a reception (Rx). Tx not allowed
                                 txAllowed = false;
                         }
                 }
 
                 // Receive block.  When RXNE flag set, it means that there is new data.
-                if (rxRemainig && (spi->SR & SPI_FLAG_RXNE)) {
+                if (rxRemainig && (SPI->SR & SPI_FLAG_RNE)) {
 
-#ifndef LIB_MICRO_STM32F4
-                        if (dataPacking && rxRemainig > 1) {
-                                *((uint16_t *)rxData) = spi->DR;
-                                rxData += sizeof (uint16_t);
-                                rxRemainig -= 2;
+                        (*rxData++) = *reinterpret_cast<__IO uint8_t *> (&SPI->DR);
+                        --rxRemainig;
 
-                                if (rxRemainig <= 1) {
-                                        // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
-                                        SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
-                                }
-                        }
-                        else {
-#endif
-                                (*(uint8_t *)rxData++) = *(__IO uint8_t *)&spi->DR;
-                                --rxRemainig;
-#ifndef LIB_MICRO_STM32F4
-                        }
-#endif
                         // Next Data is a Transmission (Tx). Tx is allowed
                         txAllowed = true;
                 }
@@ -129,13 +84,8 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
                         __asm("nop");
                 }
         }
-
-        // In 2way mode (I don't use 1way modes), when we haven't read, the OVR will  occur. So we clear it.
-        if (!rxData) {
-                clearOvr ();
-        }
-#endif
 }
+
 /*****************************************************************************/
 
 void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
@@ -149,7 +99,7 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
 
                 // Sending part. TXE true means, old data has been sent, and we can push more bytes.
                 if (txAllowed && (SPI->SR & SPI_FLAG_TFE)) {
-                        *(__IO uint8_t *)&SPI->DR = 0xff;
+                        *reinterpret_cast<__IO uint8_t *> (&SPI->DR) = 0xff;
                         // Next Data is a reception (Rx). Tx not allowed
                         txAllowed = false;
                 }
@@ -157,7 +107,7 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
                 // Receive block.  When RXNE flag set, it means that there is new data.
                 if (SPI->SR & SPI_FLAG_RNE) {
 
-                        (*(uint8_t *)rxData++) = *(__IO uint8_t *)&SPI->DR;
+                        (*rxData++) = *reinterpret_cast<__IO uint8_t *> (&SPI->DR);
                         --rxRemainig;
 
                         // Next Data is a Transmission (Tx). Tx is allowed
@@ -182,7 +132,7 @@ uint8_t Spi::transmit8 (uint8_t word)
         while (!(SPI->SR & SPI_FLAG_RNE))
                 ;
 
-        uint8_t ret = SPI->DR;
+        uint8_t ret = static_cast<uint8_t> (SPI->DR);
 
         while (SPI->SR & SPI_FLAG_BSY)
                 ;

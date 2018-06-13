@@ -36,7 +36,7 @@ public:
          * @param rxData Leave nullptr if not interested.
          */
         void transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData = nullptr, size_t bogoDelay = 0, bool dataPacking = true);
-        void receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay = 0);
+        void receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay = 0, bool dataPacking = true);
 
         /**
          * @brief Transmit one byte, and return what has been sent back.

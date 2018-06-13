@@ -163,7 +163,7 @@ public:
                 MASK_NO_IRQ = 0
         };
 
-        Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin, uint32_t bd = 0);
+        Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin, uint32_t bogoDelay = 0);
 
         enum CrcLength { CRC_LEN_1 = 0, CRC_LEN_2 = 1 << CRCO };
         void setConfig (uint8_t maskIrqSource, bool crcEnable, CrcLength crcLength);
@@ -247,6 +247,7 @@ public:
         {
                 writeRegister (RX_ADDR_P0 + dataPipeNo, address, addressLen);
         }
+
         void setTxAddress (uint8_t const *address, uint8_t addressLen) { writeRegister (TX_ADDR, address, addressLen); }
 
         void setPayloadLength (uint8_t dataPipeNo, uint8_t len) { writeRegister (RX_PW_P0 + dataPipeNo, len); }
@@ -337,7 +338,7 @@ public:
         /// Bogo-delay between bytes sent over SPI.
         void setBogoDelay (uint32_t b) { bogoDelay = b; }
 
-private:
+//private:
         void writeRegister (uint8_t reg, uint8_t value);
         void writeRegister (uint8_t reg, uint8_t const *data, uint8_t len);
         uint8_t readRegister (uint8_t reg) const;
@@ -345,6 +346,7 @@ private:
         /*****************************************************************************/
 
         void setCe (bool b) { cePin->set (b); }
+        void doBogoDelay () const;
 
 private:
         Spi *spi;

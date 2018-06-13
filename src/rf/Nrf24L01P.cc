@@ -12,8 +12,8 @@
 
 /*****************************************************************************/
 
-Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin, uint32_t bd)
-    : spi (spi), cePin (cePin), irqPin (irqPin), configRegisterCopy (0x08), callback (nullptr), bogoDelay (bd)
+Nrf24L01P::Nrf24L01P (Spi *spi, Gpio *cePin, Gpio *irqPin, uint32_t bogoDelay)
+    : spi (spi), cePin (cePin), irqPin (irqPin), configRegisterCopy (0x08), callback (nullptr), bogoDelay (bogoDelay)
 {
         if (irqPin) {
                 irqPin->setOnToggle ([this] {
@@ -96,8 +96,11 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t value)
 {
         spi->setNss (false);
         spi->transmit8 (reg | W_REGISTER);
+        doBogoDelay ();
         spi->transmit8 (value);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
 }
 
 /*****************************************************************************/
@@ -106,8 +109,11 @@ void Nrf24L01P::writeRegister (uint8_t reg, uint8_t const *data, uint8_t len)
 {
         spi->setNss (false);
         spi->transmit8 (reg | W_REGISTER);
-        spi->transmit8 (data, len, nullptr, bogoDelay);
+        doBogoDelay ();
+        spi->transmit8 (data, len, nullptr, bogoDelay, false);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
 }
 
 /*****************************************************************************/
@@ -116,8 +122,11 @@ uint8_t Nrf24L01P::readRegister (uint8_t reg) const
 {
         spi->setNss (false);
         spi->transmit8 (reg | R_REGISTER);
+        doBogoDelay ();
         uint8_t ret = spi->transmit8 (NOP);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
         return ret;
 }
 
@@ -135,7 +144,9 @@ void Nrf24L01P::powerUp (Mode mode)
 
         // Clear FIFOS
         flushTx ();
+        doBogoDelay ();
         flushRx ();
+        doBogoDelay ();
 
         // Clear IRQS
         writeRegister (STATUS, 0x70);
@@ -147,7 +158,9 @@ void Nrf24L01P::flushTx ()
 {
         spi->setNss (false);
         spi->transmit8 (FLUSH_TX);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
 }
 
 /*****************************************************************************/
@@ -156,7 +169,9 @@ void Nrf24L01P::flushRx ()
 {
         spi->setNss (false);
         spi->transmit8 (FLUSH_RX);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
 }
 
 /*****************************************************************************/
@@ -165,7 +180,9 @@ void Nrf24L01P::reuseTx ()
 {
         spi->setNss (false);
         spi->transmit8 (REUSE_TX_PL);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
 }
 
 /*****************************************************************************/
@@ -174,7 +191,9 @@ uint8_t Nrf24L01P::nop () const
 {
         spi->setNss (false);
         uint8_t r = spi->transmit8 (NOP);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
         return r;
 }
 
@@ -191,14 +210,14 @@ void Nrf24L01P::transmit (uint8_t *data, size_t len, bool noAck)
                 spi->transmit8 (W_TX_PAYLOAD);
         }
 
-        spi->transmit8 (data, len, nullptr, bogoDelay);
+        doBogoDelay ();
+        spi->transmit8 (data, len, nullptr, bogoDelay, false);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
 
         setCe (true);
-
-        for (uint32_t i = 0; i < bogoDelay; ++i)
-                ;
-
+        doBogoDelay ();
         setCe (false);
 }
 
@@ -209,8 +228,11 @@ void Nrf24L01P::setAckPayload (uint8_t forPipe, uint8_t *data, size_t len)
 
         spi->setNss (false);
         spi->transmit8 (W_ACK_PAYLOAD | forPipe);
-        spi->transmit8 (data, len, nullptr, bogoDelay);
+        doBogoDelay ();
+        spi->transmit8 (data, len, nullptr, bogoDelay, false);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
 }
 
 /*****************************************************************************/
@@ -219,8 +241,11 @@ size_t Nrf24L01P::getPayloadLength () const
 {
         spi->setNss (false);
         spi->transmit8 (R_RX_PL_WID);
+        doBogoDelay ();
         uint8_t r = spi->transmit8 (NOP);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
         return r;
 }
 
@@ -230,8 +255,11 @@ uint8_t *Nrf24L01P::receive (uint8_t *data, size_t len)
 {
         spi->setNss (false);
         spi->transmit8 (R_RX_PAYLOAD);
-        spi->receive8 (data, len, bogoDelay);
+        doBogoDelay ();
+        spi->receive8 (data, len, bogoDelay, false);
+        doBogoDelay ();
         spi->setNss (true);
+        doBogoDelay ();
         return data;
 }
 
@@ -280,5 +308,14 @@ void Nrf24L01P::poorMansScanner (int tries)
                 }
 
                 d->print ("\n");
+        }
+}
+
+/*****************************************************************************/
+
+void Nrf24L01P::doBogoDelay () const
+{
+        for (size_t i = 0; i < bogoDelay; ++i) {
+                __asm("nop");
         }
 }

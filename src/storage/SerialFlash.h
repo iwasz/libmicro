@@ -10,6 +10,7 @@
 #define SERIALFLASH_H
 
 #include "Spi.h"
+#include <cstdint>
 
 /**
  * Serial flash class developed and tested on LE25U20AMB.
@@ -29,11 +30,28 @@ public:
                 STATUS_REGISTER_WRITE = 0x01,
                 READ_SILICON_ID1 = 0x9f,
                 READ_SILICON_ID2 = 0xab,
-                EXIT_POWER_DOWN_MODE = 0xab
+                EXIT_POWER_DOWN_MODE = 0xab,
+                GLOBAL_BLOCK_PROTECTION_UNLOCK = 0x98
         };
 
         SerialFlash (Spi *s) : spi (s) {}
-        void read (uint32_t address);
+
+        enum StatusRegister {
+                RDY_POS = 0,
+                RDY = (1 << RDY_POS),
+                WEN_POS = 1,
+                WEN = 1 << WEN_POS,
+                BP0_POS = 2,
+                BP0 = 1 << BP0_POS,
+                BP1_POS = 3,
+                BP1 = 1 << BP1_POS,
+                SRWP_POS = 7,
+                SRWP = 1 << SRWP_POS
+        };
+
+        void read (uint32_t address, uint8_t *buf, size_t len);
+        void write (uint32_t address, uint8_t const *buf, size_t len);
+
         uint8_t statusRegisterRead () const;
         void statusRegisterWrite (uint8_t value);
 
@@ -41,6 +59,8 @@ public:
 
         void writeEnable ();
         void writeDisable ();
+        void globalBlockProtectionUnlock ();
+        void chipErase ();
 
 private:
         Spi *spi;

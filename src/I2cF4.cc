@@ -51,7 +51,8 @@ I2c::I2c (I2C_TypeDef *hi2c)
 void I2c::read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout)
 {
         //        while (HAL_I2C_Master_Sequential_Transmit_IT (&I2cHandle, (uint16_t)devAddr, &regAddr, 1, I2C_FIRST_FRAME) != HAL_OK) {
-        while (HAL_I2C_Master_Transmit (&i2cHandle, (uint16_t)devAddr << 1, &regAddr, 1, timeout) != HAL_OK) {
+        HAL_StatusTypeDef status;
+        while ((status = HAL_I2C_Master_Transmit (&i2cHandle, (uint16_t)devAddr << 1, &regAddr, 1, timeout)) != HAL_OK) {
                 if (HAL_I2C_GetError (&i2cHandle) != HAL_I2C_ERROR_AF) {
                         Error_Handler ();
                 }
