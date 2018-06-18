@@ -31,10 +31,15 @@ public:
                 READ_SILICON_ID1 = 0x9f,
                 READ_SILICON_ID2 = 0xab,
                 EXIT_POWER_DOWN_MODE = 0xab,
-                GLOBAL_BLOCK_PROTECTION_UNLOCK = 0x98
+                GLOBAL_BLOCK_PROTECTION_UNLOCK = 0x98,
+                CONFIGURATION_REGISTER_READ = 0x35,
+                BLOCK_PROTECTION_REGISTER_READ = 0x72
         };
 
         SerialFlash (Spi *s) : spi (s) {}
+
+        void read (uint32_t address, uint8_t *buf, size_t len);
+        void write (uint32_t address, uint8_t const *buf, size_t len);
 
         enum StatusRegister {
                 RDY_POS = 0,
@@ -49,9 +54,6 @@ public:
                 SRWP = 1 << SRWP_POS
         };
 
-        void read (uint32_t address, uint8_t *buf, size_t len);
-        void write (uint32_t address, uint8_t const *buf, size_t len);
-
         uint8_t statusRegisterRead () const;
         void statusRegisterWrite (uint8_t value);
 
@@ -60,7 +62,22 @@ public:
         void writeEnable ();
         void writeDisable ();
         void globalBlockProtectionUnlock ();
+
+
         void chipErase ();
+        void sectorErase (uint32_t address, uint8_t size);
+
+        enum ConfigRegister {
+                IOC_POS = 1,
+                IOC = 1 << IOC_POS, /// I/O Configuration for SPI Mode. 1 = WP# and HOLD# pins disabled, 0 = WP# and HOLD# pins enabled
+                BPNV_POS = 3,
+                BPNV = 1 << BPNV_POS, /// Block-Protection Volatility State
+                WPEN_POS = 7,
+                WPEN = 1 << WPEN_POS ///  Write-Protection Pin (WP#) Enable
+        };
+
+        uint8_t configRegisterRead () const;
+        uint8_t blockProtectionRegisterRead () const;
 
 private:
         Spi *spi;
