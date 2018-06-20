@@ -117,7 +117,6 @@ void SerialFlash::chipErase ()
         waitUntilReady ();
 
         spi->setNss (false);
-        spi->transmit8 (WRITE_ENABLE);
         spi->transmit8 (CHIP_ERASE);
         spi->setNss (true);
 
