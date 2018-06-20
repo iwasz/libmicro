@@ -14,9 +14,7 @@
 
 void SerialFlash::read (uint32_t address, uint8_t *buf, size_t len)
 {
-        while (statusRegisterRead () & RDY)
-                ;
-
+        waitUntilReady ();
         spi->setNss (false);
         address <<= 8;
         address |= READ;
@@ -29,6 +27,8 @@ void SerialFlash::read (uint32_t address, uint8_t *buf, size_t len)
 
 void SerialFlash::write (uint32_t address, uint8_t const *buf, size_t len)
 {
+        writeEnable ();
+
         while (statusRegisterRead () & RDY)
                 ;
 
@@ -41,6 +41,8 @@ void SerialFlash::write (uint32_t address, uint8_t const *buf, size_t len)
 
         while (statusRegisterRead () & RDY)
                 ;
+
+        writeDisable ();
 }
 
 /*****************************************************************************/
@@ -100,19 +102,27 @@ void SerialFlash::writeDisable ()
 
 void SerialFlash::globalBlockProtectionUnlock ()
 {
+        writeEnable ();
         spi->setNss (false);
         spi->transmit8 (GLOBAL_BLOCK_PROTECTION_UNLOCK);
         spi->setNss (true);
+        writeDisable ();
 }
 
 /*****************************************************************************/
 
 void SerialFlash::chipErase ()
 {
+        writeEnable ();
+        waitUntilReady ();
+
         spi->setNss (false);
         spi->transmit8 (WRITE_ENABLE);
         spi->transmit8 (CHIP_ERASE);
         spi->setNss (true);
+
+        waitUntilReady ();
+        writeDisable ();
 }
 
 /*****************************************************************************/
@@ -140,8 +150,8 @@ void SerialFlash::blockProtectionRegisterRead (BlockProtectionRegister &reg) con
 
 void SerialFlash::sectorErase (uint32_t address, uint8_t eraseInstruction)
 {
-        while (statusRegisterRead () & RDY)
-                ;
+        writeEnable ();
+        waitUntilReady ();
 
         spi->setNss (false);
         address <<= 8;
@@ -149,6 +159,12 @@ void SerialFlash::sectorErase (uint32_t address, uint8_t eraseInstruction)
         spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 10);
         spi->setNss (true);
 
+        waitUntilReady ();
+        writeDisable ();
+}
+
+void SerialFlash::waitUntilReady () const
+{
         while (statusRegisterRead () & RDY)
                 ;
 }
