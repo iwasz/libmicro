@@ -87,6 +87,9 @@ void Spi::transmit8 (uint8_t const *txData, size_t size, uint8_t *rxData, size_t
                         __asm("nop");
                 }
         }
+
+        while (SPI->SR & SPI_FLAG_BSY)
+                ;
 }
 
 /*****************************************************************************/
@@ -124,6 +127,9 @@ void Spi::receive8 (uint8_t *rxData, size_t size, size_t bogoDelay)
                         __asm("nop");
                 }
         }
+
+        while (SPI->SR & SPI_FLAG_BSY)
+                ;
 }
 
 /*****************************************************************************/

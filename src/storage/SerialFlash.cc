@@ -18,8 +18,8 @@ void SerialFlash::read (uint32_t address, uint8_t *buf, size_t len)
         spi->setNss (false);
         address <<= 8;
         address |= READ;
-        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 10);
-        spi->receive8 (buf, len, 10);
+        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr);
+        spi->receive8 (buf, len);
         spi->setNss (true);
 }
 
@@ -28,20 +28,16 @@ void SerialFlash::read (uint32_t address, uint8_t *buf, size_t len)
 void SerialFlash::write (uint32_t address, uint8_t const *buf, size_t len)
 {
         writeEnable ();
-
-        while (statusRegisterRead () & RDY)
-                ;
+        waitUntilReady ();
 
         spi->setNss (false);
         address <<= 8;
         address |= PAGE_PROGRAM;
-        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 10);
-        spi->transmit8 (buf, len, nullptr, 10);
+        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr);
+        spi->transmit8 (buf, len, nullptr);
         spi->setNss (true);
 
-        while (statusRegisterRead () & RDY)
-                ;
-
+        waitUntilReady ();
         writeDisable ();
 }
 
@@ -141,7 +137,7 @@ void SerialFlash::blockProtectionRegisterRead (BlockProtectionRegister &reg) con
 {
         spi->setNss (false);
         spi->transmit8 (BLOCK_PROTECTION_REGISTER_READ);
-        spi->receive8 (reg, 10, 50);
+        spi->receive8 (reg, 10);
         spi->setNss (true);
 }
 
@@ -155,12 +151,14 @@ void SerialFlash::sectorErase (uint32_t address, uint8_t eraseInstruction)
         spi->setNss (false);
         address <<= 8;
         address |= eraseInstruction;
-        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 10);
+        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr);
         spi->setNss (true);
 
         waitUntilReady ();
         writeDisable ();
 }
+
+/*****************************************************************************/
 
 void SerialFlash::waitUntilReady () const
 {
