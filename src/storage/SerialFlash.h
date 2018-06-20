@@ -63,9 +63,9 @@ public:
         void writeDisable ();
         void globalBlockProtectionUnlock ();
 
-
         void chipErase ();
-        void sectorErase (uint32_t address, uint8_t size);
+        void erase4k (uint32_t address) { sectorErase (address, 0x20); }
+        void erase32k (uint32_t address) { sectorErase (address, 0xd8); }
 
         enum ConfigRegister {
                 IOC_POS = 1,
@@ -77,7 +77,12 @@ public:
         };
 
         uint8_t configRegisterRead () const;
-        uint8_t blockProtectionRegisterRead () const;
+
+        typedef uint8_t BlockProtectionRegister[10];
+        void blockProtectionRegisterRead (BlockProtectionRegister &reg) const;
+
+private:
+        void sectorErase (uint32_t address, uint8_t eraseInstruction);
 
 private:
         Spi *spi;

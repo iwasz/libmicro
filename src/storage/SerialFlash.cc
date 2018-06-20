@@ -14,14 +14,14 @@
 
 void SerialFlash::read (uint32_t address, uint8_t *buf, size_t len)
 {
-        while (statusRegisterRead () & RDY) {
-        }
+        while (statusRegisterRead () & RDY)
+                ;
 
         spi->setNss (false);
         address <<= 8;
         address |= READ;
-        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 50);
-        spi->receive8 (buf, len, 50);
+        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 10);
+        spi->receive8 (buf, len, 10);
         spi->setNss (true);
 }
 
@@ -33,12 +33,14 @@ void SerialFlash::write (uint32_t address, uint8_t const *buf, size_t len)
                 ;
 
         spi->setNss (false);
-//        spi->transmit8 (WRITE_ENABLE);
         address <<= 8;
         address |= PAGE_PROGRAM;
-        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 50);
-        spi->transmit8 (buf, len, nullptr, 50);
+        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 10);
+        spi->transmit8 (buf, len, nullptr, 10);
         spi->setNss (true);
+
+        while (statusRegisterRead () & RDY)
+                ;
 }
 
 /*****************************************************************************/
@@ -124,24 +126,29 @@ uint8_t SerialFlash::configRegisterRead () const
         return ret;
 }
 
-uint8_t SerialFlash::blockProtectionRegisterRead () const
+/*****************************************************************************/
+
+void SerialFlash::blockProtectionRegisterRead (BlockProtectionRegister &reg) const
 {
         spi->setNss (false);
         spi->transmit8 (BLOCK_PROTECTION_REGISTER_READ);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
-        spi->transmit8 (0xff);
+        spi->receive8 (reg, 10, 50);
         spi->setNss (true);
 }
 
-void SerialFlash::sectorErase (uint32_t address, uint8_t size)
-{
+/*****************************************************************************/
 
+void SerialFlash::sectorErase (uint32_t address, uint8_t eraseInstruction)
+{
+        while (statusRegisterRead () & RDY)
+                ;
+
+        spi->setNss (false);
+        address <<= 8;
+        address |= eraseInstruction;
+        spi->transmit8 (reinterpret_cast<uint8_t *> (&address), 4, nullptr, 10);
+        spi->setNss (true);
+
+        while (statusRegisterRead () & RDY)
+                ;
 }

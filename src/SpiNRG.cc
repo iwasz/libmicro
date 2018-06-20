@@ -50,7 +50,7 @@ Spi::~Spi ()
 
 /*****************************************************************************/
 
-void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay)
+void Spi::transmit8 (uint8_t const *txData, size_t size, uint8_t *rxData, size_t bogoDelay)
 {
         SPI_ClearTXFIFO ();
         SPI_ClearRXFIFO ();
@@ -91,7 +91,7 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
 
 /*****************************************************************************/
 
-void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay)
+void Spi::receive8 (uint8_t *rxData, size_t size, size_t bogoDelay)
 {
         SPI_ClearTXFIFO ();
         SPI_ClearRXFIFO ();
