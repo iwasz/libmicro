@@ -16,8 +16,6 @@ void SerialFlash::read (uint32_t address, uint8_t *buf, size_t len)
 {
         waitUntilReady ();
         spi->setNss (false);
-        //        address <<= 8;
-        //        address |= READ;
 
         // Assumes little endian CPU.
         uint32_t tmp = READ;
@@ -36,16 +34,13 @@ void SerialFlash::write (uint32_t address, uint8_t const *buf, size_t len)
 {
         writeEnable ();
         waitUntilReady ();
-
         spi->setNss (false);
+
         // Assumes little endian CPU.
         uint32_t tmp = PAGE_PROGRAM;
         tmp |= (address & 0x000000ff) << 24;
         tmp |= (address & 0x0000ff00) << 8;
         tmp |= (address & 0x00ff0000) >> 8;
-
-        //        address <<= 8;
-        //        address |= PAGE_PROGRAM;
 
         spi->transmit8 (reinterpret_cast<uint8_t *> (&tmp), 4, nullptr);
         spi->transmit8 (buf, len, nullptr);
