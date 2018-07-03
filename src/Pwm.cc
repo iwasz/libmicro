@@ -78,6 +78,10 @@ void Pwm::clkEnable (TIM_HandleTypeDef *timer)
         else if (timer->Instance == TIM3) {
                 __HAL_RCC_TIM3_CLK_ENABLE ();
         }
+        // TODO cover all timers!!!
+        else if (timer->Instance == TIM17) {
+                __HAL_RCC_TIM17_CLK_ENABLE ();
+        }
 }
 
 /*****************************************************************************/
@@ -92,6 +96,10 @@ void Pwm::clkDisable (TIM_HandleTypeDef *timer)
         }
         else if (timer->Instance == TIM3) {
                 __HAL_RCC_TIM3_CLK_DISABLE ();
+        }
+        // TODO cover all timers!!!
+        else if (timer->Instance == TIM17) {
+                __HAL_RCC_TIM17_CLK_DISABLE ();
         }
 }
 

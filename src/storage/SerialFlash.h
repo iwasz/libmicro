@@ -39,6 +39,15 @@ public:
         SerialFlash (Spi *s) : spi (s) {}
 
         void read (uint32_t address, uint8_t *buf, size_t len);
+
+        /**
+         * Page program. Double check in your serial flash datasheet, but from what I can tell this method
+         * programs 256B long pages. This means it can program up to 256 bytes but only If address is divisible
+         * by 256. If its not, data exceeding 256 boundary will be wrapped to the beginning of a page.
+         * @param address
+         * @param buf
+         * @param len
+         */
         void write (uint32_t address, uint8_t const *buf, size_t len);
 
         enum StatusRegister {

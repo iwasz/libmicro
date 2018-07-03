@@ -18,7 +18,7 @@ public:
         bool isExpired () const;
         uint32_t elapsed () const;
         static void delay (uint32_t delayMs);
-
+        static uint32_t getTick ();
 
 protected:
         uint32_t startTime;

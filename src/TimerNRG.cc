@@ -53,3 +53,7 @@ void Timer::delay (uint32_t delayMs)
         while ((HAL_GetTick () - tickStart) < delayMs) {
         }
 }
+
+/*****************************************************************************/
+
+uint32_t Timer::getTick () { return sysTickCount; }

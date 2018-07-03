@@ -22,6 +22,7 @@ public:
         Debug (Usart *uart) : uart (uart) {}
 
         void print (const char *str);
+        void println (const char *str);
         void print (uint8_t *data, size_t len);
         void printArray (uint8_t *data, size_t len);
         void print (int);

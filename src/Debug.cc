@@ -27,6 +27,14 @@ void Debug::print (const char *str)
 
 /*****************************************************************************/
 
+void Debug::println (const char *str)
+{
+        print (str);
+        print ("\n");
+}
+
+/*****************************************************************************/
+
 void Debug::print (uint8_t *data, size_t len)
 {
         // TODO DMA
