@@ -128,6 +128,18 @@ uint8_t Nrf24L01P::readRegister (uint8_t reg) const
         spi->setNss (true);
         doBogoDelay ();
         return ret;
+
+        //        spi->setNss (false);
+        //        uint8_t in, out;
+        //        out = reg | R_REGISTER;
+        //        HAL_SPI_TransmitReceive (&spi->spiHandle, &out, &in, 1, 1000);
+        //        doBogoDelay ();
+        //        out = NOP;
+        //        HAL_SPI_TransmitReceive (&spi->spiHandle, &out, &in, 1, 1000);
+        //        doBogoDelay ();
+        //        spi->setNss (true);
+        //        doBogoDelay ();
+        //        return out;
 }
 
 /*****************************************************************************/

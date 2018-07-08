@@ -26,6 +26,9 @@ public:
         void print (uint8_t *data, size_t len);
         void printArray (uint8_t *data, size_t len);
         void print (int);
+        void println (int);
+        // void print (unsigned int);
+        // void println (unsigned int);
 
         void printTime (uint16_t time);
 

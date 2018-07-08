@@ -8,6 +8,7 @@
 
 #include "SymaX5HWRxProtocol.h"
 #include "Debug.h"
+#define DEBUG 1
 
 /*****************************************************************************/
 
@@ -21,6 +22,24 @@ const uint8_t SymaX5HWRxProtocol::BIND_ADDR[] = { 0xab, 0xac, 0xad, 0xae, 0xaf }
 
 /*****************************************************************************/
 
+SymaX5HWRxProtocol::SymaX5HWRxProtocol (Nrf24L01P *n) : nrf (n), state (BINDING), mRfChNum (0), packetNo (0)
+{
+        nrf->setConfig (Nrf24L01P::MASK_NO_IRQ, true, Nrf24L01P::CRC_LEN_2);
+        nrf->setTxAddress (SymaX5HWRxProtocol::BIND_ADDR, 5);
+        nrf->setRxAddress (0, SymaX5HWRxProtocol::BIND_ADDR, 5);
+        nrf->setAutoAck (0);
+        nrf->setEnableDataPipe (Nrf24L01P::ERX_P0);
+        nrf->setAdressWidth (Nrf24L01P::WIDTH_5);
+        nrf->setChannel (SymaX5HWRxProtocol::BIND_CHANNELS[0]);
+        nrf->setAutoRetransmit (Nrf24L01P::WAIT_4000_US, Nrf24L01P::RETRANSMIT_15);
+        nrf->setPayloadLength (0, SymaX5HWRxProtocol::RX_PACKET_SIZE);
+        nrf->setDataRate (Nrf24L01P::KBPS_250, Nrf24L01P::DBM_0);
+        nrf->powerUp (Nrf24L01P::RX);
+        nrf->setCallback (this);
+}
+
+/*****************************************************************************/
+
 uint8_t SymaX5HWRxProtocol::checksum (uint8_t *data) const
 {
         uint8_t sum = data[0];
@@ -31,6 +50,10 @@ uint8_t SymaX5HWRxProtocol::checksum (uint8_t *data) const
 
         return sum + 0x55;
 }
+
+/*****************************************************************************/
+
+void SymaX5HWRxProtocol::onRx (uint8_t *data, size_t len) { onPacket (data); }
 
 /*****************************************************************************/
 
@@ -57,32 +80,34 @@ void SymaX5HWRxProtocol::onBindPacket (uint8_t *packet)
         if (packet[5] != 0xaa || packet[6] != 0xaa || packet[RX_PACKET_SIZE - 1] != checksum (packet)) {
                 return;
         }
-
-        // Debug::singleton ()->print ("BIND : ");
-        // Debug::singleton ()->printArray (packet, 10);
-        // Debug::singleton ()->print ("\n");
-
+#ifdef DEBUG
+        Debug *d = Debug::singleton ();
+        d->print ("BIND : ");
+        d->printArray (packet, 10);
+        d->print ("\n");
+#endif
         uint8_t addr[5];
 
         for (int k = 0; k < 5; ++k) {
                 addr[k] = packet[4 - k];
         }
 
-        // Debug::singleton ()->print ("New address : ");
-        // Debug::singleton ()->printArray (addr, 5);
-        // Debug::singleton ()->print ("\n");
-
+#ifdef DEBUG
+        d->print ("New address : ");
+        d->printArray (addr, 5);
+        d->print ("\n");
+#endif
         nrf->setRxAddress (0, addr, 5);
         // setRFChannels (addr[0]);
 
         mRfChNum = 0;
         // nrf->setChannel (mRFChanBufs[mRfChNum]);
         nrf->setChannel (RX_CHANNELS[mRfChNum]);
-
-        // Debug::singleton ()->print ("Channels : ");
-        // Debug::singleton ()->printArray (mRFChanBufs, FREQ_HOPS_SIZE);
-        // Debug::singleton ()->print ("\n");
-
+#ifdef DEBUG
+        d->print ("Channels : ");
+        d->printArray (mRFChanBufs, FREQ_HOPS_SIZE);
+        d->print ("\n");
+#endif
         state = RECEIVING;
         nrf->flushRx ();
 }
@@ -180,16 +205,19 @@ void SymaX5HWRxProtocol::onReceivePacket (uint8_t *packet)
         rxValue.highspeed = packet[5] & 0x80;
         rxValue.flip = packet[6] & 0x40;
 
-        //        Debug::singleton ()->printArray (packet, 10);
-        //        Debug::singleton ()->print ("  ");
-        //        Debug::singleton ()->print (rxValue.trimYaw);
-        //        Debug::singleton ()->print ("  ");
-        //        Debug::singleton ()->print (rxValue.trimPitch);
-        //        Debug::singleton ()->print ("  ");
-        //        Debug::singleton ()->print (rxValue.trimRoll);
-        //        Debug::singleton ()->print ("  ");
-        //        Debug::singleton ()->print (rxValue.trimThrottle);
-        //        Debug::singleton ()->print ("\n");
+#ifdef DEBUG
+        Debug *d = Debug::singleton ();
+        d->printArray (packet, 10);
+        d->print ("  ");
+        d->print (rxValue.trimYaw);
+        d->print ("  ");
+        d->print (rxValue.trimPitch);
+        d->print ("  ");
+        d->print (rxValue.trimRoll);
+        d->print ("  ");
+        d->print (rxValue.trimThrottle);
+        d->print ("\n");
+#endif
 
         if (onRxValues) {
                 onRxValues (rxValue);

@@ -78,10 +78,13 @@ void Pwm::clkEnable (TIM_HandleTypeDef *timer)
         else if (timer->Instance == TIM3) {
                 __HAL_RCC_TIM3_CLK_ENABLE ();
         }
+// TODO Clen up those stupid macros
+#ifdef LIB_MICRO_STM32F0
         // TODO cover all timers!!!
         else if (timer->Instance == TIM17) {
                 __HAL_RCC_TIM17_CLK_ENABLE ();
         }
+#endif
 }
 
 /*****************************************************************************/
@@ -97,10 +100,13 @@ void Pwm::clkDisable (TIM_HandleTypeDef *timer)
         else if (timer->Instance == TIM3) {
                 __HAL_RCC_TIM3_CLK_DISABLE ();
         }
+// TODO Clen up those stupid macros
+#ifdef LIB_MICRO_STM32F0
         // TODO cover all timers!!!
         else if (timer->Instance == TIM17) {
                 __HAL_RCC_TIM17_CLK_DISABLE ();
         }
+#endif
 }
 
 /*****************************************************************************/

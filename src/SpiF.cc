@@ -6,11 +6,10 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
+#include "Debug.h"
 #include "ErrorHandler.h"
 #include "Spi.h"
 #include <cstring>
-
-#include "Debug.h"
 
 /*****************************************************************************/
 
@@ -39,7 +38,7 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
         memset (&spiHandle, 0, sizeof (spiHandle));
         spiHandle.Instance = spi;
-        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_128;
         spiHandle.Init.Direction = SPI_DIRECTION_2LINES;
         spiHandle.Init.CLKPhase = phase;
         spiHandle.Init.CLKPolarity = polarityClockSteadyState;
@@ -71,8 +70,6 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
 void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size_t bogoDelay, bool dataPacking)
 {
-        SPI_TypeDef *spi = spiHandle.Instance;
-
         size_t txRemainig = size;
         size_t rxRemainig = (!rxData) ? (0) : (size);
 
@@ -89,7 +86,7 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
 
         bool txAllowed = true;
 
-        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+        if ((spi->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
                 __HAL_SPI_ENABLE (&spiHandle);
         }
 
@@ -152,13 +149,15 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
         if (!rxData) {
                 clearOvr ();
         }
+
+        while (spi->SR & SPI_FLAG_BSY)
+                ;
 }
+
 /*****************************************************************************/
 
 void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay, bool dataPacking)
 {
-        SPI_TypeDef *spi = spiHandle.Instance;
-
         size_t rxRemainig = (!rxData) ? (0) : (size);
 
 #ifndef LIB_MICRO_STM32F4
@@ -227,6 +226,10 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay, bool dataP
                         __asm("nop");
                 }
         }
+
+        // Avoids errors at the end
+        while (spi->SR & SPI_FLAG_BSY)
+                ;
 }
 
 /*****************************************************************************/
@@ -234,25 +237,33 @@ void Spi::receive8 (uint8_t *rxData, uint16_t size, size_t bogoDelay, bool dataP
 uint8_t Spi::transmit8 (uint8_t word)
 {
         // Doesn't work without it
-        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+        if ((spi->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
                 __HAL_SPI_ENABLE (&spiHandle);
         }
 
-        // Wait for tx buffer to be empty
-        while (!(spiHandle.Instance->SR & SPI_FLAG_TXE))
+        // Flush input buffer.
+        uint8_t ret = *(__IO uint8_t *)&spi->DR;
+
+        // Wait for tx buffer to be empty, which means we can write to DR.
+        while (!(spi->SR & SPI_FLAG_TXE))
                 ;
 
-        *(__IO uint8_t *)&spiHandle.Instance->DR = word;
+        *(__IO uint8_t *)&spi->DR = word;
 
 #ifndef LIB_MICRO_STM32F4
         // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
-        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+        SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
 #endif
 
-        while (!(spiHandle.Instance->SR & SPI_FLAG_RXNE))
+        while (!(spi->SR & SPI_FLAG_RXNE))
                 ;
 
-        return *(__IO uint8_t *)&spiHandle.Instance->DR;
+        ret = *(__IO uint8_t *)&spi->DR;
+
+        while (spi->SR & SPI_FLAG_BSY)
+                ;
+
+        return ret;
 }
 
 /*****************************************************************************/
@@ -260,19 +271,24 @@ uint8_t Spi::transmit8 (uint8_t word)
 uint8_t Spi::receive8 ()
 {
         // Doesn't work without it
-        if ((spiHandle.Instance->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
+        if ((spi->CR1 & SPI_CR1_SPE) != SPI_CR1_SPE) {
                 __HAL_SPI_ENABLE (&spiHandle);
         }
 
 #ifndef LIB_MICRO_STM32F4
         // Set treshold for 8bits. RXNE will be set when fifo has at lest 8 bits
-        SET_BIT (spiHandle.Instance->CR2, SPI_RXFIFO_THRESHOLD);
+        SET_BIT (spi->CR2, SPI_RXFIFO_THRESHOLD);
 #endif
 
-        while (!(spiHandle.Instance->SR & SPI_FLAG_RXNE))
+        while (!(spi->SR & SPI_FLAG_RXNE))
                 ;
 
-        return *(__IO uint8_t *)&spiHandle.Instance->DR;
+        uint8_t ret = *(__IO uint8_t *)&spi->DR;
+
+        while (spi->SR & SPI_FLAG_BSY)
+                ;
+
+        return ret;
 }
 
 /*****************************************************************************/

@@ -34,9 +34,10 @@ Lsm6ds3::AData Lsm6ds3::getRawAData () const
 {
         AData ret;
         // TODO I think this can be read in 1 readRegister (OUTX_L_XL, 6) invocation, if some auto increment magic kicked in.
-        ret.x = ((uint16_t)bsp->readRegister (OUTX_H_XL) << 8) | bsp->readRegister (OUTX_L_XL);
-        ret.y = ((uint16_t)bsp->readRegister (OUTY_H_XL) << 8) | bsp->readRegister (OUTY_L_XL);
-        ret.z = ((uint16_t)bsp->readRegister (OUTZ_H_XL) << 8) | bsp->readRegister (OUTZ_L_XL);
+        // ret.x = ((uint16_t)bsp->readRegister (OUTX_H_XL) << 8) | bsp->readRegister (OUTX_L_XL);
+        // ret.y = ((uint16_t)bsp->readRegister (OUTY_H_XL) << 8) | bsp->readRegister (OUTY_L_XL);
+        // ret.z = ((uint16_t)bsp->readRegister (OUTZ_H_XL) << 8) | bsp->readRegister (OUTZ_L_XL);
+        bsp->readRegister (OUTX_L_XL, reinterpret_cast<uint8_t *> (&ret), 6);
         return ret;
 }
 
@@ -50,52 +51,53 @@ Lsm6ds3::GData Lsm6ds3::getRawGData () const
 {
         GData ret;
         // TODO I think this can be read in 1 readRegister (OUTX_L_XL, 6) invocation, if some auto increment magic kicked in.
-        ret.x = ((uint16_t)bsp->readRegister (OUTX_H_G) << 8) | bsp->readRegister (OUTX_L_G);
-        ret.y = ((uint16_t)bsp->readRegister (OUTY_H_G) << 8) | bsp->readRegister (OUTY_L_G);
-        ret.z = ((uint16_t)bsp->readRegister (OUTZ_H_G) << 8) | bsp->readRegister (OUTZ_L_G);
+        // ret.x = ((uint16_t)bsp->readRegister (OUTX_H_G) << 8) | bsp->readRegister (OUTX_L_G);
+        // ret.y = ((uint16_t)bsp->readRegister (OUTY_H_G) << 8) | bsp->readRegister (OUTY_L_G);
+        // ret.z = ((uint16_t)bsp->readRegister (OUTZ_H_G) << 8) | bsp->readRegister (OUTZ_L_G);
+        bsp->readRegister (OUTX_L_G, reinterpret_cast<uint8_t *> (&ret), 6);
         return ret;
 }
 
-        /*****************************************************************************/
+/*****************************************************************************/
 
-        // bool Lsm6ds3::isDataReady () const
-        //{
-        //        if (!bsp) {
-        //                return false;
-        //        }
+// bool Lsm6ds3::isDataReady () const
+//{
+//        if (!bsp) {
+//                return false;
+//        }
 
-        //        uint8_t tmp = 0;
-        //        bsp->read (&tmp, LIS3DSH_STAT_ADDR, 1);
-        //        return tmp & DRDY_BIT_MASK;
-        //}
+//        uint8_t tmp = 0;
+//        bsp->read (&tmp, LIS3DSH_STAT_ADDR, 1);
+//        return tmp & DRDY_BIT_MASK;
+//}
 
-        /*****************************************************************************/
+/*****************************************************************************/
 
-        // void Lsm6ds3::interruptConfig (Lsm6ds3InterruptConfig const &LIS3DSH_IntConfigStruct)
-        //{
+// void Lsm6ds3::interruptConfig (Lsm6ds3InterruptConfig const &LIS3DSH_IntConfigStruct)
+//{
 
-        //        uint8_t ctrl = = 0x00;
+//        uint8_t ctrl = = 0x00;
 
-        //        /* Configure Interrupt Selection , Request and Signal */
-        //        ctrl = (uint8_t) (LIS3DSH_IntConfigStruct.interruptSelectionEnable | LIS3DSH_IntConfigStruct.interruptRequest
-        //                          | LIS3DSH_IntConfigStruct.interruptSignal);
+//        /* Configure Interrupt Selection , Request and Signal */
+//        ctrl = (uint8_t) (LIS3DSH_IntConfigStruct.interruptSelectionEnable | LIS3DSH_IntConfigStruct.interruptRequest
+//                          | LIS3DSH_IntConfigStruct.interruptSignal);
 
-        //        bsp->write (&ctrl, LIS3DSH_CTRL_REG3_ADDR, 1);
+//        bsp->write (&ctrl, LIS3DSH_CTRL_REG3_ADDR, 1);
 
-        //        /* Configure State Machine 1 */
-        //        ctrl = (uint8_t) (LIS3DSH_IntConfigStruct.stateMachine1Enable | LIS3DSH_IntConfigStruct.stateMachine1Interrupt);
+//        /* Configure State Machine 1 */
+//        ctrl = (uint8_t) (LIS3DSH_IntConfigStruct.stateMachine1Enable | LIS3DSH_IntConfigStruct.stateMachine1Interrupt);
 
-        //        bsp->write (&ctrl, LIS3DSH_CTRL_REG1_ADDR, 1);
+//        bsp->write (&ctrl, LIS3DSH_CTRL_REG1_ADDR, 1);
 
-        //        /* Configure State Machine 2 */
-        //        ctrl = (uint8_t) (LIS3DSH_IntConfigStruct.stateMachine2Enable | LIS3DSH_IntConfigStruct.stateMachine2Interrupt);
+//        /* Configure State Machine 2 */
+//        ctrl = (uint8_t) (LIS3DSH_IntConfigStruct.stateMachine2Enable | LIS3DSH_IntConfigStruct.stateMachine2Interrupt);
 
-        //        bsp->write (&ctrl, LIS3DSH_CTRL_REG2_ADDR, 1);
+//        bsp->write (&ctrl, LIS3DSH_CTRL_REG2_ADDR, 1);
 
-        //        bsp->itConfig ();
-        //}
+//        bsp->itConfig ();
+//}
 
-        /*****************************************************************************/
+/*****************************************************************************/
 
 #if 0
 void Lsm6ds3::clickITConfig ()

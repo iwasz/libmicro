@@ -10,7 +10,6 @@
 #define SYMAX5HWRXPROTOCOL_H
 
 #include "Nrf24L01P.h"
-#include <functional>
 
 /**
  * Syma X5HW protocol. But unfortunately it seems, that only my particular
@@ -43,11 +42,11 @@ public:
                 bool flip;
         };
 
-        SymaX5HWRxProtocol (Nrf24L01P *n) : nrf (n), state (BINDING), mRfChNum (0), packetNo (0) {}
+        SymaX5HWRxProtocol (Nrf24L01P *n);
         virtual ~SymaX5HWRxProtocol () {}
 
         void onPacket (uint8_t *packet);
-        virtual void onRx (uint8_t *data, size_t len) { onPacket (data); }
+        virtual void onRx (uint8_t *data, size_t len);
         virtual void onTx () {}
         virtual void onMaxRt () {}
         void run ();

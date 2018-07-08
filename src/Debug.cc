@@ -95,12 +95,50 @@ void itoa (int n, char s[], int zeroPad = 0)
         reverse (s);
 }
 
+void itoa (unsigned int n, char s[], int zeroPad = 0)
+{
+        int i;
+
+        i = 0;
+
+        do {                           /* generate digits in reverse order */
+                s[i++] = n % 10 + '0'; /* get next digit */
+        } while ((n /= 10) > 0);       /* delete it */
+
+        for (; i < zeroPad; ++i) {
+                s[i] = '0';
+        }
+
+        s[i] = '\0';
+
+        reverse (s);
+}
+
 void Debug::print (int i)
 {
         char buf[11];
         itoa (i, buf);
         print (buf);
 }
+
+void Debug::println (int i)
+{
+        print (i);
+        print ("\n");
+}
+
+//void Debug::print (unsigned int i)
+//{
+//        char buf[11];
+//        itoa (i, buf);
+//        print (buf);
+//}
+
+//void Debug::println (unsigned int i)
+//{
+//        print (i);
+//        print ("\n");
+//}
 
 /*****************************************************************************/
 
