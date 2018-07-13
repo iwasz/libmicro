@@ -75,8 +75,6 @@ private:
         void onBind2Packet (uint8_t *packet);
         void onReceivePacket (uint8_t *packet);
 
-        uint8_t checksum (uint8_t *data, size_t packetSize) const;
-
 private:
         Nrf24L01P *nrf;
         State state;
@@ -87,7 +85,7 @@ private:
         uint8_t addressLength;
         uint8_t packetLength;
         uint8_t packetNo;
-        RxValues values[2];
+//        RxValues values[2];
 };
 
 #endif // SYMAX5HWRXPROTOCOL_H

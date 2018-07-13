@@ -9,7 +9,7 @@
 #include "SymaX5HWRxProtocol.h"
 #include "Debug.h"
 #include <cstring>
-#define DEBUG 1
+//#define DEBUG 1
 
 /*****************************************************************************/
 
@@ -57,6 +57,7 @@ void SymaX5HWRxProtocol::buildStateInfo ()
 void SymaX5HWRxProtocol::setStateChannels (State state, uint8_t *channels, uint8_t channelsLength)
 {
         this->currentChannel = 0;
+        this->packetNo = 0;
 
         if (channels) {
                 this->channels = channels;
@@ -99,19 +100,9 @@ void SymaX5HWRxProtocol::setStatePacketLength (State state)
         StateInfo *info = stateInfo[state];
         this->packetLength = info->packetLength;
         nrf->setPayloadLength (0, this->packetLength);
-}
-
-/*****************************************************************************/
-
-uint8_t SymaX5HWRxProtocol::checksum (uint8_t *data, size_t packetSize) const
-{
-        uint8_t sum = data[0];
-
-        for (int i = 1; i < packetSize - 1; i++) {
-                sum ^= data[i];
-        }
-
-        return sum + 0x55;
+#ifdef DEBUG
+        Debug::singleton ()->println (this->packetLength);
+#endif
 }
 
 /*****************************************************************************/
@@ -124,6 +115,7 @@ void SymaX5HWRxProtocol::onPacket (uint8_t *packet)
 {
         if (packetNo++ % 2) { // use each channel twice
                 currentChannel = (currentChannel + 1) % channelsNum;
+                nrf->setChannel (channels[currentChannel]);
         }
 
         switch (state) {
@@ -162,21 +154,16 @@ void SymaX5HWRxProtocol::onBindPacket (uint8_t *packet)
 #ifdef DEBUG
         d->print ("Packet OK\n");
 #endif
-        //        uint8_t addr[5];
-
-        //        for (int k = 0; k < 5; ++k) {
-        //                addr[k] = packet[4 - k];
-        //        }
-
+        // uint8_t addr[5];
+        // for (int k = 0; k < 5; ++k) {
+        //         addr[k] = packet[4 - k];
+        // }
         //#ifdef DEBUG
         //        d->print ("New address : ");
         //        d->printArray (addr, 5);
         //        d->print ("\n");
         //#endif
-        //        nrf->setRxAddress (0, addr, 5);
-        // setRFChannels (addr[0]);
-        // nrf->setChannel (mRFChanBufs[mRfChNum]);
-        //        nrf->setChannel (RX_CHANNELS[mRfChNum]);
+
         setStateChannels (BINDING);
         setStatePacketLength (BINDING);
 
@@ -204,52 +191,6 @@ void SymaX5HWRxProtocol::onBind2Packet (uint8_t *packet)
         state = RECEIVING;
         nrf->flushRx ();
 }
-
-/*****************************************************************************/
-
-/*
- * Magic method from the Internets.
- * Channels determined by last byte of tx address.
- * Note : it does not work for X5HW
- */
-// void SymaX5HWRxProtocol::setRFChannels (uint8_t address)
-//{
-//        uint8_t laddress = address & 0x1f;
-//        uint8_t i;
-//        uint32_t *pchans = (uint32_t *)mRFChanBufs; // avoid compiler warning
-
-//        if (laddress < 0x10) {
-//                if (laddress == 6) {
-//                        laddress = 7;
-//                }
-
-//                for (i = 0; i < FREQ_HOPS_SIZE; i++) {
-//                        mRFChanBufs[i] = START_CHANS_1[i] + laddress;
-//                }
-//        }
-//        else if (laddress < 0x18) {
-
-//                for (i = 0; i < FREQ_HOPS_SIZE; i++) {
-//                        mRFChanBufs[i] = START_CHANS_2[i] + (laddress & 0x07);
-//                }
-
-//                if (laddress == 0x16) {
-//                        mRFChanBufs[0] += 1;
-//                        mRFChanBufs[1] += 1;
-//                }
-//        }
-//        else if (laddress < 0x1e) {
-//                for (i = 0; i < FREQ_HOPS_SIZE; i++) {
-//                        mRFChanBufs[i] = START_CHANS_3[i] + (laddress & 0x07);
-//                }
-//        }
-//        else if (laddress == 0x1e) {
-//                *pchans = 0x38184121;
-//        }
-//        else {
-//                *pchans = 0x39194121;
-//        }
-//}
 
 /*****************************************************************************/
 
@@ -299,25 +240,39 @@ void SymaX5HWRxProtocol::onReceivePacket (uint8_t *packet)
         rxValue.flip = packet[6] & 0x40;
 
 #ifdef DEBUG
-        Debug *d = Debug::singleton ();
-        d->printArray (packet, 10);
-        d->print ("  ");
-        d->print (rxValue.trimYaw);
-        d->print ("  ");
-        d->print (rxValue.trimPitch);
-        d->print ("  ");
-        d->print (rxValue.trimRoll);
-        d->print ("  ");
-        d->print (rxValue.trimThrottle);
-        d->print ("\n");
+        static int i = 0;
+
+        if (++i % 20 == 0) {
+                Debug *d = Debug::singleton ();
+                d->print (" ");
+                d->print (rxValue.throttle);
+                d->print (" ");
+                d->print (rxValue.yaw);
+                d->print (" ");
+                d->print (rxValue.pitch);
+                d->print (" ");
+                d->print (rxValue.roll);
+                d->print (" ");
+                d->print (rxValue.trimYaw);
+                d->print (" ");
+                d->print (rxValue.trimPitch);
+                d->print (" ");
+                d->print (rxValue.trimRoll);
+                d->print (" ");
+                d->print (rxValue.trimThrottle);
+                d->print (" ");
+                d->print (rxValue.video);
+                d->print (" ");
+                d->print (rxValue.picture);
+                d->print (" ");
+                d->print (rxValue.highspeed);
+                d->print (" ");
+                d->print (rxValue.flip);
+                d->print ("\n");
+        }
 #endif
 
         if (onRxValues) {
                 onRxValues (rxValue);
         }
-
-        //        if (++packetNo % 2 == 0) {
-        //                mRfChNum = (mRfChNum + 1) % FREQ_HOPS_SIZE;
-        //                nrf->setChannel (RX_CHANNELS[mRfChNum]);
-        //        }
 }
