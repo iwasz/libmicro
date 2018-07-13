@@ -51,35 +51,42 @@ public:
         virtual void onMaxRt () {}
         void run ();
 
-        static constexpr int RX_PACKET_SIZE = 10;
-        static constexpr int FREQ_HOPS_SIZE = 8;
-        static constexpr int CHANNEL_DELAY_MS = 128;
-
-        static const uint8_t BIND_ADDR[];
-        static const uint8_t BIND_CHANNELS[];
-        static const uint8_t RX_CHANNELS[];
-
         std::function<void(RxValues const &)> onRxValues;
 
 private:
-        enum State { BINDING, RECEIVING };
+        enum State { INIT, BINDING, BINDING2, RECEIVING, STATES_NUM };
+
+        struct StateInfo {
+                uint8_t *channels;
+                uint8_t *address;
+                uint8_t channelsLength;
+                uint8_t addressLength;
+                uint8_t packetLength;
+        };
+
+        StateInfo *stateInfo[STATES_NUM];
+
+        void buildStateInfo ();
+        void setStateChannels (State state, uint8_t *channels = nullptr, uint8_t channelsNum = 0);
+        void setStateAddress (State state, uint8_t *address = nullptr, uint8_t addressLength = 0);
+        void setStatePacketLength (State state);
 
         void onBindPacket (uint8_t *packet);
+        void onBind2Packet (uint8_t *packet);
         void onReceivePacket (uint8_t *packet);
 
-        // static const uint8_t START_CHANS_1[];
-        // static const uint8_t START_CHANS_2[];
-        // static const uint8_t START_CHANS_3[];
-
-        uint8_t checksum (uint8_t *data) const;
-        // void setRFChannels (uint8_t address);
+        uint8_t checksum (uint8_t *data, size_t packetSize) const;
 
 private:
         Nrf24L01P *nrf;
         State state;
-        uint8_t mRFChanBufs[FREQ_HOPS_SIZE];
-        int mRfChNum;
-        int packetNo;
+        uint8_t *channels;
+        uint8_t channelsNum;
+        uint8_t currentChannel;
+        uint8_t *address;
+        uint8_t addressLength;
+        uint8_t packetLength;
+        uint8_t packetNo;
         RxValues values[2];
 };
 
