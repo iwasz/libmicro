@@ -9,6 +9,7 @@
 #include "Debug.h"
 #include "ErrorHandler.h"
 #include "Spi.h"
+#include "Timer.h"
 #include <cstring>
 
 /*****************************************************************************/
@@ -90,8 +91,11 @@ void Spi::transmit8 (uint8_t const *txData, uint16_t size, uint8_t *rxData, size
                 __HAL_SPI_ENABLE (&spiHandle);
         }
 
+        Timer timeout;
+        timeout.start (POLLING_TIMEOUT_MS);
+
         // Based on HAL code.
-        while (txRemainig || rxRemainig) {
+        while ((txRemainig || rxRemainig) && !timeout.isExpired ()) {
 
                 // Sending part. TXE true means, old data has been sent, and we can push more bytes.
                 if (txAllowed && txRemainig && (spi->SR & SPI_FLAG_TXE)) {

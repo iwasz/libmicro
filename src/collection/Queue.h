@@ -40,8 +40,8 @@ public:
         /**
          * Rozmiar kolejki.
          */
-        uint32_t const &size () const { return sizep; }
-        uint32_t const &maxSize () const { return maxSizep; }
+        size_t const &size () const { return sizep; }
+        size_t const &maxSize () const { return maxSizep; }
 
         /**
          * @brief Odkłada nowy element na końcu kolejki. Jeśli nie ma miejsca, to zwraca false.
@@ -65,13 +65,13 @@ public:
          */
         //        Element *next_after_back ();
 
-        bool pop_front (uint8_t number = 1);
+        bool pop_front (size_t number = 1);
 
         /**
          * @brief Zwraca pierwszy (domyślnie), lub n-ty (offset) za pierwszym. Jeśli offset >= size, to nullptr.
          */
-        Element &front (uint8_t offset = 0);
-        Element const &front (uint8_t offset = 0) const { return const_cast<Queue *> (this)->front (offset); }
+        Element &front (size_t offset = 0);
+        Element const &front (size_t offset = 0) const { return const_cast<Queue *> (this)->front (offset); }
 
         void clear ()
         {
@@ -84,10 +84,10 @@ public:
 private:
 #endif
 
-        uint32_t frontp;
-        uint32_t backp;
-        uint32_t sizep;
-        uint32_t maxSizep;
+        size_t frontp;
+        size_t backp;
+        size_t sizep;
+        size_t maxSizep;
         Element *queue;
 };
 
@@ -127,7 +127,7 @@ template <typename El> void Queue<El>::push_back_roll ()
 
 /*---------------------------------------------------------------------------*/
 
-template <typename El> bool Queue<El>::pop_front (uint8_t number)
+template <typename El> bool Queue<El>::pop_front (size_t number)
 {
         //        __disable_irq ();
         if (!size () || number > size ()) {
@@ -166,7 +166,7 @@ template <typename El> typename Queue<El>::Element &Queue<El>::back ()
 
 /*---------------------------------------------------------------------------*/
 
-template <typename El> typename Queue<El>::Element &Queue<El>::front (uint8_t offset)
+template <typename El> typename Queue<El>::Element &Queue<El>::front (size_t offset)
 {
         if (!size () || offset >= size ()) {
                 Error_Handler ();

@@ -18,6 +18,8 @@
  */
 class Spi {
 public:
+        enum { POLLING_TIMEOUT_MS = 500 };
+
         Spi (SPI_TypeDef *spi, uint32_t mode = SPI_MODE_MASTER, uint32_t dataSize = SPI_DATASIZE_8BIT, uint32_t phase = SPI_PHASE_1EDGE,
              uint32_t polarityClockSteadyState = SPI_POLARITY_LOW, uint32_t nssMode = SPI_NSS_SOFT);
 
@@ -53,9 +55,9 @@ public:
 
         // TODO Make (interafce) and SpiSlave class!
         // Slave methods
-//        uint8_t receive8NonBlocking (); /// Non blocking method
-//        void transmit8nr (uint8_t word);
-//        void transmit8nrNb (uint8_t word);
+        //        uint8_t receive8NonBlocking (); /// Non blocking method
+        //        void transmit8nr (uint8_t word);
+        //        void transmit8nrNb (uint8_t word);
 
         void transmit8nr (uint8_t const *txData, uint16_t size, uint8_t *rxData = nullptr);
         void receive8nb (uint8_t *rxData, uint16_t size);
