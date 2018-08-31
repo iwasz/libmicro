@@ -2,7 +2,8 @@
 SET (CUBE_ROOT "/home/iwasz/workspace/BlueNRG-1_2-DK-3.0.0")
 #SET (CRYSTAL_HZ 8000000)
 #SET (STARTUP_CODE "src/startup_stm32f072xb.s")
-SET (LINKER_SCRIPT "${CUBE_ROOT}/Project/BLE_Examples/Fixed_Stack/TrueSTUDIO/BlueNRG-2/BlueNRG2.ld")
+#SET (LINKER_SCRIPT "${CUBE_ROOT}/Project/BLE_Examples/Fixed_Stack/TrueSTUDIO/BlueNRG-2/BlueNRG2.ld")
+SET (LINKER_SCRIPT "/home/iwasz/workspace/libmicro/scripts/BlueNRG2.ld")
 
 SET (CMAKE_SYSTEM_NAME Generic)
 SET (CMAKE_SYSTEM_PROCESSOR arm)

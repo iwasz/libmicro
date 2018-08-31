@@ -13,6 +13,7 @@
 #include "Hal.h"
 #include "ICircullarQueueStorage.h"
 #include "IRandomAccessStorage.h"
+#include <cstring>
 
 /**
  * @brief Example implenentation of IStorege interface using files, but emulating

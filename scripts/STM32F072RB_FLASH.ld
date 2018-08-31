@@ -94,6 +94,7 @@ SECTIONS
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
   } >FLASH
+  
   .init_array :
   {
     PROVIDE_HIDDEN (__init_array_start = .);
@@ -101,6 +102,7 @@ SECTIONS
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
   } >FLASH
+  
   .fini_array :
   {
     PROVIDE_HIDDEN (__fini_array_start = .);
@@ -127,6 +129,7 @@ SECTIONS
   
   /* Uninitialized data section */
   . = ALIGN(4);
+  
   .bss :
   {
     /* This is used by the startup in order to initialize the .bss secion */

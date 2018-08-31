@@ -12,39 +12,47 @@
 #include "Usart.h"
 #include <cstring>
 
-Debug *Debug::instance;
+#define GLOBAL_DEBUG
 
+Debug *Debug::instance;
 Debug *&Debug::singleton () { return instance; }
 
 /*****************************************************************************/
 
 void Debug::print (const char *str)
 {
+#ifdef GLOBAL_DEBUG
         // TODO DMA
         size_t len = strlen (str);
         uart->transmit ((uint8_t *)str, len);
+#endif
 }
 
 /*****************************************************************************/
 
 void Debug::println (const char *str)
 {
+#ifdef GLOBAL_DEBUG
         print (str);
         print ("\n");
+#endif
 }
 
 /*****************************************************************************/
 
 void Debug::print (uint8_t *data, size_t len)
 {
+#ifdef GLOBAL_DEBUG
         // TODO DMA
         uart->transmit (data, len);
+#endif
 }
 
 /*****************************************************************************/
 
 void Debug::printArray (uint8_t *data, size_t len)
 {
+#ifdef GLOBAL_DEBUG
         for (size_t i = 0; i < len; ++i) {
                 print (data[i]);
 
@@ -52,6 +60,7 @@ void Debug::printArray (uint8_t *data, size_t len)
                         print (",");
                 }
         }
+#endif
 }
 
 /* reverse:  reverse string s in place */
@@ -116,25 +125,29 @@ void itoa (unsigned int n, char s[], int zeroPad = 0)
 
 void Debug::print (int i)
 {
+#ifdef GLOBAL_DEBUG
         char buf[11];
         itoa (i, buf);
         print (buf);
+#endif
 }
 
 void Debug::println (int i)
 {
+#ifdef GLOBAL_DEBUG
         print (i);
         print ("\n");
+#endif
 }
 
-//void Debug::print (unsigned int i)
+// void Debug::print (unsigned int i)
 //{
 //        char buf[11];
 //        itoa (i, buf);
 //        print (buf);
 //}
 
-//void Debug::println (unsigned int i)
+// void Debug::println (unsigned int i)
 //{
 //        print (i);
 //        print ("\n");
@@ -144,6 +157,7 @@ void Debug::println (int i)
 
 void Debug::printTime (uint16_t time)
 {
+#ifdef GLOBAL_DEBUG
         char buf[6];
         uint16_t sec100 = time % 100;
 
@@ -163,6 +177,7 @@ void Debug::printTime (uint16_t time)
 
         itoa (sec100, buf, 2);
         print (buf);
+#endif
 }
 
 /*****************************************************************************/
