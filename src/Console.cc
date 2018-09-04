@@ -86,7 +86,7 @@ void Console::run ()
         std::pair<char const *, uint8_t> line;
         while (!lineBuffer.isEmpty ()) {
                 line = lineBuffer.front ();
-                onNewLine (line.first, line.second);
+                onNewLine (line.first, line.second - 1);
 
                 if (prompt) {
                         output->transmit (prompt);

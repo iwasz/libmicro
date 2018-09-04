@@ -26,9 +26,9 @@ public:
 
         enum { DEFAULT_TIMEOUT = 1000, RX_BUFFER_SIZE = 16 };
         void read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
-        void write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
+        void write (uint8_t devAddr, uint8_t regAddr, uint8_t const *data, size_t length, uint16_t timeout = DEFAULT_TIMEOUT);
 
-        bool slaveWrite (uint8_t *data, size_t length);
+        bool slaveWrite (const uint8_t *data, size_t length);
         void setCallback (II2cCallback *c) { callback = c; }
 
         /**
@@ -55,7 +55,7 @@ private:
 
         /// Addres by witch we were called as a slave.
         uint16_t currentAddress;
-        uint8_t *txBuffer, *txPointer;
+        mutable const uint8_t *txBuffer, *txPointer;
         size_t txToSend, txRemaining;
         uint8_t rxBuffer[RX_BUFFER_SIZE], *rxPointer;
         size_t rxReceived;

@@ -6,8 +6,8 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef CHARACTERCIRCULARQUEUE_H
-#define CHARACTERCIRCULARQUEUE_H
+#ifndef LIB_MICRO_CIRCULARQUEUE_H
+#define LIB_MICRO_CIRCULARQUEUE_H
 
 #include <ErrorHandler.h>
 #include <cstdint>
@@ -15,7 +15,8 @@
 #include <utility>
 
 /**
- * Fancy byte-bassed circular queue which allows zero-copy reads.
+ * Fancy byte-bassed circular queue which allows zero-copy reads when T == char. It was unit
+ * tested with T == char and T == uint8_t.
  *
  * Usage example:
  *
@@ -31,6 +32,9 @@
  *
  *   buf.popFront ();
  *   REQUIRE (buf.front ().first == std::string ("fox"));
+ *
+ * CircularQueue <uint8_t, 128> buf2;
+ * buf.pushBack (std::vector<uint8_t>{ 1, 2, 3 }.data (), 3);
  *
  * Description:
  *
@@ -50,25 +54,27 @@
  * limited API, and was created for specified purpose. Thus method names were
  * written in camel case to clearly show this.
  */
-template <size_t MAX_SIZE> class CharacterCircularQueue {
+template <typename T, size_t MAX_SIZE> class CircularQueueBase {
 public:
         /// End Of Buffer
         enum { EOB = 0xff };
+        using ElementType = T;
+        using SizeType = uint8_t;
 
-        CharacterCircularQueue () : input (buffer), output (buffer), elementsNo (0) {}
+        CircularQueueBase () : input (buffer), output (buffer), elementsNo (0) {}
 
         /**
          * Pushes an element onto the queue. If no space is available, it returns false.
          */
-        bool pushBack (char const *s);
+        bool pushBack (ElementType const *s, SizeType size);
 
         /**
          * Returns first (the oldest) element of the queue and its length. Warning : if collection
          * is empty, this method returns garbage. It is up to the user to check beforehand.
-         * Warning 2 : second member of returned pair contains the length of returned string
-         * element WITHOUT '\0'.
+         * Warning 2 : second member of returned pair contains the length of returned element.
+         * Warning 3 : If T == char, then remember, that second contains length WITH '\0'.
          */
-        std::pair<char const *, uint8_t> front () const;
+        std::pair<ElementType const *, SizeType> front () const;
 
         /**
          * Removes the oldest element if any. If no elements are available for removing,
@@ -85,25 +91,23 @@ public:
         /// Returns if the collection is empty.
         bool isEmpty () const { return getSize () == 0; }
 
-private:
-        char buffer[MAX_SIZE];
-        char *input;
-        char *output;
-        uint8_t elementsNo;
+protected:
+        ElementType buffer[MAX_SIZE];
+        ElementType *input;
+        ElementType *output;
+        SizeType elementsNo;
 };
 
 /*****************************************************************************/
 
-template <size_t MAX_SIZE> bool CharacterCircularQueue<MAX_SIZE>::pushBack (char const *s)
+template <typename T, size_t MAX_SIZE> bool CircularQueueBase<T, MAX_SIZE>::pushBack (ElementType const *s, SizeType len)
 {
-        size_t len = strlen (s) + 1;
-
         if (len > EOB - 1) {
                 Error_Handler ();
         }
 
-        char *dest;
-        char *dataEnd = (output <= input) ? (buffer + MAX_SIZE) : (output);
+        ElementType *dest;
+        ElementType *dataEnd = (output <= input) ? (buffer + MAX_SIZE) : (output);
 
         // Special case where every byte of 'buffer' is used
         if (input == output && elementsNo) {
@@ -142,14 +146,16 @@ template <size_t MAX_SIZE> bool CharacterCircularQueue<MAX_SIZE>::pushBack (char
 
 /*****************************************************************************/
 
-template <size_t MAX_SIZE> std::pair<char const *, uint8_t> CharacterCircularQueue<MAX_SIZE>::front () const
+template <typename T, size_t MAX_SIZE>
+std::pair<typename CircularQueueBase<T, MAX_SIZE>::ElementType const *, typename CircularQueueBase<T, MAX_SIZE>::SizeType>
+CircularQueueBase<T, MAX_SIZE>::front () const
 {
-        return std::make_pair<char const *, uint8_t> (output + 1, *output - 1);
+        return std::make_pair<ElementType const *, SizeType> (output + 1, static_cast<SizeType> (*output));
 }
 
 /*****************************************************************************/
 
-template <size_t MAX_SIZE> bool CharacterCircularQueue<MAX_SIZE>::popFront ()
+template <typename T, size_t MAX_SIZE> bool CircularQueueBase<T, MAX_SIZE>::popFront ()
 {
         if (!elementsNo) {
                 return false;
@@ -159,11 +165,55 @@ template <size_t MAX_SIZE> bool CharacterCircularQueue<MAX_SIZE>::popFront ()
         size_t len = *output;
         output += len + 1;
 
-        if (output >= buffer + MAX_SIZE || *output == char(EOB)) {
+        if (output >= buffer + MAX_SIZE || *output == ElementType (EOB)) {
                 output = buffer;
         }
 
         return true;
 }
+
+/*****************************************************************************/
+/* CircularQueue                                                             */
+/*****************************************************************************/
+
+/**
+ *
+ */
+template <typename T, size_t MAX_SIZE> class CircularQueue : public CircularQueueBase<T, MAX_SIZE> {
+};
+
+/*****************************************************************************/
+/* CircularQueue <char>                                                      */
+/*****************************************************************************/
+
+/**
+ * General implementation. @see CircularQueueBase.
+ */
+template <size_t MAX_SIZE> class CircularQueue<char, MAX_SIZE> : public CircularQueueBase<char, MAX_SIZE> {
+public:
+        using ElementType = typename CircularQueueBase<char, MAX_SIZE>::ElementType;
+        using SizeType = typename CircularQueueBase<char, MAX_SIZE>::SizeType;
+
+        std::pair<ElementType const *, SizeType> front () const;
+        bool pushBack (char const *s) { return CircularQueueBase<char, MAX_SIZE>::pushBack (s, strlen (s) + 1); }
+};
+
+/*****************************************************************************/
+
+/**
+ * Partial specialization for char.
+ */
+template <size_t MAX_SIZE>
+std::pair<typename CircularQueue<char, MAX_SIZE>::ElementType const *, typename CircularQueue<char, MAX_SIZE>::SizeType>
+CircularQueue<char, MAX_SIZE>::front () const
+{
+        return std::make_pair<ElementType const *, SizeType> (CircularQueueBase<char, MAX_SIZE>::output + 1,
+                                                              static_cast<SizeType> (*CircularQueueBase<char, MAX_SIZE>::output) - 1);
+}
+
+/*****************************************************************************/
+
+template <size_t MAX_SIZE> using CharacterCircularQueue = CircularQueue<char, MAX_SIZE>;
+
 
 #endif // CHARACTERCIRCULARQUEUE_H

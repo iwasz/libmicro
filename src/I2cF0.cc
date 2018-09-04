@@ -338,7 +338,7 @@ void I2c::read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, 
 
 /*****************************************************************************/
 
-void I2c::write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout)
+void I2c::write (uint8_t devAddr, uint8_t regAddr, const uint8_t *data, size_t length, uint16_t timeout)
 {
         uint8_t tmp[128];
         tmp[0] = regAddr;
@@ -359,7 +359,7 @@ void I2c::write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length,
 
 /*****************************************************************************/
 
-bool I2c::slaveWrite (uint8_t *data, size_t length)
+bool I2c::slaveWrite (uint8_t const *data, size_t length)
 {
         if (state == SLAVE_BYTE_TX) {
                 return false;
