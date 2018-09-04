@@ -470,9 +470,30 @@ TEST_CASE ("push+popByte2", "[ccq2]")
                 // Błąd numer 1, ale nie ten którego szukam
                 CircularQueue<uint8_t, 8> buf;
                 REQUIRE (buf.pushBack (std::vector<uint8_t>{ 1, 2 }.data (), 2));
+
+                /*  o     i
+                 * +-+-+-+-+-+-+-+-+
+                 * |2|1|2| | | | | |
+                 * +-+-+-+-+-+-+-+-+
+                 */
+
                 REQUIRE (buf.pushBack (std::vector<uint8_t>{ 3, 4 }.data (), 2));
+
+                /*  o           i
+                 * +-+-+-+-+-+-+-+-+
+                 * |2|1|2|2|3|4| | |
+                 * +-+-+-+-+-+-+-+-+
+                 */
+
                 REQUIRE (buf.getSize () == 2);
                 REQUIRE (buf.popFront ());
+
+                /*        o     i
+                 * +-+-+-+-+-+-+-+-+
+                 * | | | |2|3|4| | |
+                 * +-+-+-+-+-+-+-+-+
+                 */
+
                 REQUIRE (buf.getSize () == 1);
                 REQUIRE (buf.pushBack (std::vector<uint8_t>{ 5, 6 }.data (), 2));
         }
@@ -506,6 +527,55 @@ TEST_CASE ("push+popByte2", "[ccq2]")
                 REQUIRE (buf.pushBack (std::vector<uint8_t>{ 3, 4, 5, 6, 7 }.data (), 5));
                 REQUIRE (buf.popFront ());
                 REQUIRE (buf.pushBack (std::vector<uint8_t>{ 3, 4 }.data (), 2));
+        }
+
+        {
+                // Błąd numer 2 test 3
+                CircularQueue<uint8_t, 8> buf;
+                REQUIRE (buf.pushBack (std::vector<uint8_t>{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }.data (), 7));
+                REQUIRE (buf.popFront ());
+
+                REQUIRE (buf.pushBack (std::vector<uint8_t>{ 1 }.data (), 1));
+                REQUIRE (buf.getSize () == 1);
+                REQUIRE (buf.front ().first[0] == 1);
+
+                REQUIRE (buf.pushBack (std::vector<uint8_t>{ 2 }.data (), 1));
+                REQUIRE (buf.getSize () == 2);
+
+                REQUIRE (buf.popFront ());
+                REQUIRE (buf.front ().first[0] == 2);
+                REQUIRE (buf.pushBack (std::vector<uint8_t>{ 3, 4 }.data (), 2));
+
+                REQUIRE (buf.getSize () == 2);
+                REQUIRE (buf.popFront ());
+                REQUIRE (buf.front ().first[0] == 3);
+                REQUIRE (buf.front ().first[1] == 4);
+        }
+
+        {
+                // Błąd numer 2 test 3
+                CircularQueue<uint8_t, 8> buf;
+                REQUIRE (buf.pushBack (std::vector<uint8_t>{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }.data (), 7));
+                REQUIRE (buf.popFront ());
+
+                REQUIRE (buf.pushBack (std::vector<uint8_t>{ 1 }.data (), 1));
+                REQUIRE (buf.getSize () == 1);
+                REQUIRE (buf.front ().first[0] == 1);
+
+                REQUIRE (buf.pushBack (std::vector<uint8_t>{ 2 }.data (), 1));
+                REQUIRE (buf.getSize () == 2);
+
+                REQUIRE (buf.popFront ());
+                REQUIRE (buf.front ().first[0] == 2);
+                REQUIRE (buf.popFront ());
+                REQUIRE (buf.isEmpty ());
+                REQUIRE (buf.pushBack (std::vector<uint8_t>{ 3, 4 }.data (), 2));
+
+                REQUIRE (buf.getSize () == 1);
+                REQUIRE (buf.front ().first[0] == 3);
+                REQUIRE (buf.front ().first[1] == 4);
+                REQUIRE (buf.popFront ());
+                REQUIRE (buf.isEmpty ());
         }
 
         {

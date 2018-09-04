@@ -61,7 +61,7 @@ public:
         using ElementType = T;
         using SizeType = uint8_t;
 
-        CircularQueueBase () : input (buffer), output (buffer), elementsNo (0) {}
+        CircularQueueBase () : input (buffer), output (buffer), elementsNo (0) { memset (buffer, 0x00, MAX_SIZE); }
 
         /**
          * Pushes an element onto the queue. If no space is available, it returns false.
@@ -124,7 +124,7 @@ template <typename T, size_t MAX_SIZE> bool CircularQueueBase<T, MAX_SIZE>::push
                 input = buffer;
         }
         // Is here free space on the beginnig?
-        else if (buffer + len + 1 < output) {
+        else if (buffer + len + 1 <= output) {
                 *input = EOB;
                 dest = buffer;
                 input = buffer + len + 1;
@@ -162,9 +162,19 @@ template <typename T, size_t MAX_SIZE> bool CircularQueueBase<T, MAX_SIZE>::popF
         }
 
         --elementsNo;
-        size_t len = *output;
-        output += len + 1;
 
+        if (elementsNo == 0) {
+                input = output = buffer;
+                return true;
+        }
+
+        output += *output + 1;
+
+        /*
+         * This loks like a bug, because *output can point to memory past the buffer, but
+         * if so, then first condition should also be true, and the second would not even
+         * be run.
+         */
         if (output >= buffer + MAX_SIZE || *output == ElementType (EOB)) {
                 output = buffer;
         }
@@ -214,6 +224,5 @@ CircularQueue<char, MAX_SIZE>::front () const
 /*****************************************************************************/
 
 template <size_t MAX_SIZE> using CharacterCircularQueue = CircularQueue<char, MAX_SIZE>;
-
 
 #endif // CHARACTERCIRCULARQUEUE_H
