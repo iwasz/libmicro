@@ -50,7 +50,6 @@ I2c::I2c (I2C_TypeDef *hi2c)
         // rccInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_SYSCLK;
         // HAL_RCCEx_PeriphCLKConfig (&rccInit);
 
-
         i2cHandle.Instance = hi2c;
         clkEnable ();
 
@@ -130,14 +129,18 @@ void I2c::slaveIrq (I2c *i2c)
                         return;
                 }
 
-                if (rxReceived < RX_BUFFER_SIZE) {
-                        *rxPointer++ = static_cast<uint8_t> (i2ci->RXDR);
-                        ++rxReceived;
-                }
-                else {
-                        // send NACK when rxBuffer is full.
-                        i2ci->CR2 |= I2C_CR2_NACK;
-                }
+                do {
+                        if (rxReceived < RX_BUFFER_SIZE) {
+                                *rxPointer++ = static_cast<uint8_t> (i2ci->RXDR);
+                                ++rxReceived;
+                        }
+                        else {
+                                // send NACK when rxBuffer is full.
+                                i2ci->CR2 |= I2C_CR2_NACK;
+                                break;
+                        }
+                } while (i2ci->ISR & I2C_ISR_RXNE);
+
 #ifdef ISR_PRINT
                 d->print ("R2\n");
 #endif

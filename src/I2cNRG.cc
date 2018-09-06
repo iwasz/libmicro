@@ -8,6 +8,7 @@
 
 #include "ErrorHandler.h"
 #include "I2c.h"
+#include "Timer.h"
 #include <cstring>
 
 /* Read/Write command */
@@ -40,7 +41,7 @@ I2c::I2c (I2C_Type *instance, uint32_t clockSpeed) : i2c (instance)
 
 /*****************************************************************************/
 
-bool I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
+bool I2c::read (uint8_t devAddr, uint8_t *data, size_t length, bool stopCondition, int timeout)
 {
         I2C_TransactionType t;
 
@@ -49,17 +50,22 @@ bool I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
         t.Address = devAddr;
         t.StartByte = I2C_StartByte_Disable;
         t.AddressType = I2C_AddressType_7Bit;
-        t.StopCondition = I2C_StopCondition_Enable;
+        t.StopCondition = (stopCondition) ? (I2C_StopCondition_Enable) : (I2C_StopCondition_Disable);
         t.Length = length;
 
         I2C_BeginTransaction (i2c, &t);
 
-        /* Check read */
+        Timer timer;
+        timer.start (timeout);
+
         do {
                 if (I2C_OP_ABORTED == I2C_GetStatus (i2c)) {
                         return false;
                 }
 
+                if (timeout > 0 && timer.isExpired ()) {
+                        return false;
+                }
         } while (RESET == I2C_GetITStatus (i2c, I2C_IT_MTD));
 
         I2C_ClearITPendingBit (i2c, I2C_IT_MTD | I2C_IT_MTDWS);
@@ -74,7 +80,7 @@ bool I2c::read (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
 
 /*****************************************************************************/
 
-bool I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout)
+bool I2c::write (uint8_t devAddr, uint8_t *data, size_t length, bool stopCondition, int timeout)
 {
         I2C_TransactionType t;
 
@@ -83,7 +89,7 @@ bool I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout
         t.Address = devAddr;
         t.StartByte = I2C_StartByte_Disable;
         t.AddressType = I2C_AddressType_7Bit;
-        t.StopCondition = I2C_StopCondition_Disable;
+        t.StopCondition = (stopCondition) ? (I2C_StopCondition_Enable) : (I2C_StopCondition_Disable);
         t.Length = length;
 
         I2C_FlushTx (i2c);
@@ -94,12 +100,22 @@ bool I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout
 
         /* Write I2C device address address and put the send_val in TX FIFO */
         I2C_BeginTransaction (i2c, &t);
-        I2C_FillTxFIFO (i2c, data[0]);
+
+        while (length--) {
+            I2C_FillTxFIFO (i2c, *data++);
+        }
+
+        Timer timer;
+        timer.start (timeout);
 
         /* Check write */
         do {
                 if (I2C_OP_ABORTED == I2C_GetStatus (i2c)) {
                         // volatile uint32_t cause = I2C1->SR_b.CAUSE;
+                        return false;
+                }
+
+                if (timeout > 0 && timer.isExpired ()) {
                         return false;
                 }
 
@@ -111,25 +127,25 @@ bool I2c::write (uint8_t devAddr, uint8_t *data, size_t length, uint16_t timeout
 
 /*****************************************************************************/
 
-void I2c::read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout)
-{
-        write (devAddr, &regAddr, 1);
-        read (devAddr, data, length);
-}
+// void I2c::read (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, int timeout)
+//{
+//        write (devAddr, &regAddr, 1, false, timeout);
+//        read (devAddr, data, length, true, timeout);
+//}
 
 /*****************************************************************************/
 
-void I2c::write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, uint16_t timeout)
-{
-        uint8_t tmp[128];
-        tmp[0] = regAddr;
+// void I2c::write (uint8_t devAddr, uint8_t regAddr, uint8_t *data, size_t length, int timeout)
+//{
+//        uint8_t tmp[128];
+//        tmp[0] = regAddr;
 
-        if (length <= 127) {
-                memcpy (tmp + 1, data, length);
-        }
-        else {
-                Error_Handler ();
-        }
+//        if (length <= 127) {
+//                memcpy (tmp + 1, data, length);
+//        }
+//        else {
+//                Error_Handler ();
+//        }
 
-        write (devAddr, tmp, length + 1);
-}
+//        write (devAddr, tmp, length + 1, true, timeout);
+//}
