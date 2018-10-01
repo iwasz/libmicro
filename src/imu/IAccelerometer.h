@@ -19,7 +19,7 @@ struct IAccelerometer {
                 int16_t z;
         };
 
-        virtual ~IAccelerometer () {}
+        virtual ~IAccelerometer () = default;
         virtual AData getAData () const = 0;
 };
 

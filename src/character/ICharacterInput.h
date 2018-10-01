@@ -12,7 +12,7 @@
 #include "ICharacterSink.h"
 
 struct ICharacterInput {
-        virtual ~ICharacterInput () {}
+        virtual ~ICharacterInput () = default;
         virtual void setSink (ICharacterSink *s) = 0;
         virtual void pause () = 0;
         virtual void resume () = 0;

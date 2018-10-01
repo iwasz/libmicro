@@ -23,14 +23,27 @@ public:
 
         void print (const char *str);
         void println (const char *str);
+
         void print (uint8_t *data, size_t len);
         void printArray (uint8_t *data, size_t len);
+
         void print (int);
         void println (int);
-        // void print (unsigned int);
-        // void println (unsigned int);
 
         void printTime (uint16_t time);
+
+        /*---------------------------------------------------------------------------*/
+
+//        static void print (const char *str) { singleton ()->print (str); }
+//        static void println (const char *str) { singleton ()->println (str); }
+
+//        static void print (uint8_t *data, size_t len) { singleton ()->print (data, len); }
+//        static void printArray (uint8_t *data, size_t len) { singleton ()->printArray (data, len); }
+
+//        static void print (int i) { singleton ()->print (i); }
+//        static void println (int i) { singleton ()->print (i); }
+
+//        static void printTime (uint16_t time) { singleton ()->print (time); }
 
 public:
         Usart *uart;

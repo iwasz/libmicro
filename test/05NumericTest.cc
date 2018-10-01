@@ -58,3 +58,4 @@ TEST_CASE ("RollingAverage", "[numeric]")
         avg.run (7.5);
         REQUIRE (avg.getResult () == Approx (7.9375f));
 }
+

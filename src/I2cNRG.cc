@@ -101,6 +101,11 @@ bool I2c::write (uint8_t devAddr, uint8_t *data, size_t length, bool stopConditi
         /* Write I2C device address address and put the send_val in TX FIFO */
         I2C_BeginTransaction (i2c, &t);
 
+        /*
+         * TODO - this requires further invastigation. BlueNRG-2 has 16B input FIFO with configurable treshold. What will happen if
+         * I would try to send more than 16 butes at once, I do not know, probably nothing nice. I think the status register should
+         * be checked down there inside that loop.
+         */
         while (length--) {
             I2C_FillTxFIFO (i2c, *data++);
         }

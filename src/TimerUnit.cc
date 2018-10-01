@@ -55,7 +55,6 @@ bool Timer::isExpired () const { return elapsed () >= intervalMs; }
 
 uint32_t Timer::elapsed () const
 {
-
         std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now ();
         auto duration = now.time_since_epoch ();
         int actualTime = std::chrono::duration_cast<std::chrono::milliseconds> (duration).count ();

@@ -52,3 +52,4 @@ TEST_CASE ("usleep", "[timer]")
         usleep (100 * 1000);
         REQUIRE (t.isExpired ());
 }
+

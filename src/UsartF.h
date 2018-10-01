@@ -20,7 +20,7 @@
 class Usart : public ICharacterInput, public ICharacterOutput {
 public:
         Usart (USART_TypeDef *instance, uint32_t baudRate);
-        virtual ~Usart ();
+        virtual ~Usart () override;
 
         static void clkEnable (USART_TypeDef *instance);
         static void clkDisable (USART_TypeDef *instance);
@@ -28,23 +28,23 @@ public:
         void clkDisable () { clkDisable (huart.Instance); }
 
         void transmit (const uint8_t *str, size_t len);
-        void transmit (const char *str, size_t len);
-        void transmit (const char *str);
+        void transmit (const char *str, size_t len) override;
+        void transmit (const char *str) override;
 
         /// Turns on the data ready IRQ and sets the callback.
         void startReceive ();
 
-        void setSink (ICharacterSink *s) { sink = s; }
+        void setSink (ICharacterSink *s) override { sink = s; }
         void setOnData (std::function<void(uint8_t)> const &t) { onData = t; }
 
         /// Turns off all IRQs of this usart
         void stopReceive ();
 
         /// Turns off data ready IRQs of this usart
-        void pause ();
+        void pause () override;
 
         /// Turns on the data ready IRQ.
-        void resume ();
+        void resume () override;
 
 private:
         FRIEND_ALL_USART_IRQS
