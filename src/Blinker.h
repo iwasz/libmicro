@@ -74,6 +74,6 @@ template <size_t SLOTS_NO> void Blinker<SLOTS_NO>::run ()
                 gpio->set (curentSlotNo % 2 != 0);
                 start ();
         }
-`}
+}
 
 #endif // BLINKER_H
