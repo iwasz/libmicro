@@ -10,7 +10,7 @@ SET (CMAKE_SYSTEM_PROCESSOR arm)
 
 SET(CMAKE_C_FLAGS "-std=gnu99 -fdata-sections -ffunction-sections -Wall" CACHE INTERNAL "c compiler flags")
 SET(CMAKE_CXX_FLAGS "-std=c++17 -fno-rtti -fno-exceptions -fno-unwind-tables -Wall -fdata-sections -ffunction-sections -MD -Wall" CACHE INTERNAL "cxx compiler flags")
-SET (CMAKE_EXE_LINKER_FLAGS "-T ${LINKER_SCRIPT} -specs=nosys.specs -static -Wl,-u,-Xlinker,--defsym=ST_LINKER_OPTION=1 -Wl,--gc-sections -Wl,--defsym=malloc_getpagesize_P=0x80" CACHE INTERNAL "exe link flags")
+SET (CMAKE_EXE_LINKER_FLAGS "-T ${LINKER_SCRIPT} -specs=nosys.specs -static -Wl,-u,-Xlinker -Wl,--gc-sections" CACHE INTERNAL "exe link flags")
 
 
 INCLUDE_DIRECTORIES(${SUPPORT_FILES})

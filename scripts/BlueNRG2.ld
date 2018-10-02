@@ -355,6 +355,10 @@ SECTIONS
     . = ALIGN(4);
   } >REGION_RAM
 
+  . = ALIGN(4);
+  PROVIDE ( end = . );
+  PROVIDE ( _end = . );
+
 /**
 * The last 2KB sector of FLASH is reserved for firmware to use. The BLE Host
 * stores its security database in this area. The linker needs to make sure this
@@ -368,11 +372,6 @@ SECTIONS
     KEEP(*(.noinit.stacklib_stored_device_id_data))
     
   } >REGION_NVM
-
-
-  . = ALIGN(4);
-  PROVIDE ( end = . );
-  PROVIDE ( _end = . );
 
   /* This is to emulate place at end of IAR linker */
   CSTACK (ORIGIN(REGION_RAM) + LENGTH(REGION_RAM) - _Min_Stack_Size) (NOLOAD) :
