@@ -13,9 +13,6 @@ SET(CMAKE_CXX_FLAGS "-std=c++17 -fno-rtti -fno-exceptions -fno-unwind-tables -Wa
 SET (CMAKE_EXE_LINKER_FLAGS "-T ${LINKER_SCRIPT} -specs=nosys.specs -static -Wl,-u,-Xlinker,--defsym=ST_LINKER_OPTION=1 -Wl,--gc-sections -Wl,--defsym=malloc_getpagesize_P=0x80" CACHE INTERNAL "exe link flags")
 
 
-#SET (CMAKE_EXE_LINKER_FLAGS "-T ${LINKER_SCRIPT} -Wl,--gc-sections" CACHE INTERNAL "exe link flags")
-#-specs=nosys.specs -nostartfiles -nodefaultlibs -static -L../../../../../../Library/Bluetooth_LE/library -L".." -Wl,-cref,-u,-Xlinker,--defsym=ST_LINKER_OPTION=1 "-Wl,-Map=${BuildArtifactFileBaseName}.map" -Wl,--gc-sections -Wl,--defsym=malloc_getpagesize_P=0x80 -Wl,--start-group -lc -lm -Wl,--end-group
-
 INCLUDE_DIRECTORIES(${SUPPORT_FILES})
 LINK_DIRECTORIES(${SUPPORT_FILES})
 #ADD_DEFINITIONS(-D${DEVICE})
