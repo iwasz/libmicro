@@ -14,6 +14,10 @@
 
 #if defined (LIB_MICRO_STM32F)
 #include "UsartF.h"
+
+#elif defined (LIB_MICRO_STM32L)
+#include "UsartL.h"
+
 #elif defined (LIB_MICRO_NRG)
 #include "UsartNRG.h"
 #endif

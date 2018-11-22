@@ -9,9 +9,9 @@
 #ifndef ACCELERO_LSM6ds3_H
 #define ACCELERO_LSM6ds3_H
 
-#include "IAccelerometer.h"
-#include "IGyroscope.h"
-#include "ILsm6ds3Bsp.h"
+#include "imu/IAccelerometer.h"
+#include "imu/IGyroscope.h"
+#include "imu/lsm6ds3/ILsm6ds3Bsp.h"
 #include <cstdint>
 
 /**

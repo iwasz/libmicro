@@ -358,7 +358,7 @@ SECTIONS
   . = ALIGN(4);
   PROVIDE ( end = . );
   PROVIDE ( _end = . );
-
+    
 /**
 * The last 2KB sector of FLASH is reserved for firmware to use. The BLE Host
 * stores its security database in this area. The linker needs to make sure this

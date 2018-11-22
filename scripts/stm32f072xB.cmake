@@ -1,8 +1,8 @@
 SET (DEVICE "STM32F072xB")
-SET (CUBE_ROOT "/home/iwasz/workspace/STM32Cube_FW_F0_V1.7.0")
+SET (CUBE_ROOT "$ENV{HOME}/workspace/STM32Cube_FW_F0_V1.7.0")
 SET (CRYSTAL_HZ 16000000)
-SET (STARTUP_CODE "/home/iwasz/workspace/libmicro/scripts/startup_stm32f072xb.s")
-SET (LINKER_SCRIPT "/home/iwasz/workspace/libmicro/scripts/STM32F072RB_FLASH.ld")
+SET (STARTUP_CODE "$ENV{HOME}/workspace/libmicro/scripts/startup_stm32f072xb.s")
+SET (LINKER_SCRIPT "$ENV{HOME}/workspace/libmicro/scripts/STM32F072RB_FLASH.ld")
 
 
 SET (CMAKE_SYSTEM_NAME Generic)

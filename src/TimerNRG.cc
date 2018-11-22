@@ -30,10 +30,6 @@ uint32_t HAL_GetTick () { return sysTickCount; }
 
 /*****************************************************************************/
 
-Timer::Timer () : startTime (0), intervalMs (0) {}
-
-/*****************************************************************************/
-
 void Timer::start (uint32_t interval)
 {
         startTime = HAL_GetTick ();

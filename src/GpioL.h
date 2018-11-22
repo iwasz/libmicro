@@ -6,8 +6,8 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef LIB_MICRO_GPIO_F_H
-#define LIB_MICRO_GPIO_F_H
+#ifndef LIB_MICRO_GPIO_L_H
+#define LIB_MICRO_GPIO_L_H
 
 #include <Hal.h>
 #include <functional>

@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <cmath>
 
-void BipolarStepper::timeStep ()
+void Drv8835StepperMotor::timeStep ()
 {
         if (speed) {
                 if (static_cast<uint32_t> (std::abs (speed)) == counter++) {
@@ -31,7 +31,7 @@ void BipolarStepper::timeStep ()
 #define SCALE_FACTOR 0.5
 //#define MIN_MOTOR_SPEED 10
 
-void BipolarStepper::setSpeed (int32_t speed)
+void Drv8835StepperMotor::setSpeed (int32_t speed)
 {
         if (speed > 100) {
                 speed = 100;
@@ -92,7 +92,7 @@ void BipolarStepper::setSpeed (int32_t speed)
 //        cycle = uint8_t (cycle + 1) % 4;
 //}
 
-void BipolarStepper::stepLeft ()
+void Drv8835StepperMotor::stepLeft ()
 {
         //        bPhasePin->set (cycle / 2);
         //        cycle = uint8_t (cycle + 1) % 4;
@@ -173,7 +173,7 @@ void BipolarStepper::stepLeft ()
         };
 }
 
-void BipolarStepper::stepRight ()
+void Drv8835StepperMotor::stepRight ()
 {
         //        aPhasePin->set (cycle / 2);
         //        cycle = uint8_t (cycle + 1) % 4;
@@ -274,8 +274,18 @@ void BipolarStepper::stepRight ()
 //        }
 //}
 
-void BipolarStepper::power (bool on)
+void Drv8835StepperMotor::power (bool on)
 {
         aEnablePin->set (on);
         bEnablePin->set (on);
+}
+
+/*---------------------------------------------------------------------------*/
+
+void Stspin820StepperMotor::step (int n) {}
+
+void Stspin820StepperMotor::setSpeed (Speed speed)
+{
+        pwm.setDuty (channel, 50);
+        direction.set (true);
 }

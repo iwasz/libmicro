@@ -20,7 +20,7 @@ class HardwareTimer;
 class AbstractTimerChannel {
 public:
         AbstractTimerChannel (HardwareTimer *timer, int channelNumber);
-        virtual ~AbstractTimerChannel () {}
+        virtual ~AbstractTimerChannel () = default;
 
         void setOnIrq (std::function<void(void)> const &onIrq) { this->onIrq = onIrq; }
 
@@ -36,13 +36,12 @@ protected:
 
 class OutputCompareChannel : public AbstractTimerChannel {
 public:
-        virtual ~OutputCompareChannel () {}
+        virtual ~OutputCompareChannel () = default;
 };
 
 class PwmChannel : public AbstractTimerChannel {
 public:
-        virtual ~PwmChannel () {}
-
+        virtual ~PwmChannel () = default;
         virtual void onIrq () = 0;
 };
 
@@ -52,7 +51,7 @@ public:
 class InputCaptureChannel : public AbstractTimerChannel {
 public:
         InputCaptureChannel (HardwareTimer *timer, int channelNumber, bool withIrq = false);
-        virtual ~InputCaptureChannel () {}
+        virtual ~InputCaptureChannel () = default;
 };
 
 /**

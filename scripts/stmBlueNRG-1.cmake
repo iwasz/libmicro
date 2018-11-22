@@ -1,5 +1,5 @@
 #SET (DEVICE "STM32F072xB")
-SET (CUBE_ROOT "/home/iwasz/workspace/BlueNRG-1_2-DK-2.6.0")
+SET (CUBE_ROOT "$ENV{HOME}/workspace/BlueNRG-1_2-DK-2.6.0")
 #SET (CRYSTAL_HZ 8000000)
 #SET (STARTUP_CODE "src/startup_stm32f072xb.s")
 SET (LINKER_SCRIPT "${CUBE_ROOT}/Project/BLE_Examples/Fixed_Stack/TrueSTUDIO/BlueNRG-1/BlueNRG1.ld")

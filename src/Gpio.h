@@ -14,6 +14,10 @@
 
 #if defined (LIB_MICRO_STM32F)
 #include "GpioF.h"
+
+#elif defined (LIB_MICRO_STM32L)
+#include "GpioL.h"
+
 #elif defined (LIB_MICRO_NRG)
 #include "GpioNRG.h"
 #endif
