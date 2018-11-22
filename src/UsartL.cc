@@ -6,9 +6,9 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#include "Usart.h"
 #include "ErrorHandler.h"
 #include "Hal.h"
+#include "Usart.h"
 #include <cstring>
 
 #if defined(USE_USART1) || defined(USE_UART1)
@@ -287,9 +287,8 @@ void Usart::pause () { huart.Instance->CR1 &= ~USART_CR1_RXNEIE; }
 
 void Usart::resume () { huart.Instance->CR1 |= USART_CR1_RXNEIE; }
 
-        /*****************************************************************************/
+/*****************************************************************************/
 
-#if defined(LIB_MICRO_STM32F0)
 void Usart::fireOnData (Usart *u)
 {
         // If it were not initialized
@@ -323,38 +322,3 @@ void Usart::fireOnData (Usart *u)
                 }
         }
 }
-#elif defined(LIB_MICRO_STM32F4)
-void Usart::fireOnData (Usart *u)
-{
-        // If it were not initialized
-        if (!u) {
-                return;
-        }
-
-        UART_HandleTypeDef *huart = &u->huart;
-
-        uint32_t isrflags = READ_REG (huart->Instance->SR);
-        uint32_t cr1its = READ_REG (huart->Instance->CR1);
-
-        if (isrflags & uint32_t (USART_SR_PE | USART_SR_FE | USART_SR_NE)) {
-                Error_Handler ();
-        }
-
-        // TODO ORE is silently discarded
-        if (isrflags & uint32_t (USART_SR_ORE)) {
-                //                __HAL_USART_CLEAR_IT (huart, USART_CLEAR_OREF);
-                return;
-        }
-
-        if (((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET)) {
-                uint8_t c = (uint8_t) (huart->Instance->DR & (uint8_t)0x00FF);
-
-                if (u->onData) {
-                        u->onData (c);
-                }
-                if (u->sink) {
-                        u->sink->onData (char(c));
-                }
-        }
-}
-#endif

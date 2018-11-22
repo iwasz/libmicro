@@ -6,8 +6,8 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef HALSTM32F0_H
-#define HALSTM32F0_H
+#ifndef HALSTM32F4_H
+#define HALSTM32F4_H
 
 #include <stm32f4xx.h>
 #include <stm32f4xx_hal.h>

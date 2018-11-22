@@ -37,7 +37,6 @@
 #define USE_USART3
 #define USE_UART4
 #define USE_UART5
-#define USE_USART6
 #include "HalStm32L4.h"
 
 #elif defined(NRG1)
