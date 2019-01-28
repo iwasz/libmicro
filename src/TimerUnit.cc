@@ -34,10 +34,6 @@
 
 /*****************************************************************************/
 
-Timer::Timer () : startTime (0), intervalMs (0) {}
-
-/*****************************************************************************/
-
 void Timer::start (uint32_t interval)
 {
         std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now ();

@@ -31,7 +31,8 @@ LIST (APPEND SOURCES "01StorageTest.cc")
 LIST (APPEND SOURCES "02CcqTest.cc")
 LIST (APPEND SOURCES "03QueueTest.cc")
 LIST (APPEND SOURCES "04TimerTest.cc")
-LIST (APPEND SOURCES "05NumericTest.cc")
+LIST (APPEND SOURCES "05NumericTest.cc" "06SourceSinkTest.cc")
+
 
 ADD_EXECUTABLE (libmicrotest ${SOURCES})
 ADD_TEST (libmicrotest libmicrotest)

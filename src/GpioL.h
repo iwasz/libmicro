@@ -56,6 +56,9 @@ public:
                 return on;
         }
 
+        bool get () const { return port->IDR & pin; }
+        operator bool () const { return get (); }
+
         /**
          * @brief Sets the callback. You must configure this Gpio in EXTI mode for this to work
          * i.e. use GPIO_MODE_IT_RISING or simmilar. Warning this callback is run from ISR!

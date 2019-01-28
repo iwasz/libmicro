@@ -261,6 +261,13 @@ void Usart::transmit (const char *str) { transmit (reinterpret_cast<uint8_t cons
 
 void Usart::startReceive ()
 {
+        __HAL_USART_CLEAR_IT (&huart, USART_CLEAR_PEF);
+        __HAL_USART_CLEAR_IT (&huart, USART_CLEAR_FEF);
+        __HAL_USART_CLEAR_IT (&huart, USART_CLEAR_NEF);
+        __HAL_USART_CLEAR_IT (&huart, USART_CLEAR_OREF);
+        __HAL_USART_CLEAR_IT (&huart, USART_CLEAR_IDLEF);
+        __HAL_USART_CLEAR_IT (&huart, USART_CLEAR_TCF);
+
         // Enable the UART Error Interrupt: (Frame error, noise error, overrun error)
         huart.Instance->CR3 |= USART_CR3_EIE;
 
@@ -300,8 +307,20 @@ void Usart::fireOnData (Usart *u)
 
         uint32_t isrflags = READ_REG (huart->Instance->ISR);
         uint32_t cr1its = READ_REG (huart->Instance->CR1);
+        uint32_t cr3its = READ_REG (huart->Instance->CR3);
 
-        if (isrflags & uint32_t (USART_ISR_PE | USART_ISR_FE | USART_ISR_NE)) {
+        // Parity error
+        if ((isrflags & USART_ISR_PE) && (cr1its & USART_CR1_PEIE)) {
+                Error_Handler ();
+        }
+
+        // Framing error
+        if ((isrflags & USART_ISR_FE) && (cr3its & USART_CR3_EIE)) {
+                Error_Handler ();
+        }
+
+        // Noise
+        if ((isrflags & USART_ISR_NE) && (cr3its & USART_CR3_EIE)) {
                 Error_Handler ();
         }
 

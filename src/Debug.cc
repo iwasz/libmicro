@@ -16,6 +16,7 @@
 
 Debug *Debug::instance;
 Debug *&Debug::singleton () { return instance; }
+Debug *debug;
 
 /*****************************************************************************/
 

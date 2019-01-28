@@ -590,5 +590,6 @@ TEST_CASE ("push+popByte2", "[ccq2]")
                 REQUIRE (buf.pushBack (std::vector<uint8_t>{ 1, 2, 3, 4, 5 }.data (), 5));
                 REQUIRE (buf.popFront ());
                 REQUIRE (buf.pushBack (std::vector<uint8_t>{ 2, 3, 4, 5, 6 }.data (), 5));
+                delete [] p;
         }
 }

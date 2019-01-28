@@ -50,4 +50,7 @@ public:
         static Debug *instance;
 };
 
+// TODO hack, get rid of this.
+extern Debug *debug;
+
 #endif //__CMD_UART_H__
