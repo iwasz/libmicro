@@ -333,21 +333,21 @@ void Usart::fireOnData (Usart *u)
 
         UART_HandleTypeDef *huart = &u->huart;
 
-        uint32_t isrflags = READ_REG (huart->Instance->SR);
+        uint32_t isrflags = READ_REG (huart->Instance->ISR);
         uint32_t cr1its = READ_REG (huart->Instance->CR1);
 
-        if (isrflags & uint32_t (USART_SR_PE | USART_SR_FE | USART_SR_NE)) {
+        if (isrflags & uint32_t (USART_ISR_PE | USART_ISR_FE | USART_ISR_NE)) {
                 Error_Handler ();
         }
 
         // TODO ORE is silently discarded
-        if (isrflags & uint32_t (USART_SR_ORE)) {
+        if (isrflags & uint32_t (USART_ISR_ORE)) {
                 //                __HAL_USART_CLEAR_IT (huart, USART_CLEAR_OREF);
                 return;
         }
 
-        if (((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET)) {
-                uint8_t c = (uint8_t) (huart->Instance->DR & (uint8_t)0x00FF);
+        if (((isrflags & USART_ISR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET)) {
+                uint8_t c = (uint8_t) (huart->Instance->RDR & (uint8_t)0x00FF);
 
                 if (u->onData) {
                         u->onData (c);

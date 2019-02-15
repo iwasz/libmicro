@@ -11,28 +11,32 @@ PROJECT (libmicrotest)
 ENABLE_TESTING ()
 INCLUDE_DIRECTORIES("../src/")
 
-SET(SOURCES)
-LIST (APPEND SOURCES "../src/storage/IRandomAccessStorage.h")
-LIST (APPEND SOURCES "../src/storage/ICircullarQueueStorage.h")
-LIST (APPEND SOURCES "../src/storage/FlashEepromStorage.h")
-LIST (APPEND SOURCES "../src/storage/FileRandomAccessStorage.h")
-LIST (APPEND SOURCES "../src/ErrorHandler.h")
-LIST (APPEND SOURCES "../src/ErrorHandler.c")
-LIST (APPEND SOURCES "../src/Timer.h")
-LIST (APPEND SOURCES "../src/TimerUnit.cc")
-LIST (APPEND SOURCES "../src/collection/CircularQueue.h")
-LIST (APPEND SOURCES "../src/collection/Queue.h")
-LIST (APPEND SOURCES "../src/numeric/IncrementalAverage.h")
-LIST (APPEND SOURCES "../src/numeric/IncrementalAverage.cc")
-LIST (APPEND SOURCES "../src/numeric/RollingAverage.h")
-LIST (APPEND SOURCES "../src/numeric/RollingAverage.cc")
-LIST (APPEND SOURCES "00CatchInit.cc")
-LIST (APPEND SOURCES "01StorageTest.cc")
-LIST (APPEND SOURCES "02CcqTest.cc")
-LIST (APPEND SOURCES "03QueueTest.cc")
-LIST (APPEND SOURCES "04TimerTest.cc")
-LIST (APPEND SOURCES "05NumericTest.cc" "06SourceSinkTest.cc")
 
+ADD_EXECUTABLE(libmicrotest
+    "../src/storage/IRandomAccessStorage.h"
+    "../src/storage/ICircullarQueueStorage.h"
+    "../src/storage/FlashEepromStorage.h"
+    "../src/storage/FileRandomAccessStorage.h"
+    "../src/ErrorHandler.h"
+    "../src/ErrorHandler.c"
+    "../src/Timer.h"
+    "../src/TimerUnit.cc"
+    "../src/collection/CircularQueue.h"
+    "../src/collection/Queue.h"
+    "../src/collection/CircularBuffer.h"
+    "../src/collection/CircularBuffer.cc"
+    "../src/numeric/IncrementalAverage.h"
+    "../src/numeric/IncrementalAverage.cc"
+    "../src/numeric/RollingAverage.h"
+    "../src/numeric/RollingAverage.cc"
+    "00CatchInit.cc"
+    "01StorageTest.cc"
+    "02CcqTest.cc"
+    "03QueueTest.cc"
+    "04TimerTest.cc"
+    "05NumericTest.cc"
+    "06SourceSinkTest.cc"
+    "07CircularBufferTest.cc"
+)
 
-ADD_EXECUTABLE (libmicrotest ${SOURCES})
 ADD_TEST (libmicrotest libmicrotest)
