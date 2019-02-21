@@ -1,7 +1,7 @@
 SET (DEVICE "STM32H743xx")
 SET (CUBE_ROOT "$ENV{HOME}/workspace/STM32Cube_FW_H7_V1.3.1")
-SET (STARTUP_CODE "${CUBE_ROOT}/Drivers/CMSIS/Device/ST/STM32H7xx/Source/Templates/gcc/startup_stm32h743xx.s")
-SET (LINKER_SCRIPT "${CUBE_ROOT}/Projects/STM32H743ZI-Nucleo/Templates/SW4STM32/STM32H743ZI-Nucleo/STM32H743ZITx_FLASH_DTCMRAM.ld")
+SET (STARTUP_CODE "$ENV{HOME}/workspace/libmicro/scripts/startup_stm32h743xx.s")
+SET (LINKER_SCRIPT "$ENV{HOME}/workspace/libmicro/scripts/STM32H743ZITx_FLASH_DTCMRAM.ld")
 
 SET (CMAKE_SYSTEM_NAME Generic)
 SET (CMAKE_SYSTEM_PROCESSOR arm)

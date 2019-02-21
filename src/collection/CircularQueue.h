@@ -15,8 +15,8 @@
 #include <utility>
 
 /**
- * Fancy byte-bassed circular queue which allows zero-copy reads when T == char. It was unit
- * tested with T == char and T == uint8_t.
+ * Circular queue which was designed for for storing zero-ended strings which character type is T.
+ * It allows zero-copy reads when T == char. It was unit tested with T == char and T == uint8_t.
  *
  * Usage example:
  *

@@ -34,8 +34,13 @@ TEST_CASE ("IO bez zawinięcia", "[CircularBuffer]")
         SECTION ("dodawanie 1 raz")
         {
                 CircularBuffer buffer (4);
-                REQUIRE (!buffer.store (TEST_DATA, 5));
-                REQUIRE (buffer.store (TEST_DATA, 2));
+                REQUIRE (buffer.store (TEST_DATA, 5) != 5);
+
+                buffer.clear ();
+                REQUIRE (buffer.store (TEST_DATA, 6) == 4);
+
+                buffer.clear ();
+                REQUIRE (buffer.store (TEST_DATA, 2) == 2);
                 REQUIRE (buffer.size () == 2);
 
                 uint8_t *pa, *pb;
@@ -497,8 +502,8 @@ TEST_CASE ("Remove last bez zawinięcia", "[CircularBuffer]")
         REQUIRE (buffer.size () == 0);
         REQUIRE (buffer.offsetIn == 0);
 
-        REQUIRE (!buffer.store (TEST_DATA, 4));
-        REQUIRE (buffer.store (TEST_DATA, 3));
+        REQUIRE (buffer.store (TEST_DATA, 4) == 3);
+        // REQUIRE (buffer.store (TEST_DATA, 3));
         REQUIRE (buffer.size () == 3);
         REQUIRE (buffer.removeLast (3));
         REQUIRE (buffer.size () == 0);
@@ -563,6 +568,17 @@ TEST_CASE ("Boundary", "[CircularBuffer]")
 
         REQUIRE (lenA == 8);
         REQUIRE (lenB == 0);
+
+        SECTION ("Declare to much")
+        {
+                CircularBuffer buffer (4);
+                REQUIRE (buffer.store (TEST_DATA, 4));
+                REQUIRE (buffer.size () == 4);
+                REQUIRE (buffer.declareRead (2) == 2);
+                REQUIRE (buffer.size () == 2);
+                REQUIRE (buffer.declareRead (3) == 2);
+                REQUIRE (buffer.size () == 0);
+        }
 }
 
 /**

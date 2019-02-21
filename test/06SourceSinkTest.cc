@@ -21,6 +21,7 @@ public:
         //        MySink (StringQueue &g) : gsmQueue (g) {}
         virtual ~MySink () {}
         virtual void onData (char c);
+        virtual void onError (uint32_t flags){};
 
 private:
         uint16_t rxBufferGsmPos = 0;

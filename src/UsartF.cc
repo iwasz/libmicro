@@ -6,9 +6,9 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#include "Usart.h"
 #include "ErrorHandler.h"
 #include "Hal.h"
+#include "Usart.h"
 #include <cstring>
 
 #if defined(USE_USART1) || defined(USE_UART1)
@@ -287,7 +287,7 @@ void Usart::pause () { huart.Instance->CR1 &= ~USART_CR1_RXNEIE; }
 
 void Usart::resume () { huart.Instance->CR1 |= USART_CR1_RXNEIE; }
 
-        /*****************************************************************************/
+/*****************************************************************************/
 
 #if defined(LIB_MICRO_STM32F0)
 void Usart::fireOnData (Usart *u)
@@ -337,12 +337,24 @@ void Usart::fireOnData (Usart *u)
         uint32_t cr1its = READ_REG (huart->Instance->CR1);
 
         if (isrflags & uint32_t (USART_ISR_PE | USART_ISR_FE | USART_ISR_NE)) {
-                Error_Handler ();
+                __HAL_USART_CLEAR_IT (huart, USART_ISR_PE);
+                __HAL_USART_CLEAR_IT (huart, USART_ISR_FE);
+                __HAL_USART_CLEAR_IT (huart, USART_ISR_NE);
+
+                if (u->sink) {
+                        u->sink->onError (isrflags);
+                }
+
+                return;
         }
 
-        // TODO ORE is silently discarded
+        // TODO ORE (OverRun Error) is silently discarded
         if (isrflags & uint32_t (USART_ISR_ORE)) {
-                //                __HAL_USART_CLEAR_IT (huart, USART_CLEAR_OREF);
+                __HAL_USART_CLEAR_IT (huart, USART_CLEAR_OREF);
+
+                if (u->sink) {
+                        u->sink->onError (uint32_t (USART_ISR_ORE));
+                }
                 return;
         }
 

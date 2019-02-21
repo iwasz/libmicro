@@ -13,13 +13,14 @@
 #include <cstdint>
 
 /**
+ * Circular queue designed for storing one uniform chunk of bytes (thus name buffer). Oldest bytes
+ * can be read and removed, and new bytes can be added at the end.
  * Bufor kolejka. Gdy miejsce się kończy na końcu bufora, zaczyna zapisywać znów na początku.
  * Elementy są jednorodne, to znaczy sama kolejka nie definiuje żadnego logicznego (abstrakcyjnego)
  * elementu w środku. To jest po prostu ciąg bajtów, czy znaków, czy elementów.
  * Zapisywane do niego bajty lądują zawsze na końcu, a odczytywane bajty pobierane
  * są z początku. Jeżeli następuje przepełnienie bufora, to bufor może zwrócić false i nie dodać
  * więcej danych, albo może nadpisać najstarzse dane.
- * TODO zmienić nazwę na CircularBuffer
  */
 class CircularBuffer {
 public:
@@ -36,7 +37,7 @@ public:
         size_t store (uint8_t const *data, size_t len, bool nullTerminate = false);
         bool removeLast (size_t len);
         void retrieve (uint8_t **partA, size_t *lenA, uint8_t **partB, size_t *lenB, size_t maxBytes = -1) const;
-        void declareRead (size_t len);
+        size_t declareRead(size_t len);
         void declareReadAll ();
         void clear ()
         {

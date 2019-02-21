@@ -37,7 +37,8 @@ size_t CircularBuffer::store (uint8_t const *data, size_t len, bool nullTerminat
         size_t overwrite = 0;
         if (size () + len > MAX_SIZE) {
                 if (!canOverwrite) {
-                        return 0;
+                        // return 0;
+                        len = MAX_SIZE - size ();
                 }
                 else {
                         overwrite = (size () + len) - MAX_SIZE;
@@ -84,10 +85,16 @@ size_t CircularBuffer::store (uint8_t const *data, size_t len, bool nullTerminat
 
 /*****************************************************************************/
 
-void CircularBuffer::declareRead (size_t len)
+size_t CircularBuffer::declareRead (size_t len)
 {
+        if (len > size ()) {
+                len = size ();
+        }
+
         offsetOut = (offsetOut + len) % MAX_SIZE;
         empty = (offsetIn == offsetOut);
+
+        return len;
 }
 
 /*****************************************************************************/
