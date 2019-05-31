@@ -14,18 +14,17 @@
 #include "character/ICharacterOutput.h"
 #include <functional>
 
+namespace lm {
+class UsartChar;
+template <typename StringT> class UsartString;
+} // namespace lm
 /**
  * @brief The Uart class
  */
 class Usart : public ICharacterInput, public ICharacterOutput {
 public:
-        Usart (USART_TypeDef *instance, uint32_t baudRate);
+        Usart (uint32_t baudRate);
         virtual ~Usart () override;
-
-        static void clkEnable (USART_TypeDef *instance);
-        static void clkDisable (USART_TypeDef *instance);
-        void clkEnable () { clkEnable (huart.Instance); }
-        void clkDisable () { clkDisable (huart.Instance); }
 
         void transmit (const uint8_t *str, size_t len);
         void transmit (const char *str, size_t len) override;
@@ -46,32 +45,11 @@ public:
         /// Turns on the data ready IRQ.
         void resume () override;
 
+        friend class lm::UsartChar;
+        template <typename StringT> friend class lm::UsartString;
+
 private:
-        FRIEND_ALL_USART_IRQS
-        UART_HandleTypeDef huart;
-
-#if defined(USE_USART1) || defined(USE_UART1)
-        static Usart *usart1;
-#endif
-#if defined(USE_USART2) || defined(USE_UART2)
-        static Usart *usart2;
-#endif
-#if defined(USE_USART3) || defined(USE_UART3)
-        static Usart *usart3;
-#endif
-#if defined(USE_USART4) || defined(USE_UART4)
-        static Usart *usart4;
-#endif
-#if defined(USE_USART5) || defined(USE_UART5)
-        static Usart *usart5;
-#endif
-#if defined(USE_USART6) || defined(USE_UART6)
-        static Usart *usart6;
-#endif
-#if defined(USE_USART7) || defined(USE_UART7)
-        static Usart *usart7;
-#endif
-
+        bool receiving = false;
         static void fireOnData (Usart *u);
         std::function<void(uint8_t)> onData;
         ICharacterSink *sink;

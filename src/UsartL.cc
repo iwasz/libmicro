@@ -316,7 +316,8 @@ void Usart::fireOnData (Usart *u)
 
         // Framing error
         if ((isrflags & USART_ISR_FE) && (cr3its & USART_CR3_EIE)) {
-                Error_Handler ();
+                //__HAL_USART_CLEAR_IT (huart, USART_CLEAR_FEF);
+                 Error_Handler ();
         }
 
         // Noise

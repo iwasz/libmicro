@@ -17,3 +17,6 @@ extern "C" void USART3_IRQHandler () { Usart::fireOnData (Usart::usart3); }
 extern "C" void UART4_IRQHandler () { Usart::fireOnData (Usart::usart4); }
 extern "C" void UART5_IRQHandler () { Usart::fireOnData (Usart::usart5); }
 extern "C" void USART6_IRQHandler () { Usart::fireOnData (Usart::usart6); }
+#ifdef LIB_MICRO_STM32H
+extern "C" void UART7_IRQHandler () { Usart::fireOnData (Usart::usart7); }
+#endif

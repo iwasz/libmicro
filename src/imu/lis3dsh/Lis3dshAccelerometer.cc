@@ -8,6 +8,7 @@
 
 #include "Lis3dshAccelerometer.h"
 #include "Lis3dshConstants.h"
+#include "imu/IAccelerometer.h"
 
 /*****************************************************************************/
 
@@ -180,7 +181,7 @@ void Lis3dsh::setFullScale (uint8_t FS_value)
 
 /*****************************************************************************/
 
-IAccelerometer::Data Lis3dsh::getData () const
+IAccelerometer::AData Lis3dsh::getAData () const
 {
         int8_t buffer[6];
         uint8_t crtl;
@@ -224,7 +225,7 @@ IAccelerometer::Data Lis3dsh::getData () const
                 break;
         }
 
-        Data data;
+        AData data;
         data.x = (int16_t) (((buffer[1] << 8) + buffer[0]) * sensitivity + 0.5);
         data.y = (int16_t) (((buffer[3] << 8) + buffer[2]) * sensitivity + 0.5);
         data.z = (int16_t) (((buffer[5] << 8) + buffer[4]) * sensitivity + 0.5);

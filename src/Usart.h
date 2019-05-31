@@ -20,6 +20,9 @@
 
 #elif defined (LIB_MICRO_NRG)
 #include "UsartNRG.h"
+
+#elif defined (X86_TEST)
+#include "UsartX86T.h"
 #endif
 
 #endif // UART_H

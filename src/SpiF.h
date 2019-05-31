@@ -103,7 +103,7 @@ public:
          */
         void clearOvr ();
 
-private:
+//private:
         void onTxEmpty ();
         void onRxNotEmpty ();
         size_t txRemainig;
@@ -112,7 +112,7 @@ private:
         uint8_t *rxData;
         uint8_t *rxData0;
 
-private:
+//private:
         FRIEND_ALL_SPI_IRQS
         SPI_HandleTypeDef spiHandle;
         SPI_TypeDef *spi;

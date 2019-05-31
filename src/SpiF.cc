@@ -404,6 +404,9 @@ void Spi::clkEnable (SPI_HandleTypeDef *spiX)
         else if (spiX->Instance == SPI2) {
                 __HAL_RCC_SPI2_CLK_ENABLE ();
         }
+        else if (spiX->Instance == SPI3) {
+                __HAL_RCC_SPI3_CLK_ENABLE ();
+        }
 
         __HAL_SPI_ENABLE (spiX);
 }
@@ -417,6 +420,9 @@ void Spi::clkDisable (SPI_HandleTypeDef *spiX)
         }
         else if (spiX->Instance == SPI2) {
                 __HAL_RCC_SPI2_CLK_DISABLE ();
+        }
+        else if (spiX->Instance == SPI3) {
+                __HAL_RCC_SPI3_CLK_DISABLE ();
         }
 
         __HAL_SPI_DISABLE (spiX);

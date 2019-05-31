@@ -31,6 +31,7 @@ void USART3_IRQHandler ();
 void UART4_IRQHandler ();
 void UART5_IRQHandler ();
 void USART6_IRQHandler ();
+void UART7_IRQHandler ();
 
 void SPI1_IRQHandler ();
 void SPI2_IRQHandler ();
@@ -51,7 +52,8 @@ void SPI3_IRQHandler ();
         friend void USART3_IRQHandler ();                                                                                                       \
         friend void UART4_IRQHandler ();                                                                                                        \
         friend void UART5_IRQHandler ();                                                                                                        \
-        friend void USART6_IRQHandler ();
+        friend void USART6_IRQHandler ();                                                                                                       \
+        friend void UART7_IRQHandler ();
 
 #define FRIEND_ALL_SPI_IRQS                                                                                                                     \
         friend void SPI1_IRQHandler ();                                                                                                         \

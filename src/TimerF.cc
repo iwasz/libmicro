@@ -45,3 +45,11 @@ bool Timer::isExpired () const { return HAL_GetTick () - startTime >= intervalMs
 /*****************************************************************************/
 
 uint32_t Timer::elapsed () const { return HAL_GetTick () - startTime; }
+
+/*****************************************************************************/
+
+void Timer::delay (uint32_t delayMs) { HAL_Delay (delayMs); }
+
+/*****************************************************************************/
+
+uint32_t Timer::getTick () { return HAL_GetTick (); }

@@ -32,12 +32,14 @@
 #elif defined(STM32H743xx)
 #define LIB_MICRO_STM32F4
 #define LIB_MICRO_STM32F
+#define LIB_MICRO_STM32H
 #define USE_USART1
 #define USE_USART2
 #define USE_USART3
 #define USE_UART4
 #define USE_UART5
 #define USE_USART6
+#define USE_UART7
 #include "HalStm32H7.h"
 
 #elif defined(STM32L476xx)
@@ -57,6 +59,41 @@
 #elif defined(NRG2)
 #define LIB_MICRO_NRG
 #include "HalBlueNRG.h"
+
+#elif defined (X86_TEST)
+#include "HalX86Test.h"
+
+#endif
+
+// TODO Move this somewhere else.
+#ifdef __cplusplus
+
+/**
+ * etl::queue_spsc_isr
+ */
+struct CortexMInterruptControl {
+
+        static void lock ()
+        {
+#ifndef UNIT_TEST
+                __disable_irq ();
+#endif
+        }
+
+        static void unlock ()
+        {
+#ifndef UNIT_TEST
+                __enable_irq ();
+#endif
+        }
+};
+
+template <typename InterruptControlT> struct InterruptLock {
+        using InterruptControlType = InterruptControlT;
+
+        InterruptLock () noexcept { InterruptControlType::lock (); }
+        ~InterruptLock () noexcept { InterruptControlType::unlock (); }
+};
 
 #endif
 

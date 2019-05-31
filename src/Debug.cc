@@ -11,6 +11,9 @@
 #include "Hal.h"
 #include "Usart.h"
 #include <cstring>
+#ifdef UNIT_TEST
+#include <iostream>
+#endif
 
 #define GLOBAL_DEBUG
 
@@ -22,10 +25,14 @@ Debug *debug;
 
 void Debug::print (const char *str)
 {
+#ifdef UNIT_TEST
+        std::cout << str << std::flush;
+#else
 #ifdef GLOBAL_DEBUG
         // TODO DMA
         size_t len = strlen (str);
         uart->transmit ((uint8_t *)str, len);
+#endif
 #endif
 }
 
@@ -33,25 +40,41 @@ void Debug::print (const char *str)
 
 void Debug::println (const char *str)
 {
+#ifdef UNIT_TEST
+        std::cout << str << std::endl;
+#else
 #ifdef GLOBAL_DEBUG
         print (str);
         print ("\n");
 #endif
-}
-
-/*****************************************************************************/
-
-void Debug::print (uint8_t *data, size_t len)
-{
-#ifdef GLOBAL_DEBUG
-        // TODO DMA
-        uart->transmit (data, len);
 #endif
 }
 
 /*****************************************************************************/
 
-void Debug::printArray (uint8_t *data, size_t len)
+void Debug::print (uint8_t const *data, size_t len)
+{
+#ifdef UNIT_TEST
+        std::cout << std::string_view (reinterpret_cast<const char *> (data), len) << std::flush;
+#else
+#ifdef GLOBAL_DEBUG
+        // TODO DMA
+        uart->transmit (data, len);
+#endif
+#endif
+}
+
+/*****************************************************************************/
+
+void Debug::println (uint8_t const *data, size_t len)
+{
+        print (data, len);
+        print ("\n");
+}
+
+/*****************************************************************************/
+
+void Debug::printArray (const uint8_t *data, size_t len)
 {
 #ifdef GLOBAL_DEBUG
         for (size_t i = 0; i < len; ++i) {

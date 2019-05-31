@@ -33,8 +33,6 @@ public:
         {
         }
 
-        // TODO Why did I use malloc/free instead of new/delete[]. I can't recall.
-        // ~Queue () { free (queue); }
         ~Queue () { delete[] queue; }
 
         /**
@@ -88,7 +86,7 @@ private:
         size_t backp;
         size_t sizep;
         size_t maxSizep;
-        Element *queue;
+        Element *queue = nullptr;
 };
 
 /*---------------------------------------------------------------------------*/

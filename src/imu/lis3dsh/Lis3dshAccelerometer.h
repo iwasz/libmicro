@@ -9,8 +9,8 @@
 #ifndef ACCELERO_LIS3DSH_H
 #define ACCELERO_LIS3DSH_H
 
-#include "IAccelerometer.h"
 #include "ILis3dshBsp.h"
+#include "imu/IAccelerometer.h"
 #include <cstdint>
 
 /// Power mode, frequency
@@ -83,14 +83,15 @@ struct Lis3dshInterruptConfig {
 class Lis3dsh : public IAccelerometer {
 public:
         Lis3dsh () : bsp (nullptr) {}
-        virtual ~Lis3dsh () {}
+        virtual ~Lis3dsh () override = default;
         static Lis3dsh *singleton ();
 
         void init (ILis3dshBsp *bsp, Lis3dshInit const &initStruct);
         void reset ();
 
         uint8_t getId () const;
-        Data getData () const;
+        AData getAData () const override;
+
         int8_t getTemperature () const;
         /// Checks for interrupt status DRDY
         bool isDataReady () const;

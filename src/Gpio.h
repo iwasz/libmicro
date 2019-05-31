@@ -20,6 +20,9 @@
 
 #elif defined (LIB_MICRO_NRG)
 #include "GpioNRG.h"
+
+#elif defined (X86_TEST)
+#include "GpioX86T.h"
 #endif
 
 #endif // GPIO_H

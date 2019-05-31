@@ -32,13 +32,15 @@
 #include <cstdint>
 #include <iostream>
 
+using namespace std::chrono;
+
 /*****************************************************************************/
 
 void Timer::start (uint32_t interval)
 {
-        std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now ();
+        system_clock::time_point now = system_clock::now ();
         auto duration = now.time_since_epoch ();
-        startTime = std::chrono::duration_cast<std::chrono::milliseconds> (duration).count ();
+        startTime = duration_cast<milliseconds> (duration).count ();
         // std::cerr << "Start Time : " << startTime << std::endl;
         this->intervalMs = interval;
 }
@@ -51,9 +53,20 @@ bool Timer::isExpired () const { return elapsed () >= intervalMs; }
 
 uint32_t Timer::elapsed () const
 {
-        std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now ();
-        auto duration = now.time_since_epoch ();
-        int actualTime = std::chrono::duration_cast<std::chrono::milliseconds> (duration).count ();
+        uint32_t actualTime = getTick ();
         // std::cerr << "Actual : " << actualTime << ", diff : " << actualTime - startTime << ", intervalMs: " << intervalMs << std::endl;
         return actualTime - startTime;
+}
+
+void Timer::delay (uint32_t delayMs)
+{
+        while (true) { /* TODO */
+        }
+}
+
+uint32_t Timer::getTick ()
+{
+        time_point<system_clock> now = system_clock::now ();
+        auto duration = now.time_since_epoch ();
+        return duration_cast<milliseconds> (duration).count ();
 }

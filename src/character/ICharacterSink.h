@@ -12,8 +12,8 @@
 #include <cstdint>
 
 struct ICharacterSink {
-        virtual ~ICharacterSink () {}
-        virtual void onData (char c) = 0;
+        virtual ~ICharacterSink () = default;
+        virtual void onData (uint8_t c) = 0;
         virtual void onError (uint32_t flags) = 0;
 };
 

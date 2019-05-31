@@ -29,6 +29,9 @@ Usart *Usart::usart5;
 #if defined(USE_USART6) || defined(USE_UART6)
 Usart *Usart::usart6;
 #endif
+#if defined(USE_USART7) || defined(USE_UART7)
+Usart *Usart::usart7;
+#endif
 
 /*****************************************************************************/
 
@@ -91,6 +94,12 @@ Usart::Usart (USART_TypeDef *instance, uint32_t baudRate) : sink (nullptr)
 #elif defined(USE_UART6)
         else if (instance == UART6) {
                 usart6 = this;
+        }
+#endif
+
+#if defined(USE_UART7)
+        else if (instance == UART7) {
+                usart7 = this;
         }
 #endif
 
@@ -178,6 +187,11 @@ void Usart::clkEnable (USART_TypeDef *instance)
                 __HAL_RCC_UART6_CLK_ENABLE ();
         }
 #endif
+#if defined(USE_UART7)
+        else if (instance == UART7) {
+                __HAL_RCC_UART7_CLK_ENABLE ();
+        }
+#endif
 }
 
 /*****************************************************************************/
@@ -241,6 +255,11 @@ void Usart::clkDisable (USART_TypeDef *instance)
 #elif defined(USE_UART6)
         if (instance == UART6) {
                 __HAL_RCC_UART6_CLK_DISABLE ();
+        }
+#endif
+#if defined(USE_UART7)
+        else if (instance == UART7) {
+                __HAL_RCC_UART7_CLK_DISABLE ();
         }
 #endif
 }
@@ -324,6 +343,52 @@ void Usart::fireOnData (Usart *u)
         }
 }
 #elif defined(LIB_MICRO_STM32F4)
+void Usart::fireOnData (Usart *u)
+{
+        // If it were not initialized
+        if (!u) {
+                return;
+        }
+
+        UART_HandleTypeDef *huart = &u->huart;
+
+        uint32_t isrflags = READ_REG (huart->Instance->SR);
+        uint32_t cr1its = READ_REG (huart->Instance->CR1);
+
+        if (isrflags & uint32_t (USART_SR_PE | USART_SR_FE | USART_SR_NE)) {
+                __HAL_USART_CLEAR_PEFLAG (huart);
+                __HAL_USART_CLEAR_FEFLAG (huart);
+                __HAL_USART_CLEAR_NEFLAG (huart);
+
+                if (u->sink) {
+                        u->sink->onError (isrflags);
+                }
+
+                return;
+        }
+
+        // TODO ORE (OverRun Error) is silently discarded
+        if (isrflags & uint32_t (USART_SR_ORE)) {
+                __HAL_USART_CLEAR_OREFLAG (huart);
+
+                if (u->sink) {
+                        u->sink->onError (uint32_t (USART_SR_ORE));
+                }
+                return;
+        }
+
+        if (((isrflags & USART_SR_RXNE) != RESET) && ((cr1its & USART_CR1_RXNEIE) != RESET)) {
+                uint8_t c = (uint8_t) (huart->Instance->DR & (uint8_t)0x00FF);
+
+                if (u->onData) {
+                        u->onData (c);
+                }
+                if (u->sink) {
+                        u->sink->onData (char(c));
+                }
+        }
+}
+#elif defined(LIB_MICRO_STM32H)
 void Usart::fireOnData (Usart *u)
 {
         // If it were not initialized
