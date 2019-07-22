@@ -58,12 +58,14 @@ void Gpio::clkEnable (GPIO_TypeDef *port)
         else if (port == GPIOC) {
                 __HAL_RCC_GPIOC_CLK_ENABLE ();
         }
+#if !defined (STM32F042x6)
         else if (port == GPIOD) {
                 __HAL_RCC_GPIOD_CLK_ENABLE ();
         }
         else if (port == GPIOE) {
                 __HAL_RCC_GPIOE_CLK_ENABLE ();
         }
+#endif
         else if (port == GPIOF) {
                 __HAL_RCC_GPIOF_CLK_ENABLE ();
         }
@@ -82,12 +84,14 @@ void Gpio::clkDisable (GPIO_TypeDef *port)
         else if (port == GPIOC) {
                 __HAL_RCC_GPIOC_CLK_DISABLE ();
         }
+#if !defined (STM32F042x6)
         else if (port == GPIOD) {
                 __HAL_RCC_GPIOD_CLK_DISABLE ();
         }
         else if (port == GPIOE) {
                 __HAL_RCC_GPIOE_CLK_DISABLE ();
         }
+#endif
         else if (port == GPIOF) {
                 __HAL_RCC_GPIOF_CLK_DISABLE ();
         }

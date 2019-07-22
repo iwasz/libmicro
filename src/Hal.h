@@ -18,6 +18,13 @@
 #define USE_USART4
 #include "HalStm32F0.h"
 
+#elif defined(STM32F042x6)
+#define LIB_MICRO_STM32F0
+#define LIB_MICRO_STM32F
+#define USE_USART1
+#define USE_USART2
+#include "HalStm32F0.h"
+
 #elif defined(STM32F407xx) | defined(STM32F429xx)
 #define LIB_MICRO_STM32F4
 #define LIB_MICRO_STM32F
