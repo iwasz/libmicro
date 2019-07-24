@@ -19,8 +19,11 @@ extern "C" void USART2_IRQHandler () { Usart::fireOnData (Usart::usart2); }
 
 /*****************************************************************************/
 
+// TODO it shouldn't be like that
+#if !defined (STM32F042x6)
 extern "C" void USART3_4_IRQHandler ()
 {
         Usart::fireOnData (Usart::usart3);
         Usart::fireOnData (Usart::usart4);
 }
+#endif
