@@ -404,7 +404,7 @@ void Spi::clkEnable (SPI_HandleTypeDef *spiX)
         else if (spiX->Instance == SPI2) {
                 __HAL_RCC_SPI2_CLK_ENABLE ();
         }
-#if !defined (STM32F042x6)
+#if !defined (LIB_MICRO_STM32F0)
         else if (spiX->Instance == SPI3) {
                 __HAL_RCC_SPI3_CLK_ENABLE ();
         }
@@ -423,7 +423,7 @@ void Spi::clkDisable (SPI_HandleTypeDef *spiX)
         else if (spiX->Instance == SPI2) {
                 __HAL_RCC_SPI2_CLK_DISABLE ();
         }
-#if !defined (STM32F042x6)
+#if !defined (LIB_MICRO_STM32F0)
         else if (spiX->Instance == SPI3) {
                 __HAL_RCC_SPI3_CLK_DISABLE ();
         }
