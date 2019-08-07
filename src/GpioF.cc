@@ -6,8 +6,8 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#include "Gpio.h"
 #include "ErrorHandler.h"
+#include "Gpio.h"
 #include <cstring>
 
 /*****************************************************************************/
@@ -58,7 +58,7 @@ void Gpio::clkEnable (GPIO_TypeDef *port)
         else if (port == GPIOC) {
                 __HAL_RCC_GPIOC_CLK_ENABLE ();
         }
-#if !defined (STM32F042x6)
+#if !defined(STM32F042x6)
         else if (port == GPIOD) {
                 __HAL_RCC_GPIOD_CLK_ENABLE ();
         }
@@ -84,7 +84,7 @@ void Gpio::clkDisable (GPIO_TypeDef *port)
         else if (port == GPIOC) {
                 __HAL_RCC_GPIOC_CLK_DISABLE ();
         }
-#if !defined (STM32F042x6)
+#if !defined(STM32F042x6)
         else if (port == GPIOD) {
                 __HAL_RCC_GPIOD_CLK_DISABLE ();
         }
@@ -109,6 +109,10 @@ void Gpio::set (bool on)
                 port->BSRR = pin << 16;
         }
 }
+
+/*****************************************************************************/
+
+bool Gpio::get () const { return port->IDR & pin; }
 
 /*****************************************************************************/
 
