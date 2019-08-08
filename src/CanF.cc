@@ -347,14 +347,17 @@ void Can::clkDisable (CAN_HandleTypeDef *canX)
 
 /*****************************************************************************/
 
-void Can::interrupts (bool on)
+void Can::interrupts (bool on, bool errors)
 {
         if (on) {
-                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_EWG);  // Enable Error warning Interrupt
-                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_EPV);  // Enable Error passive Interrupt
-                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_BOF);  // Enable Bus-off Interrupt
-                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_LEC);  // Enable Last error code Interrupt
-                __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_ERR);  // Enable Error Interrupt
+                if (errors) {
+                        __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_EWG); // Enable Error warning Interrupt
+                        __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_EPV); // Enable Error passive Interrupt
+                        __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_BOF); // Enable Bus-off Interrupt
+                        __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_LEC); // Enable Last error code Interrupt
+                        __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_ERR); // Enable Error Interrupt
+                }
+
                 __HAL_CAN_ENABLE_IT (&canHandle, CAN_IT_FMP0); // Enable FIFO0 interrupt. CAN_IT_FMP1 os also valid value.
         }
         else {

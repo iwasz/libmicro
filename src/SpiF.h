@@ -20,8 +20,10 @@ class Spi {
 public:
         enum { POLLING_TIMEOUT_MS = 500 };
 
-        Spi (SPI_TypeDef *spi, uint32_t mode = SPI_MODE_MASTER, uint32_t dataSize = SPI_DATASIZE_8BIT, uint32_t phase = SPI_PHASE_1EDGE,
-             uint32_t polarityClockSteadyState = SPI_POLARITY_LOW, uint32_t nssMode = SPI_NSS_SOFT);
+        // Commented the default, to prevent from unnoticed nasty errors. Those parameters should have its own enum types
+        Spi (SPI_TypeDef *spi, uint32_t prescaler /*= SPI_BAUDRATEPRESCALER_32*/, uint32_t mode = SPI_MODE_MASTER,
+             uint32_t dataSize = SPI_DATASIZE_8BIT, uint32_t phase = SPI_PHASE_1EDGE, uint32_t polarityClockSteadyState = SPI_POLARITY_LOW,
+             uint32_t nssMode = SPI_NSS_SOFT);
 
         ~Spi () { clkDisable (); }
 
@@ -103,7 +105,7 @@ public:
          */
         void clearOvr ();
 
-//private:
+        // private:
         void onTxEmpty ();
         void onRxNotEmpty ();
         size_t txRemainig;
@@ -112,7 +114,7 @@ public:
         uint8_t *rxData;
         uint8_t *rxData0;
 
-//private:
+        // private:
         FRIEND_ALL_SPI_IRQS
         SPI_HandleTypeDef spiHandle;
         SPI_TypeDef *spi;
