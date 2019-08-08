@@ -48,6 +48,8 @@ public:
 
         void setBaudratePrescaler (uint32_t prescaler);
 
+        void setAutomaticRetransmission (bool b);
+
 private:
         static void clkEnable (CAN_HandleTypeDef *canX);
         static void clkDisable (CAN_HandleTypeDef *spiX);
