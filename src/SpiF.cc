@@ -19,7 +19,8 @@ Spi *Spi::spi2;
 
 /*****************************************************************************/
 
-Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarityClockSteadyState, uint32_t nssMode)
+Spi::Spi (SPI_TypeDef *spi, uint32_t prescaler, uint32_t mode, uint32_t dataSize, uint32_t phase, uint32_t polarityClockSteadyState,
+          uint32_t nssMode)
     : txRemainig (0),
       rxRemainig (0),
       rxRemaining0 (0),
@@ -39,7 +40,7 @@ Spi::Spi (SPI_TypeDef *spi, uint32_t mode, uint32_t dataSize, uint32_t phase, ui
 
         memset (&spiHandle, 0, sizeof (spiHandle));
         spiHandle.Instance = spi;
-        spiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+        spiHandle.Init.BaudRatePrescaler = prescaler;
         spiHandle.Init.Direction = SPI_DIRECTION_2LINES;
         spiHandle.Init.CLKPhase = phase;
         spiHandle.Init.CLKPolarity = polarityClockSteadyState;
@@ -404,7 +405,7 @@ void Spi::clkEnable (SPI_HandleTypeDef *spiX)
         else if (spiX->Instance == SPI2) {
                 __HAL_RCC_SPI2_CLK_ENABLE ();
         }
-#if !defined (LIB_MICRO_STM32F0)
+#if !defined(LIB_MICRO_STM32F0)
         else if (spiX->Instance == SPI3) {
                 __HAL_RCC_SPI3_CLK_ENABLE ();
         }
@@ -423,7 +424,7 @@ void Spi::clkDisable (SPI_HandleTypeDef *spiX)
         else if (spiX->Instance == SPI2) {
                 __HAL_RCC_SPI2_CLK_DISABLE ();
         }
-#if !defined (LIB_MICRO_STM32F0)
+#if !defined(LIB_MICRO_STM32F0)
         else if (spiX->Instance == SPI3) {
                 __HAL_RCC_SPI3_CLK_DISABLE ();
         }

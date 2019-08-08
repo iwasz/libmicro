@@ -6,9 +6,7 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef LIBMICRO_CAN_H__
-#define LIBMICRO_CAN_H__
-
+#pragma once
 #include "CanFrame.h"
 #include "Hal.h"
 #include "ICanCallback.h"
@@ -32,7 +30,7 @@ public:
         void setCanCallback (ICanCallback *c) { callback = c; }
 
         /// Turns interrupts on or off. TODO Check if synchronous read works when turned on.
-        void interrupts (bool on);
+        void interrupts (bool on, bool errors = true);
 
         /// Reset and put in loopback mode.
         void disable ();
