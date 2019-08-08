@@ -13,8 +13,10 @@
 #include <cstring>
 
 // TODO dome ifdefs
-HardwareTimer *HardwareTimer::timer2;
-HardwareTimer *HardwareTimer::timer3;
+HardwareTimer *HardwareTimer::timer1 = nullptr;
+HardwareTimer *HardwareTimer::timer2 = nullptr;
+HardwareTimer *HardwareTimer::timer3 = nullptr;
+HardwareTimer *HardwareTimer::timer15 = nullptr;
 
 HardwareTimer::HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_t period)
 {
@@ -24,11 +26,17 @@ HardwareTimer::HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_
         channel[3] = nullptr;
 
         // TODO ifdefs
-        if (instance == TIM2) {
+        if (instance == TIM1) {
+                timer1 = this;
+        }
+        else if (instance == TIM2) {
                 timer2 = this;
         }
         else if (instance == TIM3) {
                 timer3 = this;
+        }
+        else if (instance == TIM15) {
+                timer15 = this;
         }
 
         htim.Instance = instance;
@@ -60,6 +68,7 @@ HardwareTimer::HardwareTimer (TIM_TypeDef *instance, uint32_t prescaler, uint32_
         // Only 3 values are possible here : divide by 1, 2 or 4.
         htim.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
         htim.Init.RepetitionCounter = 0;
+        htim.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
 
         clkEnable ();
 
@@ -89,6 +98,9 @@ void HardwareTimer::clkEnable (TIM_HandleTypeDef *timer)
         else if (timer->Instance == TIM3) {
                 __HAL_RCC_TIM3_CLK_ENABLE ();
         }
+        else if (timer->Instance == TIM15) {
+                __HAL_RCC_TIM15_CLK_ENABLE ();
+        }
 }
 
 /*****************************************************************************/
@@ -103,6 +115,9 @@ void HardwareTimer::clkDisable (TIM_HandleTypeDef *timer)
         }
         else if (timer->Instance == TIM3) {
                 __HAL_RCC_TIM3_CLK_DISABLE ();
+        }
+        else if (timer->Instance == TIM15) {
+                __HAL_RCC_TIM15_CLK_DISABLE ();
         }
 }
 
@@ -288,8 +303,10 @@ void HardwareTimer::serviceIrq (HardwareTimer *that)
 /*****************************************************************************/
 
 // TODO przenieść do plików HAL, zaimplementować dla F0 i F4, zaimplementować inne zegary niż TIM3
-extern "C" void TIM3_IRQHandler () { HardwareTimer::serviceIrq (HardwareTimer::timer3); }
+extern "C" void TIM1_BRK_UP_TRG_COM_IRQHandler () { HardwareTimer::serviceIrq (HardwareTimer::timer1); }
 extern "C" void TIM2_IRQHandler () { HardwareTimer::serviceIrq (HardwareTimer::timer2); }
+extern "C" void TIM3_IRQHandler () { HardwareTimer::serviceIrq (HardwareTimer::timer3); }
+extern "C" void TIM15_IRQHandler () { HardwareTimer::serviceIrq (HardwareTimer::timer15); }
 
 /*****************************************************************************/
 

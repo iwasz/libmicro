@@ -7,7 +7,6 @@
  ****************************************************************************/
 
 #include "Can.h"
-#include "Types.h"
 #include <Debug.h>
 #include <ErrorHandler.h>
 #include <cstdlib>

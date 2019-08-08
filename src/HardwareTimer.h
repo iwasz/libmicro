@@ -12,8 +12,10 @@
 #include "Hal.h"
 #include <functional>
 
+extern "C" void TIM1_BRK_UP_TRG_COM_IRQHandler ();
 extern "C" void TIM2_IRQHandler ();
 extern "C" void TIM3_IRQHandler ();
+extern "C" void TIM15_IRQHandler ();
 
 class HardwareTimer;
 
@@ -105,12 +107,16 @@ private:
         AbstractTimerChannel *channel[4];
 
         // TODO some ifdefs.
-        static HardwareTimer *timer3;
+        static HardwareTimer *timer1;
         static HardwareTimer *timer2;
+        static HardwareTimer *timer3;
+        static HardwareTimer *timer15;
         static void serviceIrq (HardwareTimer *that);
 
+        friend void TIM1_BRK_UP_TRG_COM_IRQHandler ();
         friend void TIM2_IRQHandler ();
         friend void TIM3_IRQHandler ();
+        friend void TIM15_IRQHandler ();
         friend class AbstractTimerChannel;
         friend class OutputCompareChannel;
         friend class InputCaptureChannel;

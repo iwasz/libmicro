@@ -50,11 +50,16 @@ public:
          * @param on
          */
         void set (bool on);
+
         bool operator= (bool on)
         {
                 set (on);
                 return on;
         }
+
+        bool get () const;
+
+        operator bool () const { return get (); }
 
         /**
          * @brief Sets the callback. You must configure this Gpio in EXTI mode for this to work
