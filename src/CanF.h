@@ -62,4 +62,3 @@ private:
         static Can *can;
 };
 
-#endif
