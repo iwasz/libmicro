@@ -18,6 +18,10 @@
 /**
  * Observes an character source like Usart and groups characters received into
  * lines. Every line is then placed on a Queue.
+ *
+ * TODO this API is broken, or at least the names are. For instance why EventT? It should be
+ * named LineT or StringT something. This way as it is now, it creates some "events" not the
+ * promised strings of text.
  */
 template <typename QueueT, typename EventT> class LineSink : public ICharacterSink {
 public:
@@ -83,9 +87,8 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
 
                         auto &queueBuffer = gsmQueue.back ();
                         // TODO Optimize - for example etl::queue has an emplace method.
-                        // TODO 64 hardcoded.
                         // TODO kolejka powinna przyjmować stringi o zmiennej długości.
-                        if (rxBufferGsmPos > BINARY_EVENT_MAX_SIZE /*EventType::capacity ()*/) {
+                        if (rxBufferGsmPos > EventT::MAX_SIZE) {
                                 Error_Handler ();
                         }
 

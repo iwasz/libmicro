@@ -10,13 +10,14 @@
 #define FIXEDLINESINK_H
 
 #include "LineSink.h"
+#include <algorithm>
 
 // TODO templatize BinaryEvent
-template <typename QueueT> class FixedLineSink : public LineSink<QueueT, BinaryEvent> {
+template <typename QueueT, typename EventT> class FixedLineSink : public LineSink<QueueT, EventT> {
 public:
         using QueueType = QueueT;
 
-        FixedLineSink (QueueT &q) : LineSink<QueueType, BinaryEvent> (q) {}
+        FixedLineSink (QueueT &q) : LineSink<QueueType, EventT> (q) {}
         virtual ~FixedLineSink () = default;
 
         virtual void onData (uint8_t c) override;
@@ -38,7 +39,7 @@ private:
 
 /*****************************************************************************/
 
-template <typename QueueT> void FixedLineSink<QueueT>::onData (uint8_t c)
+template <typename QueueT, typename EventT> void FixedLineSink<QueueT, EventT>::onData (uint8_t c)
 {
         if (fixedNumberOfBytes > 0) {
 #ifdef ALL_DATA_DEBUG
@@ -49,11 +50,11 @@ template <typename QueueT> void FixedLineSink<QueueT>::onData (uint8_t c)
                 tmpBuffer[currentByte++] = c;
 
                 if (currentByte == fixedNumberOfBytes) {
-                        if (!LineSink<QueueT, BinaryEvent>::gsmQueue.push_back ()) {
+                        if (!LineSink<QueueT, EventT>::gsmQueue.push_back ()) {
                                 Error_Handler ();
                         }
 
-                        auto &queueBuffer = LineSink<QueueT, BinaryEvent>::gsmQueue.back ();
+                        auto &queueBuffer = LineSink<QueueT, EventT>::gsmQueue.back ();
                         queueBuffer.resize (fixedNumberOfBytes);
                         // TODO potetntialy optimize
                         std::copy (tmpBuffer, tmpBuffer + fixedNumberOfBytes, queueBuffer.begin ());
@@ -62,13 +63,13 @@ template <typename QueueT> void FixedLineSink<QueueT>::onData (uint8_t c)
                 }
         }
         else {
-                LineSink<QueueType, BinaryEvent>::onData (c);
+                LineSink<QueueType, EventT>::onData (c);
         }
 }
 
 /*****************************************************************************/
 
-template <typename QueueT> void FixedLineSink<QueueT>::receiveBytes (size_t b)
+template <typename QueueT, typename EventT> void FixedLineSink<QueueT, EventT>::receiveBytes (size_t b)
 {
         fixedNumberOfBytes = b;
         currentByte = 0;
