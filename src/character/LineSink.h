@@ -9,7 +9,6 @@
 #ifndef LINESINK_H
 #define LINESINK_H
 
-#include "BinaryEvent.h"
 #include "Debug.h"
 #include "ErrorHandler.h"
 #include "character/ICharacterSink.h"
