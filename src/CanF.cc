@@ -434,3 +434,15 @@ void Can::setBaudratePrescaler (uint32_t prescaler)
         // canHandle.Instance->BTR = btr | (prescaler - 1);
         setMode (NORMAL);
 }
+
+/*****************************************************************************/
+
+void Can::setAutomaticRetransmission (bool b)
+{
+        if (b) {
+                canHandle.Instance->MCR &= ~(1u << 4); // NART
+        }
+        else {
+                canHandle.Instance->MCR |= (1u << 4);
+        }
+}
