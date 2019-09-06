@@ -95,7 +95,7 @@ struct CortexMInterruptControl {
         }
 };
 
-template <typename InterruptControlT> struct InterruptLock {
+template <typename InterruptControlT = CortexMInterruptControl> struct InterruptLock {
         using InterruptControlType = InterruptControlT;
 
         InterruptLock () noexcept { InterruptControlType::lock (); }

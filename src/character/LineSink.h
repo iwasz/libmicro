@@ -30,8 +30,8 @@ public:
         LineSink (QueueT &g) : gsmQueue (g) {}
         virtual ~LineSink () = default;
 
-        virtual void onData (uint8_t c) override;
-        virtual void onError (uint32_t) { Error_Handler (); }
+        void onData (uint8_t c) override;
+        void onError (uint32_t) override { Error_Handler (); }
 
         /**
          * If set, sink will not split nest n lines.
