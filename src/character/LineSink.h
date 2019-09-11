@@ -10,6 +10,7 @@
 #include "Debug.h"
 #include "ErrorHandler.h"
 #include "character/ICharacterSink.h"
+#include <algorithm>
 #include <array>
 #include <cctype>
 #include <cstdint>
@@ -38,7 +39,7 @@ public:
          */
         void receiveLines (size_t n);
 
-//#define ALL_DATA_DEBUG
+#define ALL_DATA_DEBUG
 #ifdef ALL_DATA_DEBUG
         static constexpr size_t ALL_DATA_MAX_SIZE = 2048;
         uint8_t allData[ALL_DATA_MAX_SIZE];
@@ -55,7 +56,7 @@ public:
 protected:
         uint16_t rxBufferGsmPos = 0;
         /// Bufor wejściowy na odpowiedzi z modemu. Mamy własny, gdyż kolejka może się w między czasie wyczyścić.
-        std::array<uint8_t, 128> rxBufferGsm{};
+        std::array<uint8_t, 160> rxBufferGsm{};
         QueueT &gsmQueue;
         CanLooseData canLooseData;
 };
@@ -73,6 +74,10 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
         }
 
         if (rxBufferGsmPos > 0 && (c == '\r' || c == '\n')) {
+                if (rxBufferGsmPos >= rxBufferGsm.max_size ()) {
+                        debug->println ("L. ovf");
+                        return;
+                }
 
                 rxBufferGsm[rxBufferGsmPos] = '\0';
 
@@ -85,6 +90,8 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
 
                         if (!gsmQueue.push_back ()) {
                                 if (canLooseData == CanLooseData::YES) {
+                                        // TODO UŻYĆ gsl::final_action!!!!!!
+                                        rxBufferGsmPos = 0;
                                         return;
                                 }
 
@@ -98,13 +105,19 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
                                 Error_Handler ();
                         }
 
-                        std::copy (rxBufferGsm.cbegin (), rxBufferGsm.cend (), std::back_inserter (queueBuffer));
-                        // queueBuffer = EventType (rxBufferGsm, rxBufferGsm + rxBufferGsmPos);
+                        // TODO czemu to muszę czyścić? Jeśli tego nie zrobię, to czaem się sklejają linijki.
+                        queueBuffer.clear ();
+                        std::copy_n (rxBufferGsm.cbegin (), rxBufferGsmPos, std::back_inserter (queueBuffer));
+                        // queueBuffer = EventType (rxBufferGsm.data (), rxBufferGsm.data () + rxBufferGsmPos);
                 }
-
                 rxBufferGsmPos = 0;
         }
         else if (std::isprint (c)) {
+                if (rxBufferGsmPos >= rxBufferGsm.max_size ()) {
+                        debug->println ("L. ovf");
+                        return;
+                }
+
                 rxBufferGsm[rxBufferGsmPos++] = c;
         }
 }

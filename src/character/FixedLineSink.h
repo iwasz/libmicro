@@ -43,8 +43,8 @@ template <typename QueueT, typename EventT> void FixedLineSink<QueueT, EventT>::
 {
         if (fixedNumberOfBytes > 0) {
 #ifdef ALL_DATA_DEBUG
-                LineSink<QueueType, BinaryEvent>::addAllData ('#');
-                LineSink<QueueType, BinaryEvent>::addAllData (c);
+                LineSink<QueueType, EventT>::addAllData ('#');
+                LineSink<QueueType, EventT>::addAllData (c);
 #endif
 
                 tmpBuffer[currentByte++] = c;
