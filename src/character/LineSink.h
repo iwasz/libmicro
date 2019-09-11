@@ -6,12 +6,11 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef LINESINK_H
-#define LINESINK_H
-
+#pragma once
 #include "Debug.h"
 #include "ErrorHandler.h"
 #include "character/ICharacterSink.h"
+#include <array>
 #include <cctype>
 #include <cstdint>
 
@@ -26,12 +25,13 @@
 template <typename QueueT, typename EventT> class LineSink : public ICharacterSink {
 public:
         using EventType = EventT;
+        enum class CanLooseData { NO, YES };
 
-        LineSink (QueueT &g) : gsmQueue (g) {}
-        virtual ~LineSink () = default;
+        LineSink (QueueT &g, CanLooseData canLooseData = CanLooseData::NO) : gsmQueue (g), canLooseData (canLooseData) {}
+        ~LineSink () override = default;
 
         void onData (uint8_t c) override;
-        void onError (uint32_t) override { Error_Handler (); }
+        void onError (uint32_t /* error */) override { Error_Handler (); }
 
         /**
          * If set, sink will not split nest n lines.
@@ -54,8 +54,10 @@ public:
 
 protected:
         uint16_t rxBufferGsmPos = 0;
-        uint8_t rxBufferGsm[128]; /// Bufor wejściowy na odpowiedzi z modemu. Mamy własny, gdyż kolejka może się w między czasie wyczyścić.
+        /// Bufor wejściowy na odpowiedzi z modemu. Mamy własny, gdyż kolejka może się w między czasie wyczyścić.
+        std::array<uint8_t, 128> rxBufferGsm{};
         QueueT &gsmQueue;
+        CanLooseData canLooseData;
 };
 
 /*****************************************************************************/
@@ -82,6 +84,10 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
 #endif
 
                         if (!gsmQueue.push_back ()) {
+                                if (canLooseData == CanLooseData::YES) {
+                                        return;
+                                }
+
                                 Error_Handler ();
                         }
 
@@ -92,7 +98,8 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
                                 Error_Handler ();
                         }
 
-                        queueBuffer = EventType (rxBufferGsm, rxBufferGsm + rxBufferGsmPos);
+                        std::copy (rxBufferGsm.cbegin (), rxBufferGsm.cend (), std::back_inserter (queueBuffer));
+                        // queueBuffer = EventType (rxBufferGsm, rxBufferGsm + rxBufferGsmPos);
                 }
 
                 rxBufferGsmPos = 0;
@@ -101,5 +108,3 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
                 rxBufferGsm[rxBufferGsmPos++] = c;
         }
 }
-
-#endif // LINESINK_H
