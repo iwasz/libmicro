@@ -14,6 +14,7 @@
 #include <array>
 #include <cctype>
 #include <cstdint>
+#include <gsl/gsl>
 
 /**
  * Observes an character source like Usart and groups characters received into
@@ -39,7 +40,7 @@ public:
          */
         void receiveLines (size_t n);
 
-#define ALL_DATA_DEBUG
+//#define ALL_DATA_DEBUG
 #ifdef ALL_DATA_DEBUG
         static constexpr size_t ALL_DATA_MAX_SIZE = 2048;
         uint8_t allData[ALL_DATA_MAX_SIZE];
@@ -74,9 +75,12 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
         }
 
         if (rxBufferGsmPos > 0 && (c == '\r' || c == '\n')) {
+                gsl::final_action clearPos{ [this] { rxBufferGsmPos = 0; } };
+
                 if (rxBufferGsmPos >= rxBufferGsm.max_size ()) {
-                        debug->println ("L. ovf");
-                        return;
+                        // debug->println ("L. ovf");
+                        // return;
+                        Error_Handler ();
                 }
 
                 rxBufferGsm[rxBufferGsmPos] = '\0';
@@ -90,8 +94,7 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
 
                         if (!gsmQueue.push_back ()) {
                                 if (canLooseData == CanLooseData::YES) {
-                                        // TODO UŻYĆ gsl::final_action!!!!!!
-                                        rxBufferGsmPos = 0;
+                                        // rxBufferGsmPos = 0;
                                         return;
                                 }
 
@@ -106,16 +109,19 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
                         }
 
                         // TODO czemu to muszę czyścić? Jeśli tego nie zrobię, to czaem się sklejają linijki.
-                        queueBuffer.clear ();
-                        std::copy_n (rxBufferGsm.cbegin (), rxBufferGsmPos, std::back_inserter (queueBuffer));
-                        // queueBuffer = EventType (rxBufferGsm.data (), rxBufferGsm.data () + rxBufferGsmPos);
+                        // TODO z tym poniżej działa niestabilnie i nadal sklejają się czasem linijki! WTF!
+                        // queueBuffer.clear ();
+                        // std::copy_n (rxBufferGsm.cbegin (), rxBufferGsmPos, std::back_inserter (queueBuffer));
+                        queueBuffer = EventType (rxBufferGsm.data (), rxBufferGsm.data () + rxBufferGsmPos);
                 }
-                rxBufferGsmPos = 0;
+
+                // rxBufferGsmPos = 0;
         }
         else if (std::isprint (c)) {
                 if (rxBufferGsmPos >= rxBufferGsm.max_size ()) {
-                        debug->println ("L. ovf");
-                        return;
+                        // debug->println ("L. ovf");
+                        // return;
+                        Error_Handler ();
                 }
 
                 rxBufferGsm[rxBufferGsmPos++] = c;

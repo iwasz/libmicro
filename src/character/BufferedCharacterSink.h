@@ -6,9 +6,7 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef BUFFEREDCHARACTERSINK_H
-#define BUFFEREDCHARACTERSINK_H
-
+#pragma once
 #include "ErrorHandler.h"
 #include "Hal.h"
 #include "ICharacterSink.h"
@@ -24,18 +22,18 @@ public:
         BufferedCharacterSink &operator= (BufferedCharacterSink const &) = delete;
         BufferedCharacterSink (BufferedCharacterSink &&) = delete;
         BufferedCharacterSink &operator= (BufferedCharacterSink &&) = delete;
-        virtual ~BufferedCharacterSink () = default;
+        ~BufferedCharacterSink () override = default;
 
         /// Called from ISR
         void onData (uint8_t c) override;
 
         /// Called from ISR
-        void onError (uint32_t) override { Error_Handler (); }
+        void onError (uint32_t /*error*/) override { Error_Handler (); }
 
         /// Call periodicaly from a main loop (not from ISR).
         void run ();
 
-#define ALL_DATA_DEBUG_BUFFERED
+//#define ALL_DATA_DEBUG_BUFFERED
 #ifdef ALL_DATA_DEBUG_BUFFERED
         static constexpr size_t ALL_DATA_MAX_SIZE = 2048;
         uint8_t allData[ALL_DATA_MAX_SIZE];
@@ -87,4 +85,3 @@ template <size_t MAX_SIZE> void BufferedCharacterSink<MAX_SIZE>::run ()
         }
 }
 
-#endif // BUFFEREDCHARACTERSINK_H
