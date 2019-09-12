@@ -94,7 +94,6 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
 
                         if (!gsmQueue.push_back ()) {
                                 if (canLooseData == CanLooseData::YES) {
-                                        // rxBufferGsmPos = 0;
                                         return;
                                 }
 
@@ -114,8 +113,6 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
                         // std::copy_n (rxBufferGsm.cbegin (), rxBufferGsmPos, std::back_inserter (queueBuffer));
                         queueBuffer = EventType (rxBufferGsm.data (), rxBufferGsm.data () + rxBufferGsmPos);
                 }
-
-                // rxBufferGsmPos = 0;
         }
         else if (std::isprint (c)) {
                 if (rxBufferGsmPos >= rxBufferGsm.max_size ()) {
