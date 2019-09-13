@@ -24,21 +24,15 @@
  * named LineT or StringT something. This way as it is now, it creates some "events" not the
  * promised strings of text.
  */
-template <typename QueueT, typename EventT> class LineSink : public ICharacterSink {
+template <typename QueueT, typename LineT> class LineSink : public ICharacterSink {
 public:
-        using EventType = EventT;
         enum class CanLooseData { NO, YES };
 
-        LineSink (QueueT &g, CanLooseData canLooseData = CanLooseData::NO) : gsmQueue (g), canLooseData (canLooseData) {}
+        LineSink (QueueT &g, CanLooseData canLooseData = CanLooseData::NO) : receivedDataQueue (g), canLooseData (canLooseData) {}
         ~LineSink () override = default;
 
         void onData (uint8_t c) override;
         void onError (uint32_t /* error */) override { Error_Handler (); }
-
-        /**
-         * If set, sink will not split nest n lines.
-         */
-        void receiveLines (size_t n);
 
 //#define ALL_DATA_DEBUG
 #ifdef ALL_DATA_DEBUG
@@ -58,13 +52,13 @@ protected:
         uint16_t rxBufferGsmPos = 0;
         /// Bufor wejściowy na odpowiedzi z modemu. Mamy własny, gdyż kolejka może się w między czasie wyczyścić.
         std::array<uint8_t, 160> rxBufferGsm{};
-        QueueT &gsmQueue;
+        QueueT &receivedDataQueue;
         CanLooseData canLooseData;
 };
 
 /*****************************************************************************/
 
-template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onData (uint8_t c)
+template <typename QueueT, typename LineT> void LineSink<QueueT, LineT>::onData (uint8_t c)
 {
 #ifdef ALL_DATA_DEBUG
         addAllData (c);
@@ -92,7 +86,7 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
                         debug->println (rxBufferGsm, rxBufferGsmPos);
 #endif
 
-                        if (!gsmQueue.push_back ()) {
+                        if (receivedDataQueue.full ()) {
                                 if (canLooseData == CanLooseData::YES) {
                                         return;
                                 }
@@ -100,10 +94,11 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
                                 Error_Handler ();
                         }
 
-                        auto &queueBuffer = gsmQueue.back ();
+                        // auto &queueBuffer = receivedDataQueue.back ();
+
                         // TODO Optimize - for example etl::queue has an emplace method.
                         // TODO kolejka powinna przyjmować stringi o zmiennej długości.
-                        if (rxBufferGsmPos > EventT::MAX_SIZE) {
+                        if (rxBufferGsmPos > LineT::MAX_SIZE) {
                                 Error_Handler ();
                         }
 
@@ -111,7 +106,7 @@ template <typename QueueT, typename EventT> void LineSink<QueueT, EventT>::onDat
                         // TODO z tym poniżej działa niestabilnie i nadal sklejają się czasem linijki! WTF!
                         // queueBuffer.clear ();
                         // std::copy_n (rxBufferGsm.cbegin (), rxBufferGsmPos, std::back_inserter (queueBuffer));
-                        queueBuffer = EventType (rxBufferGsm.data (), rxBufferGsm.data () + rxBufferGsmPos);
+                        receivedDataQueue.push_back (LineT{ rxBufferGsm.data (), rxBufferGsm.data () + rxBufferGsmPos });
                 }
         }
         else if (std::isprint (c)) {

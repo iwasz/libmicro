@@ -13,11 +13,11 @@
 #include <algorithm>
 
 // TODO templatize BinaryEvent
-template <typename QueueT, typename EventT> class FixedLineSink : public LineSink<QueueT, EventT> {
+template <typename QueueT, typename LineT> class FixedLineSink : public LineSink<QueueT, LineT> {
 public:
         using QueueType = QueueT;
 
-        FixedLineSink (QueueT &q) : LineSink<QueueType, EventT> (q) {}
+        FixedLineSink (QueueT &q) : LineSink<QueueType, LineT> (q) {}
         virtual ~FixedLineSink () = default;
 
         virtual void onData (uint8_t c) override;
@@ -39,37 +39,41 @@ private:
 
 /*****************************************************************************/
 
-template <typename QueueT, typename EventT> void FixedLineSink<QueueT, EventT>::onData (uint8_t c)
+template <typename QueueT, typename LineT> void FixedLineSink<QueueT, LineT>::onData (uint8_t c)
 {
         if (fixedNumberOfBytes > 0) {
 #ifdef ALL_DATA_DEBUG
-                LineSink<QueueType, EventT>::addAllData ('#');
-                LineSink<QueueType, EventT>::addAllData (c);
+                LineSink<QueueType, LineT>::addAllData ('#');
+                LineSink<QueueType, LineT>::addAllData (c);
 #endif
 
                 tmpBuffer[currentByte++] = c;
 
                 if (currentByte == fixedNumberOfBytes) {
-                        if (!LineSink<QueueT, EventT>::gsmQueue.push_back ()) {
+                        auto &lineQueue = LineSink<QueueT, LineT>::receivedDataQueue;
+
+                        if (lineQueue.full ()) {
                                 Error_Handler ();
                         }
 
-                        auto &queueBuffer = LineSink<QueueT, EventT>::gsmQueue.back ();
-                        queueBuffer.resize (fixedNumberOfBytes);
-                        // TODO potetntialy optimize
-                        std::copy (tmpBuffer, tmpBuffer + fixedNumberOfBytes, queueBuffer.begin ());
+                        // auto &queueBuffer = LineSink<QueueT, LineT>::receivedDataQueue.back ();
+                        // queueBuffer.resize (fixedNumberOfBytes);
+                        // // TODO potetntialy optimize
+                        // std::copy (tmpBuffer, tmpBuffer + fixedNumberOfBytes, queueBuffer.begin ());
+
+                        lineQueue.push_back (LineT{ tmpBuffer, tmpBuffer + fixedNumberOfBytes });
                         fixedNumberOfBytes = 0;
                         currentByte = 0;
                 }
         }
         else {
-                LineSink<QueueType, EventT>::onData (c);
+                LineSink<QueueType, LineT>::onData (c);
         }
 }
 
 /*****************************************************************************/
 
-template <typename QueueT, typename EventT> void FixedLineSink<QueueT, EventT>::receiveBytes (size_t b)
+template <typename QueueT, typename LineT> void FixedLineSink<QueueT, LineT>::receiveBytes (size_t b)
 {
         fixedNumberOfBytes = b;
         currentByte = 0;
