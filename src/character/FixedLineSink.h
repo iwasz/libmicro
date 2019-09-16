@@ -6,21 +6,29 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef FIXEDLINESINK_H
-#define FIXEDLINESINK_H
-
+#pragma once
 #include "LineSink.h"
 #include <algorithm>
 
-// TODO templatize BinaryEvent
+/**
+ * In normal circumstances it works exactly the same as its base class LineSink.
+ * But when receiveBytes is used it switches to "fixed" mode where it waits for
+ * exact number of bytes that was set using receiveBytes method. Those bytes can
+ * be non-printable. After receiving this fixed amout it switches back to normal
+ * "lineSink" mode.
+ */
 template <typename QueueT, typename LineT> class FixedLineSink : public LineSink<QueueT, LineT> {
 public:
         using QueueType = QueueT;
 
-        FixedLineSink (QueueT &q) : LineSink<QueueType, LineT> (q) {}
-        virtual ~FixedLineSink () = default;
+        explicit FixedLineSink (QueueT &q) : LineSink<QueueType, LineT> (q) {}
+        FixedLineSink (FixedLineSink const &) = delete;
+        FixedLineSink &operator= (FixedLineSink const &) = delete;
+        FixedLineSink (FixedLineSink &&) = delete;
+        FixedLineSink &operator= (FixedLineSink &&) = delete;
+        ~FixedLineSink () override = default;
 
-        virtual void onData (uint8_t c) override;
+        void onData (uint8_t c) override;
 
         /**
          * Set this to something biger than 0 for fixed number reception. If set, this
@@ -31,10 +39,7 @@ public:
 
 private:
         size_t fixedNumberOfBytes = 0;
-        size_t currentByte = 0;
-
-        // TODO quick fix, rethink
-        uint8_t tmpBuffer[128];
+        LineT fixedLine;
 };
 
 /*****************************************************************************/
@@ -47,23 +52,18 @@ template <typename QueueT, typename LineT> void FixedLineSink<QueueT, LineT>::on
                 LineSink<QueueType, LineT>::addAllData (c);
 #endif
 
-                tmpBuffer[currentByte++] = c;
+                fixedLine.push_back (c);
 
-                if (currentByte == fixedNumberOfBytes) {
+                if (fixedLine.size () == fixedNumberOfBytes) {
                         auto &lineQueue = LineSink<QueueT, LineT>::receivedDataQueue;
 
                         if (lineQueue.full ()) {
                                 Error_Handler ();
                         }
 
-                        // auto &queueBuffer = LineSink<QueueT, LineT>::receivedDataQueue.back ();
-                        // queueBuffer.resize (fixedNumberOfBytes);
-                        // // TODO potetntialy optimize
-                        // std::copy (tmpBuffer, tmpBuffer + fixedNumberOfBytes, queueBuffer.begin ());
-
-                        lineQueue.push_back (LineT{ tmpBuffer, tmpBuffer + fixedNumberOfBytes });
+                        lineQueue.push_back (std::move (fixedLine));
                         fixedNumberOfBytes = 0;
-                        currentByte = 0;
+                        fixedLine.clear ();
                 }
         }
         else {
@@ -76,7 +76,6 @@ template <typename QueueT, typename LineT> void FixedLineSink<QueueT, LineT>::on
 template <typename QueueT, typename LineT> void FixedLineSink<QueueT, LineT>::receiveBytes (size_t b)
 {
         fixedNumberOfBytes = b;
-        currentByte = 0;
+        fixedLine.clear ();
 }
 
-#endif // FIXEDLINESINK_H
