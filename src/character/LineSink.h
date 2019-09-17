@@ -92,8 +92,13 @@ template <typename QueueT, typename LineT> void LineSink<QueueT, LineT>::onData 
 template <typename QueueT, typename LineT> class LineSink2 : public ICharacterSink {
 public:
         enum class CanLooseData { NO, YES };
+        enum class LineEnd { CR_LF, CR, LF, EITHER };
 
-        explicit LineSink2 (QueueT &g, CanLooseData canLooseData = CanLooseData::NO) : receivedDataQueue (g), canLooseData (canLooseData) {}
+        explicit LineSink2 (QueueT &g, LineEnd lineEnd = LineEnd::CR_LF, CanLooseData canLooseData = CanLooseData::NO)
+            : receivedDataQueue (g), canLooseData (canLooseData), lineEnd (lineEnd)
+        {
+        }
+
         LineSink2 (LineSink2 const &) = delete;
         LineSink2 &operator= (LineSink2 const &) = delete;
         LineSink2 (LineSink2 &&) = delete;
@@ -103,7 +108,7 @@ public:
         void onData (uint8_t c) override;
         void onError (uint32_t /* error */) override { Error_Handler (); }
 
-        void receiveBytes (size_t b);
+        void receiveBytes (size_t b) { fixedNumberOfBytes = b; }
 
 //#define ALL_DATA_DEBUG
 #ifdef ALL_DATA_DEBUG
@@ -124,6 +129,7 @@ protected:
         LineT line; /// Bufor wejściowy na odpowiedzi z modemu. Mamy własny, gdyż kolejka może się w między czasie wyczyścić.
         QueueT &receivedDataQueue;
         CanLooseData canLooseData;
+        LineEnd lineEnd;
         size_t fixedNumberOfBytes = 0;
 };
 
@@ -143,8 +149,6 @@ template <typename QueueT, typename LineT> void LineSink2<QueueT, LineT>::onData
                 LineSink<QueueType, LineT>::addAllData (c);
 #endif
 
-                //                line.push_back (c);
-
                 if (line.size () == fixedNumberOfBytes) {
                         if (receivedDataQueue.full ()) {
                                 if (canLooseData == CanLooseData::YES) {
@@ -159,28 +163,23 @@ template <typename QueueT, typename LineT> void LineSink2<QueueT, LineT>::onData
                         line.clear ();
                 }
         }
-        else if (!line.empty () && (c == '\r' || c == '\n')) { // Case 2 : splitting on newlines.
+        /* clang-format off */
+        else if ((lineEnd == LineEnd::CR_LF && line.size () >= 2 && c == '\n' && line.at (line.size () - 2) == '\r') ||
+                 (((lineEnd == LineEnd::EITHER && (c == '\r' || c == '\n')) ||
+                  (lineEnd == LineEnd::LF && c == '\n') ||
+                  (lineEnd == LineEnd::CR && c == '\r')) && !line.empty ()))
+        /* clang-format on */
+        {
                 gsl::final_action clearPos{ [this] { line.clear (); } };
 
-                // Nie wrzucamy na kolejkę odpowiedzi, które zawierają tylko \r\n
-                // TODO to jest błąd, bo możemy stracić \n w danych binarnych
-                if (line.size () > 1) {
-                        if (receivedDataQueue.full ()) {
-                                if (canLooseData == CanLooseData::YES) {
-                                        return;
-                                }
-
-                                Error_Handler ();
+                if (receivedDataQueue.full ()) {
+                        if (canLooseData == CanLooseData::YES) {
+                                return;
                         }
 
-                        receivedDataQueue.push_back (std::move (line));
+                        Error_Handler ();
                 }
+
+                receivedDataQueue.push_back (std::move (line));
         }
-        //        else {
-        //                line.push_back (c);
-        //        }
 }
-
-/*****************************************************************************/
-
-template <typename QueueT, typename LineT> void LineSink2<QueueT, LineT>::receiveBytes (size_t b) { fixedNumberOfBytes = b; }
