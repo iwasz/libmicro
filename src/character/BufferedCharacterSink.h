@@ -7,13 +7,14 @@
  ****************************************************************************/
 
 #pragma once
+#include "Debug.h"
 #include "ErrorHandler.h"
 #include "Hal.h"
 #include "ICharacterSink.h"
 #include <cstdlib>
 #include <etl/queue_spsc_isr.h>
 
-template <size_t MAX_SIZE> class BufferedCharacterSink : public ICharacterSink {
+template <size_t MAX_SIZE, bool FATAL_IF_FULL = true> class BufferedCharacterSink : public ICharacterSink {
 public:
         using QueueType = etl::queue_spsc_isr<uint8_t, MAX_SIZE, CortexMInterruptControl>;
 
@@ -50,38 +51,36 @@ public:
 private:
         QueueType queue;
         ICharacterSink &childSink;
+        bool dataLostMarker = false;
 };
 
 /*****************************************************************************/
 
-template <size_t MAX_SIZE> inline void BufferedCharacterSink<MAX_SIZE>::onData (uint8_t c)
+template <size_t MAX_SIZE, bool FATAL_IF_FULL> inline void BufferedCharacterSink<MAX_SIZE, FATAL_IF_FULL>::onData (uint8_t c)
 {
 #ifdef ALL_DATA_DEBUG_BUFFERED
         addAllData (c);
 #endif
 
         if (!queue.push_from_isr (c)) {
-                // Too much data at once.
-                Error_Handler ();
+
+                if constexpr (FATAL_IF_FULL) {
+                        // Too much data at once.
+                        Error_Handler ();
+                }
+                else {
+                        dataLostMarker = true;
+                }
         }
 }
 
 /*****************************************************************************/
 
-template <size_t MAX_SIZE> void BufferedCharacterSink<MAX_SIZE>::run ()
+template <size_t MAX_SIZE, bool FATAL_IF_FULL> void BufferedCharacterSink<MAX_SIZE, FATAL_IF_FULL>::run ()
 {
-        //        if (queue.size () >= MAX_SIZE / 2) {
-        //                while (!queue.empty ()) {
-        //                        uint8_t c;
-        //                        queue.pop (c);
-        //                        childSink.onData (c);
-        //                }
-        //        }
-
         if (!queue.empty ()) {
                 uint8_t c;
                 queue.pop (c);
                 childSink.onData (c);
         }
 }
-
