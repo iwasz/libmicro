@@ -38,7 +38,7 @@ public:
         ~LineSink () override = default;
 
         void onData (uint8_t c) override;
-        void onError (uint32_t /* error */) override { Error_Handler (); }
+        void onError (uint32_t /* error */) override { Error_Handler (LINE_SINK_ON_ERROR); }
 
         void receiveBytes (size_t b) { fixedNumberOfBytes = b; }
 
@@ -87,7 +87,7 @@ template <typename QueueT, typename LineT> void LineSink<QueueT, LineT>::onData 
                                         return;
                                 }
 
-                                Error_Handler ();
+                                Error_Handler (LINE_SINK_FULL);
                         }
 
                         receivedDataQueue.push_back (std::move (line));
@@ -102,14 +102,14 @@ template <typename QueueT, typename LineT> void LineSink<QueueT, LineT>::onData 
                   (lineEnd == LineEnd::CR && c == '\r')) && !line.empty ()))
         /* clang-format on */
         {
-                gsl::final_action clearPos{ [this] { line.clear (); } };
+                gsl::final_action clearPos{[this] { line.clear (); }};
 
                 if (receivedDataQueue.full ()) {
                         if (canLooseData == CanLooseData::YES) {
                                 return;
                         }
 
-                        Error_Handler ();
+                        Error_Handler (LINE_SINK_FULL_2);
                 }
 
                 receivedDataQueue.push_back (std::move (line));

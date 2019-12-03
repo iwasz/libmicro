@@ -65,18 +65,18 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FileRandomAccessStorage<PAGE
         fd = open ("file-flash-eeprom.bin", O_RDWR, 0666);
 
         if (fd < 0) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
         if (ftruncate (fd, PAGE_SIZE * FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::numOfPages) < 0) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
         FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::contents
                 = (uint8_t *)mmap (NULL, PAGE_SIZE * FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::numOfPages, PROT_READ, MAP_SHARED, fd, 0);
 
         if (!FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::contents) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
 //        // Init END_MARKER
@@ -94,12 +94,12 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FileRandomAccessStorage<PAGE
 template <size_t PAGE_SIZE, size_t WRITE_SIZE> FileRandomAccessStorage<PAGE_SIZE, WRITE_SIZE>::~FileRandomAccessStorage ()
 {
         if (munmap (FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::contents, PAGE_SIZE * FlashEepromStorage<PAGE_SIZE, WRITE_SIZE>::numOfPages) < 0) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
         errno = 0;
         if (close (fd) < 0) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 }
 
@@ -108,11 +108,11 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> FileRandomAccessStorage<PAGE_SIZE
 template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FileRandomAccessStorage<PAGE_SIZE, WRITE_SIZE>::storeWordImpl (uint8_t const *word, size_t address)
 {
         if (lseek (fd, address, SEEK_SET) < 0) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
         if (write (fd, word, WRITE_SIZE) < (ssize_t)WRITE_SIZE) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 }
 
@@ -121,14 +121,14 @@ template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FileRandomAccessStorage<PAGE
 template <size_t PAGE_SIZE, size_t WRITE_SIZE> void FileRandomAccessStorage<PAGE_SIZE, WRITE_SIZE>::clearPage (size_t address)
 {
         if (lseek (fd, address, SEEK_SET) < 0) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
         uint8_t ZERO[PAGE_SIZE];
         memset (ZERO, 0xff, PAGE_SIZE);
 
         if (write (fd, ZERO, PAGE_SIZE) < (ssize_t)PAGE_SIZE) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 }
 
