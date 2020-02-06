@@ -107,7 +107,7 @@ Usart::Usart (USART_TypeDef *instance, uint32_t baudRate) : sink (nullptr)
         clkEnable ();
 
         if (HAL_UART_Init (&huart) != HAL_OK) {
-                Error_Handler ();
+                Error_Handler (USART_INIT);
         }
 }
 
@@ -311,18 +311,18 @@ void Usart::fireOnData (Usart *u)
 
         // Parity error
         if ((isrflags & USART_ISR_PE) && (cr1its & USART_CR1_PEIE)) {
-                Error_Handler ();
+                Error_Handler (USART_PARITY_ERROR);
         }
 
         // Framing error
         if ((isrflags & USART_ISR_FE) && (cr3its & USART_CR3_EIE)) {
                 //__HAL_USART_CLEAR_IT (huart, USART_CLEAR_FEF);
-                 Error_Handler ();
+                 Error_Handler (USART_FRAMING_ERROR);
         }
 
         // Noise
         if ((isrflags & USART_ISR_NE) && (cr3its & USART_CR3_EIE)) {
-                Error_Handler ();
+                Error_Handler (USART_NOISE);
         }
 
         // TODO ORE is silently discarded

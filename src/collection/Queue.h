@@ -156,7 +156,7 @@ template <typename El> bool Queue<El>::pop_front (size_t number)
 template <typename El> typename Queue<El>::Element &Queue<El>::back ()
 {
         if (!size ()) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
         return queue[backp];
@@ -167,7 +167,7 @@ template <typename El> typename Queue<El>::Element &Queue<El>::back ()
 template <typename El> typename Queue<El>::Element &Queue<El>::front (size_t offset)
 {
         if (!size () || offset >= size ()) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
         return queue[(frontp + offset) % maxSizep];

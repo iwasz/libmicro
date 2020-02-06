@@ -55,4 +55,7 @@ public:
 // TODO hack, get rid of this.
 extern Debug *debug;
 
+extern void itoa (int n, char s[], int zeroPad = 0);
+//extern void itoa (unsigned int n, char s[], int zeroPad = 0);
+
 #endif //__CMD_UART_H__

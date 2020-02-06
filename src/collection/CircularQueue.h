@@ -103,7 +103,7 @@ protected:
 template <typename T, size_t MAX_SIZE> bool CircularQueueBase<T, MAX_SIZE>::pushBack (ElementType const *s, SizeType len)
 {
         if (len > EOB - 1) {
-                Error_Handler ();
+                Error_Handler (UNKNOWN);
         }
 
         ElementType *dest;

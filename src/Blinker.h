@@ -6,9 +6,7 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#ifndef BLINKER_H
-#define BLINKER_H
-
+#pragma once
 #include "ErrorHandler.h"
 #include "Gpio.h"
 #include "Timer.h"
@@ -44,7 +42,7 @@ public:
 public:
         bool running = true;
         uint8_t curentSlotNo = 0;
-        uint16_t timeSlot[SLOTS_NO] = { 0 };
+        uint16_t timeSlot[SLOTS_NO] = {0};
         Timer timer;
         Gpio &gpio;
 };
@@ -88,10 +86,9 @@ template <size_t SLOTS_NO> void Blinker<SLOTS_NO>::setTimeSlot (size_t slotNo, u
 {
 
         if (slotNo >= SLOTS_NO) {
-                Error_Handler ();
+                while (true) {
+                }
         }
 
         timeSlot[slotNo] = period;
 }
-
-#endif // BLINKER_H
