@@ -29,7 +29,7 @@ public:
         void onData (uint8_t c) override;
 
         /// Called from ISR
-        void onError (uint32_t /*error*/) override { Error_Handler (); }
+        void onError (uint32_t /*error*/) override { Error_Handler (BUFFERED_CHARACTER_SINK); }
 
         /// Call periodicaly from a main loop (not from ISR).
         void run ();
@@ -66,7 +66,7 @@ template <size_t MAX_SIZE, bool FATAL_IF_FULL> inline void BufferedCharacterSink
 
                 if constexpr (FATAL_IF_FULL) {
                         // Too much data at once.
-                        Error_Handler ();
+                        Error_Handler (BUFFERED_CHARACTER_SINK_FATAL_IF_FULL);
                 }
                 else {
                         dataLostMarker = true;
