@@ -28,7 +28,7 @@ enum { GPIO_ON_TOGGLE = LAYER_MASK & LIBMICRO_LIBRARY_CODE,
        LINE_SINK_FULL,
        LINE_SINK_FULL_2,
        UNKNOWN,
-};
+       PWM };
 
 #endif
 

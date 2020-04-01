@@ -116,7 +116,7 @@ Usart::Usart (USART_TypeDef *instance, uint32_t baudRate) : sink (nullptr)
         clkEnable ();
 
         if (HAL_UART_Init (&huart) != HAL_OK) {
-                Error_Handler ();
+                Error_Handler (USART_INIT);
         }
 }
 
@@ -338,7 +338,7 @@ void Usart::fireOnData (Usart *u)
                         u->onData (c);
                 }
                 if (u->sink) {
-                        u->sink->onData (char(c));
+                        u->sink->onData (char (c));
                 }
         }
 }
@@ -384,7 +384,7 @@ void Usart::fireOnData (Usart *u)
                         u->onData (c);
                 }
                 if (u->sink) {
-                        u->sink->onData (char(c));
+                        u->sink->onData (char (c));
                 }
         }
 }
@@ -430,7 +430,7 @@ void Usart::fireOnData (Usart *u)
                         u->onData (c);
                 }
                 if (u->sink) {
-                        u->sink->onData (char(c));
+                        u->sink->onData (char (c));
                 }
         }
 }

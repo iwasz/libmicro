@@ -116,7 +116,7 @@ bool Gpio::get () const { return port->IDR & pin; }
 
 /*****************************************************************************/
 
-void Gpio::setOnToggle (std::function<void(void)> const &t)
+void Gpio::setOnToggle (std::function<void (void)> const &t)
 {
         int pinNo = pinNumber (pin);
 
@@ -128,7 +128,7 @@ void Gpio::setOnToggle (std::function<void(void)> const &t)
                  * PC0 and so on as EXTIS. See this conversation for example :
                  * https://stackoverflow.com/questions/23043465/find-specific-pin-on-which-a-interrupt-occured
                  */
-                Error_Handler ();
+                Error_Handler (GPIO_ON_TOGGLE);
         }
 
         connectedExtis[pinNo] = this;
