@@ -6,8 +6,8 @@
  *  ~~~~~~~~~                                                               *
  ****************************************************************************/
 
-#include "Hal.h"
 #include "Gpio.h"
+#include "Hal.h"
 
 extern "C" void EXTI0_IRQHandler ()
 {
@@ -51,7 +51,7 @@ extern "C" void EXTI4_IRQHandler ()
 
 extern "C" void EXTI9_5_IRQHandler ()
 {
-        uint8_t pinNo;
+        uint8_t pinNo{};
 
         if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_5) != RESET) {
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_5);
@@ -81,7 +81,7 @@ extern "C" void EXTI9_5_IRQHandler ()
 
 extern "C" void EXTI15_10_IRQHandler ()
 {
-        uint8_t pinNo;
+        uint8_t pinNo{};
 
         if (__HAL_GPIO_EXTI_GET_IT (GPIO_PIN_10) != RESET) {
                 __HAL_GPIO_EXTI_CLEAR_IT (GPIO_PIN_10);
@@ -110,4 +110,3 @@ extern "C" void EXTI15_10_IRQHandler ()
 
         Gpio::connectedExtis[pinNo]->onToggle ();
 }
-
