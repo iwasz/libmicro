@@ -12,6 +12,8 @@
 #include <stm32f4xx.h>
 #include <stm32f4xx_hal.h>
 // #include <stm32f4xx_hal_i2c_ex.h>
+// #include <Legacy/stm32_hal_legacy.h>
+// #include <Legacy/stm32f4xx_hal_can_legacy.h>
 
 #ifdef __cplusplus
 extern "C" {

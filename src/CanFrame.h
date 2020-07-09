@@ -21,8 +21,8 @@ struct CanFrame {
                   uint8_t data7 = DEFAULT_BYTE);
 
 #ifndef UNIT_TEST
-        CanFrame (CanRxMsgTypeDef const &frame);
-        CanTxMsgTypeDef toNative () const;
+        // CanFrame (CanRxMsgTypeDef const &frame);
+        // CanTxMsgTypeDef toNative () const;
 #endif
 
         operator bool () const { return id != 0; }

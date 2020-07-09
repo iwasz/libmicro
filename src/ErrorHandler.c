@@ -16,7 +16,7 @@
  * @param  None
  * @retval None
  */
-void Error_Handler (int code)
+void Error_Handler ()
 {
 #ifndef UNIT_TEST
         while (1) {

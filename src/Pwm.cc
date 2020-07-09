@@ -23,7 +23,7 @@ Pwm::Pwm (TIM_TypeDef *instance, uint32_t prescaler, uint32_t period)
         clkEnable ();
 
         if (HAL_TIM_PWM_Init (&htim) != HAL_OK) {
-                Error_Handler (PWM);
+                Error_Handler ();
         }
 
         //        TIM_OC_InitTypeDef sConfigOC;
@@ -124,7 +124,7 @@ void Pwm::enableChannels (uint8_t channels)
 
         if (channels & CHANNEL1) {
                 if (HAL_TIM_PWM_ConfigChannel (&htim, &sConfigOC, TIM_CHANNEL_1) != HAL_OK) {
-                        Error_Handler (PWM);
+                        Error_Handler ();
                 }
 
                 HAL_TIM_PWM_Start (&htim, TIM_CHANNEL_1);
@@ -132,7 +132,7 @@ void Pwm::enableChannels (uint8_t channels)
 
         if (channels & CHANNEL2) {
                 if (HAL_TIM_PWM_ConfigChannel (&htim, &sConfigOC, TIM_CHANNEL_2) != HAL_OK) {
-                        Error_Handler (PWM);
+                        Error_Handler ();
                 }
 
                 HAL_TIM_PWM_Start (&htim, TIM_CHANNEL_2);
@@ -140,7 +140,7 @@ void Pwm::enableChannels (uint8_t channels)
 
         if (channels & CHANNEL3) {
                 if (HAL_TIM_PWM_ConfigChannel (&htim, &sConfigOC, TIM_CHANNEL_3) != HAL_OK) {
-                        Error_Handler (PWM);
+                        Error_Handler ();
                 }
 
                 HAL_TIM_PWM_Start (&htim, TIM_CHANNEL_3);
@@ -148,7 +148,7 @@ void Pwm::enableChannels (uint8_t channels)
 
         if (channels & CHANNEL4) {
                 if (HAL_TIM_PWM_ConfigChannel (&htim, &sConfigOC, TIM_CHANNEL_4) != HAL_OK) {
-                        Error_Handler (PWM);
+                        Error_Handler ();
                 }
 
                 HAL_TIM_PWM_Start (&htim, TIM_CHANNEL_4);

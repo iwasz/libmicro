@@ -205,7 +205,7 @@ Can::Can (ICanCallback *callback, uint32_t prescaler, uint32_t sjw, uint32_t bs1
         canHandle.Lock = HAL_UNLOCKED;
         canHandle.State = HAL_CAN_STATE_RESET;
         canHandle.ErrorCode = 0;
-        canHandle.Instance = CAN;
+        canHandle.Instance = CAN1;
         clkEnable ();
         reset ();
 
@@ -331,7 +331,7 @@ CanFrame Can::read (uint32_t timeoutMs)
 
 void Can::clkEnable (CAN_HandleTypeDef *canX)
 {
-        if (canX->Instance == CAN) {
+        if (canX->Instance == CAN1) {
                 __HAL_RCC_CAN1_CLK_ENABLE ();
         }
 }
@@ -340,7 +340,7 @@ void Can::clkEnable (CAN_HandleTypeDef *canX)
 
 void Can::clkDisable (CAN_HandleTypeDef *canX)
 {
-        if (canX->Instance == CAN) {
+        if (canX->Instance == CAN1) {
                 __HAL_RCC_CAN1_CLK_DISABLE ();
         }
 }

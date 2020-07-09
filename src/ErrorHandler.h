@@ -44,7 +44,7 @@ static const char *LIBMICRO_LIBRARY_EXCEPTION[] = {"GPIO_ON_TOGGLE",
                                                    "LINE_SINK_FULL_2",
                                                    "UNKNOWN"};
 
-__attribute__ ((weak)) void Error_Handler (int code);
+__attribute__ ((weak)) void Error_Handler ();
 
 #ifdef __cplusplus
 }
